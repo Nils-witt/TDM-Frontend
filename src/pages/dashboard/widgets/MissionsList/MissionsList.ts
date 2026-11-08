@@ -1,0 +1,35 @@
+import { useMemo } from 'react';
+import { type Mission, missionStatuses } from '@/api/missions';
+import { useMissions } from '@/data/missionsContext';
+import { useDashboard } from '@/pages/dashboard/dashboardContext';
+
+export type MissionSection = { status: string; label: string; missions: Mission[] };
+
+// A section per known status, in lifecycle order and including empty ones, then
+// one per status unknown to this build that missions carry.
+export function sectionsByStatus(missions: readonly Mission[]): MissionSection[] {
+  const sections: MissionSection[] = missionStatuses.map((s) => ({
+    status: s.value,
+    label: s.label,
+    missions: [],
+  }));
+  const byStatus = new Map(sections.map((s) => [s.status, s]));
+  for (const m of missions) {
+    let section = byStatus.get(m.status);
+    if (!section) {
+      section = { status: m.status, label: m.status, missions: [] };
+      byStatus.set(m.status, section);
+      sections.push(section);
+    }
+    section.missions.push(m);
+  }
+  return sections;
+}
+
+export function useMissionsListWidget() {
+  const { items: missions, error, loading } = useMissions();
+  const sections = useMemo(() => sectionsByStatus(missions), [missions]);
+  const { selectedId, update } = useDashboard();
+  const select = (id: string) => update({ selectedId: id });
+  return { missions, sections, error, loading, selectedId, select };
+}

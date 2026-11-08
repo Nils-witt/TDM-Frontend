@@ -4,9 +4,17 @@ import { request } from './client';
 // A failed reload keeps the data loaded before.
 export type ResourceState<T> = { data: T | undefined; error: string | null };
 
+// Loads the data of a path; request(path) by default. One that pages through a
+// list, say. It must be stable (module level): it is a hook dependency.
+export type Fetcher<T = unknown> = (path: string) => Promise<T>;
+
+const defaultFetcher: Fetcher = (path) => request<unknown>(path);
+
 type Entry = {
   state: ResourceState<unknown>;
   listeners: Set<() => void>;
+  // The last one a caller passed; all callers of one path pass the same.
+  fetch: Fetcher;
   // queued is the load to run after inflight, because something changed while
   // it was running.
   inflight: Promise<void> | null;
@@ -16,10 +24,10 @@ type Entry = {
 // Every component showing one path gets the same data from a single request,
 // and a burst of reloads during a load is coalesced into one reload after it.
 export type ResourceCache = {
-  subscribe: (path: string, listener: () => void) => () => void;
+  subscribe: (path: string, listener: () => void, fetch?: Fetcher) => () => void;
   state: (path: string) => ResourceState<unknown>;
   // Resolves once data requested after the call has arrived (or failed).
-  load: (path: string) => Promise<void>;
+  load: (path: string, fetch?: Fetcher) => Promise<void>;
   // For data a write returned.
   put: (path: string, data: unknown) => void;
 };
@@ -29,12 +37,19 @@ const initial: ResourceState<never> = { data: undefined, error: null };
 export function createResourceCache(): ResourceCache {
   const entries = new Map<string, Entry>();
 
-  const entry = (path: string): Entry => {
+  const entry = (path: string, fetch?: Fetcher): Entry => {
     let e = entries.get(path);
     if (!e) {
-      e = { state: initial, listeners: new Set(), inflight: null, queued: null };
+      e = {
+        state: initial,
+        listeners: new Set(),
+        fetch: defaultFetcher,
+        inflight: null,
+        queued: null,
+      };
       entries.set(path, e);
     }
+    if (fetch) e.fetch = fetch;
     return e;
   };
 
@@ -44,7 +59,8 @@ export function createResourceCache(): ResourceCache {
   };
 
   const start = (path: string, e: Entry): Promise<void> => {
-    const p = request<unknown>(path)
+    const p = e
+      .fetch(path)
       .then(
         (data) => set(e, { data, error: null }),
         (err: Error) => set(e, { ...e.state, error: err.message }),
@@ -56,8 +72,8 @@ export function createResourceCache(): ResourceCache {
     return p;
   };
 
-  const load = (path: string): Promise<void> => {
-    const e = entry(path);
+  const load = (path: string, fetch?: Fetcher): Promise<void> => {
+    const e = entry(path, fetch);
     if (!e.inflight) return start(path, e);
     // The running load may have been answered before what asked for the
     // reload: load again after it, once however many requests come in.
@@ -68,8 +84,8 @@ export function createResourceCache(): ResourceCache {
     return e.queued;
   };
 
-  const subscribe = (path: string, listener: () => void) => {
-    const e = entry(path);
+  const subscribe = (path: string, listener: () => void, fetch?: Fetcher) => {
+    const e = entry(path, fetch);
     e.listeners.add(listener);
     // Nobody showed the path until now, so what is cached may be outdated.
     if (e.listeners.size === 1 && !e.inflight) void start(path, e);
@@ -104,18 +120,23 @@ const noLoad = () => Promise.resolve();
 // loads nothing.
 export function useResource<T>(
   path: string | null,
+  fetch?: Fetcher<T>,
 ): ResourceState<T> & { reload: () => Promise<void> } {
   const cache = useResourceCache();
 
   const subscribe = useCallback(
-    (listener: () => void) => (path === null ? noSubscribe() : cache.subscribe(path, listener)),
-    [cache, path],
+    (listener: () => void) =>
+      path === null ? noSubscribe() : cache.subscribe(path, listener, fetch),
+    [cache, path, fetch],
   );
   const state = useSyncExternalStore(
     subscribe,
     path === null ? noState : () => cache.state(path),
   ) as ResourceState<T>;
-  const reload = useCallback(() => (path === null ? noLoad() : cache.load(path)), [cache, path]);
+  const reload = useCallback(
+    () => (path === null ? noLoad() : cache.load(path, fetch)),
+    [cache, path, fetch],
+  );
 
   return { ...state, reload };
 }

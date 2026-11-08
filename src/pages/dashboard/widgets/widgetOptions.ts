@@ -15,9 +15,12 @@ type NumberOption = BaseOption<'number', number> & { min?: number; max?: number 
 type SelectOption = BaseOption<'select', string> & {
   choices: { value: string; label: string }[];
 };
-export type WidgetOption = BooleanOption | TextOption | NumberOption | SelectOption;
+// By ID.
+type LogbookTypesOption = BaseOption<'logbookTypes', readonly string[]>;
+export type WidgetOption =
+  BooleanOption | TextOption | NumberOption | SelectOption | LogbookTypesOption;
 
-export type OptionValue = boolean | string | number;
+export type OptionValue = boolean | string | number | readonly string[];
 
 // As stored in a layout item; may be incomplete or invalid (see
 // resolveOptions).
@@ -38,7 +41,20 @@ function validValue(def: WidgetOption, v: unknown): OptionValue | undefined {
       return Math.min(Math.max(v, def.min ?? -Infinity), def.max ?? Infinity);
     case 'select':
       return typeof v === 'string' && def.choices.some((c) => c.value === v) ? v : undefined;
+    case 'logbookTypes':
+      return Array.isArray(v) && v.every((x) => typeof x === 'string')
+        ? [...new Set(v)]
+        : undefined;
   }
+}
+
+// Lists are equal if they hold the same values, in any order.
+function sameValue(a: OptionValue, b: OptionValue): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    const set = new Set<string>(a);
+    return a.length === b.length && b.every((x: string) => set.has(x));
+  }
+  return a === b;
 }
 
 // Invalid values fall back to the default; undeclared keys are dropped.
@@ -62,7 +78,7 @@ export function withOption(
   const next: WidgetOptionValues = {};
   for (const d of defs) {
     const v = d.key === def.key ? value : validValue(d, given?.[d.key]);
-    if (v !== undefined && v !== d.default) next[d.key] = v;
+    if (v !== undefined && !sameValue(v, d.default)) next[d.key] = v;
   }
   return Object.keys(next).length > 0 ? next : undefined;
 }

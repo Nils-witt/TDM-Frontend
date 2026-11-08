@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 /universamFrontend.iml
+
+# OCR assets, copied from node_modules by scripts/copy-ocr-assets.mjs
+public/ocr/

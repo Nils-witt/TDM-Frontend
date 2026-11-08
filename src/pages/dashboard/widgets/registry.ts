@@ -1,7 +1,17 @@
 import { lazy } from 'react';
+import { missionStatuses } from '@/api/missions';
+import { frameCount, frameKeys, windowUnits } from './ActiveMissions/ActiveMissions.ts';
+import { logbookFilterOptions } from './shared/logbookFilterOptions';
 import type { Widget } from './widget';
 
 const ExampleWidget = lazy(() => import('./Example/Example.tsx'));
+const MissionsListWidget = lazy(() => import('./MissionsList/MissionsList.tsx'));
+const MissionDetailsWidget = lazy(() => import('./MissionDetails/MissionDetails.tsx'));
+const ActiveMissionsWidget = lazy(() => import('./ActiveMissions/ActiveMissions.tsx'));
+const LogbookWidget = lazy(() => import('./Logbook/Logbook.tsx'));
+const LogbookFormWidget = lazy(() => import('./LogbookForm/LogbookForm.tsx'));
+const FileListWidget = lazy(() => import('./FileList/FileList.tsx'));
+const AttachmentViewerWidget = lazy(() => import('./AttachmentViewer/AttachmentViewer.tsx'));
 
 const Example: Widget = {
   id: 'Example',
@@ -20,4 +30,169 @@ const Example: Widget = {
   Component: ExampleWidget,
 };
 
-export const widgets: Record<string, Widget> = Object.fromEntries([Example].map((w) => [w.id, w]));
+// collapse-<status> sets which sections start collapsed.
+const MissionsList: Widget = {
+  id: 'MissionsList',
+  name: 'Missions',
+  category: 'missions',
+  description: 'The active missions, to pick the one to work on.',
+  emits: ['selection'],
+  consumes: ['selection'],
+  minWidth: 10,
+  maxWidth: 120,
+  minHeight: 2,
+  maxHeight: 800,
+  defaultWidth: 6,
+  defaultHeight: 4,
+  options: [
+    { key: 'groupByStatus', label: 'Group by status', type: 'boolean', default: false },
+    ...missionStatuses.map((s) => ({
+      key: `collapse-${s.value}`,
+      label: `Start "${s.label}" collapsed`,
+      type: 'boolean' as const,
+      default: false,
+    })),
+  ],
+  Component: MissionsListWidget,
+};
+
+const MissionDetails: Widget = {
+  id: 'MissionDetails',
+  name: 'Mission',
+  category: 'missions',
+  description: 'Shows and edits the selected mission, or creates a new one.',
+  emits: ['selection'],
+  consumes: ['selection'],
+  minWidth: 25,
+  maxWidth: 120,
+  minHeight: 10,
+  maxHeight: 800,
+  defaultWidth: 35,
+  defaultHeight: 40,
+  Component: MissionDetailsWidget,
+};
+
+// Counts the missions active in the last amount units, for up to frameCount
+// frames; the first is on by default, the others while their amount is above 0.
+const ActiveMissions: Widget = {
+  id: 'ActiveMissions',
+  name: 'Active missions',
+  category: 'missions',
+  description: 'How many missions were active within recent time frames.',
+  minWidth: 10,
+  maxWidth: 60,
+  minHeight: 6,
+  maxHeight: 30,
+  defaultWidth: 15,
+  defaultHeight: 8,
+  options: Array.from({ length: frameCount }, (_, i) => {
+    const n = i + 1;
+    const keys = frameKeys(n);
+    return [
+      {
+        key: keys.amount,
+        label: n === 1 ? 'Time frame 1' : `Time frame ${n} (0 = off)`,
+        type: 'number' as const,
+        default: n === 1 ? 24 : 0,
+        min: n === 1 ? 1 : 0,
+      },
+      {
+        key: keys.unit,
+        label: `Time frame ${n} unit`,
+        type: 'select' as const,
+        default: 'hours',
+        choices: windowUnits.map((u) => ({ value: u.value, label: u.label })),
+      },
+    ];
+  }).flat(),
+  Component: ActiveMissionsWidget,
+};
+
+// The filter options set the filters it starts with.
+const Logbook: Widget = {
+  id: 'Logbook',
+  name: 'Logbook',
+  category: 'logbook',
+  description: 'The logbook of the selected mission.',
+  consumes: ['selection'],
+  minWidth: 30,
+  maxWidth: 120,
+  minHeight: 10,
+  maxHeight: 800,
+  defaultWidth: 40,
+  defaultHeight: 30,
+  options: [
+    { key: 'showCreate', label: 'Show the Create action', type: 'boolean', default: true },
+    ...logbookFilterOptions,
+  ],
+  Component: LogbookWidget,
+};
+
+// The Logbook widget's Create action opens it in a window.
+const LogbookForm: Widget = {
+  id: 'LogbookForm',
+  name: 'New logbook entry',
+  category: 'logbook',
+  description: 'Writes a new entry into the selected mission’s logbook.',
+  consumes: ['selection'],
+  minWidth: 25,
+  maxWidth: 80,
+  minHeight: 15,
+  maxHeight: 60,
+  defaultWidth: 35,
+  defaultHeight: 20,
+  options: [
+    { key: 'showMission', label: 'Show the selected mission', type: 'boolean', default: true },
+  ],
+  Component: LogbookFormWidget,
+};
+
+const FileList: Widget = {
+  id: 'FileList',
+  name: 'Files',
+  category: 'files',
+  description: 'The files attached to the selected mission’s logbook.',
+  consumes: ['selection'],
+  minWidth: 20,
+  maxWidth: 120,
+  minHeight: 10,
+  maxHeight: 800,
+  defaultWidth: 30,
+  defaultHeight: 25,
+  Component: FileListWidget,
+};
+
+// The file lists open it in a window.
+const AttachmentViewer: Widget = {
+  id: 'AttachmentViewer',
+  name: 'Attachment',
+  category: 'files',
+  description: 'Shows one attached file.',
+  minWidth: 20,
+  maxWidth: 200,
+  minHeight: 10,
+  maxHeight: 200,
+  defaultWidth: 50,
+  defaultHeight: 40,
+  windowOnly: true,
+  options: [
+    { key: 'fileId', label: 'File ID', type: 'text', default: '' },
+    { key: 'name', label: 'File name', type: 'text', default: '' },
+    { key: 'mediaType', label: 'Media type', type: 'text', default: '' },
+  ],
+  title: (o) => (o.name === '' ? 'Attachment' : String(o.name)),
+  Component: AttachmentViewerWidget,
+};
+
+export const widgets: Record<string, Widget> = Object.fromEntries(
+  [
+    MissionsList,
+    MissionDetails,
+    ActiveMissions,
+    Logbook,
+    LogbookForm,
+    FileList,
+    AttachmentViewer,
+    Example,
+  ].map((w) => [w.id, w]),
+);

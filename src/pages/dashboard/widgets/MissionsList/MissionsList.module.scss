@@ -1,0 +1,89 @@
+// The lists themselves use the global .list classes in src/styles/_lists.scss.
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// Expanded sections share the height equally, each scrolling its own list
+// under its sticky header; collapsed ones take only their header. Below
+// min-height the widget's body scrolls instead.
+.section {
+  flex: none;
+  border-bottom: 1px solid var(--divider);
+
+  &[open] {
+    flex: 1 1 0;
+    min-height: 6rem;
+    overflow-y: auto;
+  }
+
+  > summary {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    list-style: none;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::before {
+      content: '';
+      width: 0.4em;
+      height: 0.4em;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(-45deg);
+      transition: transform 0.15s;
+    }
+
+    // --hover is translucent: layer it over the surface so the scrolled
+    // list does not show through the sticky header.
+    &:hover {
+      background: linear-gradient(var(--hover), var(--hover)), var(--surface);
+    }
+  }
+
+  &[open] > summary::before {
+    transform: rotate(45deg);
+  }
+
+  > :global(.list) {
+    margin-top: 0;
+  }
+
+  // Without vertical padding, like the headers.
+  :global(.list.select) button {
+    padding-block: 0;
+  }
+
+  > :global(.muted) {
+    margin: 0 0 0.5rem;
+    padding: 0 1rem;
+  }
+}
+
+.label {
+  flex: 1;
+}
+
+.count {
+  font-weight: normal;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.type {
+  font-weight: bold;
+}

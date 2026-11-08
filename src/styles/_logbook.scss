@@ -1,0 +1,18 @@
+// Shared by the logbook widgets.
+
+/* Logbooks grow long: lay out and paint only the entries on screen. */
+.list.log > li {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 3.5em;
+}
+
+.list .pre {
+  white-space: pre-wrap;
+}
+
+/* Entries with a context menu are focusable, for opening it from the keyboard. */
+.list > li[tabindex]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  border-radius: var(--radius);
+}

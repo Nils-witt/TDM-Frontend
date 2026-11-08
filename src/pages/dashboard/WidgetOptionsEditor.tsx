@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { compactControls, FieldRow, Section } from '@/components/form';
+import { useCatalogs } from '@/data/catalogContext';
 import type { Widget } from './widgets/widget';
 import {
   resolveOptions,
@@ -14,6 +15,44 @@ type Props = {
   options: WidgetOptionValues | undefined;
   onChange: (options: WidgetOptionValues | undefined) => void;
 };
+
+// A type no longer in the catalog stays checked until unchecked.
+function LogbookTypesInput({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: readonly string[];
+  onChange: (value: readonly string[]) => void;
+}) {
+  const { logbookTypes } = useCatalogs();
+  const known = new Set(logbookTypes.items.map((t) => t.id));
+  const options = [
+    ...[...logbookTypes.items]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((t) => ({ id: t.id, name: t.name })),
+    ...value.filter((id) => !known.has(id)).map((id) => ({ id, name: 'Unknown type' })),
+  ];
+  const toggle = (id: string) =>
+    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
+
+  return (
+    <FieldRow id={id} label={label} wrapLabel>
+      <span id={id} className="row">
+        {options.length === 0 && <span className="muted">No logbook types.</span>}
+        {options.map((o) => (
+          <label key={o.id} className="row">
+            <input type="checkbox" checked={value.includes(o.id)} onChange={() => toggle(o.id)} />
+            {o.name}
+          </label>
+        ))}
+      </span>
+    </FieldRow>
+  );
+}
 
 // Values equal to an option's default are left out of the layout.
 function WidgetOptionsEditor({ widget, options, onChange }: Props) {
@@ -67,6 +106,16 @@ function WidgetOptionsEditor({ widget, options, onChange }: Props) {
                   }}
                 />
               </FieldRow>
+            );
+          case 'logbookTypes':
+            return (
+              <LogbookTypesInput
+                key={def.key}
+                id={inputId}
+                label={def.label}
+                value={Array.isArray(value) ? value : def.default}
+                onChange={(v) => set(def, v)}
+              />
             );
           case 'select':
             return (

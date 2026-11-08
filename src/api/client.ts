@@ -74,11 +74,11 @@ type RequestOptions = {
   target?: ApiTarget;
 };
 
-export async function request<T>(
+async function send(
   path: string,
-  init?: RequestInit,
-  { anonymous = false, target: requestTarget }: RequestOptions = {},
-): Promise<T> {
+  init: RequestInit | undefined,
+  { anonymous = false, target: requestTarget }: RequestOptions,
+): Promise<Response> {
   // A FormData body sets its own multipart content type, with the boundary.
   const json = init?.body !== undefined && !(init.body instanceof FormData);
   const token = anonymous ? null : accessToken();
@@ -99,10 +99,26 @@ export async function request<T>(
   if (!res.ok) {
     throw new ApiError(res.status, await errorMessage(res, init?.method ?? 'GET', path));
   }
+  return res;
+}
+
+export async function request<T>(
+  path: string,
+  init?: RequestInit,
+  options: RequestOptions = {},
+): Promise<T> {
+  const res = await send(path, init, options);
   if (res.status === 204) {
     return undefined as T;
   }
   return res.json() as Promise<T>;
+}
+
+// For content that needs the token, so a plain link or <img src> cannot load
+// it.
+export async function requestBlob(path: string, signal?: AbortSignal): Promise<Blob> {
+  const res = await send(path, { signal, headers: { Accept: '*/*' } }, {});
+  return res.blob();
 }
 
 // The API answers errors as RFC 9457 problem details.

@@ -1,11 +1,32 @@
 {
   "widgets": [
     {
-      "widget": "Example",
+      "widget": "MissionsList",
       "left": 0,
       "top": 0,
+      "width": 20,
+      "height": "fill"
+    },
+    {
+      "widget": "MissionDetails",
+      "left": 20,
+      "top": 0,
       "width": 40,
-      "height": 25
+      "height": 35
+    },
+    {
+      "widget": "LogbookForm",
+      "left": 20,
+      "top": 35,
+      "width": 40,
+      "height": "fill"
+    },
+    {
+      "widget": "Logbook",
+      "right": 0,
+      "top": 0,
+      "width": 40,
+      "height": "fill"
     }
   ]
 }

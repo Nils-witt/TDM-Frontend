@@ -1,0 +1,25 @@
+// A menu dropdown, fixed so the widget's scrolling does not clip it.
+.suggestions {
+  position: fixed;
+  z-index: 1000;
+  max-height: 14rem;
+  max-width: min(36rem, calc(100vw - 2rem));
+  overflow-y: auto;
+}
+
+// Grows with a long detail.
+.suggestion {
+  height: auto;
+  min-height: 22px;
+}
+
+.label {
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.detail {
+  overflow: hidden;
+  opacity: 0.7;
+  text-overflow: ellipsis;
+}
