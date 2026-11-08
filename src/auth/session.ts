@@ -1,10 +1,9 @@
 import { type User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import { type AuthConfig, getAuthConfig, type Principal, whoAmI } from '@/api/auth';
-import { ApiError, hasSeparateMtlsApi, setAccessTokenSource, setApiTarget } from '@/api/client';
+import { ApiError, setAccessTokenSource, setApiTarget } from '@/api/client';
 
 // oidc: logged in through Authentik, with a bearer token. proxy: the reverse
-// proxy authenticated a TLS client certificate; there is no token and no
-// logout.
+// proxy authenticated a TLS client certificate; there is no token.
 export type AuthMode = 'oidc' | 'proxy';
 
 export type SessionStart =
@@ -77,22 +76,56 @@ async function signInWithToken(m: UserManager): Promise<SessionStart> {
   }
 }
 
-// The principal when a client certificate alone authenticates; then no login
-// is needed.
-async function probeClientCertificate(): Promise<Principal | null> {
+// Set once a client certificate authenticated in this tab, so a reload does
+// not need the login page again. Per tab, like the OIDC tokens.
+const certificateKey = 'universam.clientCertificate';
+
+function rememberCertificate(remember: boolean) {
+  try {
+    if (remember) window.sessionStorage.setItem(certificateKey, '1');
+    else window.sessionStorage.removeItem(certificateKey);
+  } catch {
+    // storage blocked: the login page shows again after a reload
+  }
+}
+
+function certificateRemembered(): boolean {
+  try {
+    return window.sessionStorage.getItem(certificateKey) === '1';
+  } catch {
+    return false;
+  }
+}
+
+// Only on request: without a certificate the browser may prompt for one, or
+// the proxy refuses the TLS handshake.
+async function probeClientCertificate(): Promise<Principal> {
   try {
     const principal = await whoAmI(true, 'mtls');
     setApiTarget('mtls');
+    rememberCertificate(true);
     return principal;
   } catch (err) {
     setApiTarget('oidc');
-    // A proxy on its own URL may refuse a browser without a certificate
-    // during the TLS handshake (a network error) or with a 400 or 403, not
-    // only with a 401.
-    if (hasSeparateMtlsApi() || (err instanceof ApiError && err.status === 401)) {
-      return null;
-    }
+    rememberCertificate(false);
     throw err;
+  }
+}
+
+export async function loginWithCertificate(): Promise<Principal> {
+  try {
+    return await probeClientCertificate();
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw new Error(`Client certificate not accepted: ${err.message}`, { cause: err });
+    }
+    // A refused TLS handshake reaches fetch only as a generic network error.
+    throw new Error(
+      'Client certificate login failed. Is a certificate installed in this browser?',
+      {
+        cause: err,
+      },
+    );
   }
 }
 
@@ -111,9 +144,12 @@ async function start(): Promise<SessionStart> {
     return signInWithToken(m);
   }
 
-  const principal = await probeClientCertificate();
-  if (principal) {
-    return { status: 'signedIn', principal, mode: 'proxy' };
+  if (certificateRemembered()) {
+    try {
+      return { status: 'signedIn', principal: await probeClientCertificate(), mode: 'proxy' };
+    } catch {
+      // The certificate is no longer accepted: show the login page.
+    }
   }
 
   const m = await ensureManager();
@@ -154,6 +190,11 @@ export async function login() {
 // Ends the Authentik session too when the provider offers an end-session
 // endpoint; else only this tab's tokens are dropped.
 export async function logout(): Promise<'redirected' | 'local'> {
+  if (certificateRemembered()) {
+    rememberCertificate(false);
+    setApiTarget('oidc');
+    return 'local';
+  }
   const m = await ensureManager();
   if (config?.end_session_endpoint && user) {
     await m.signoutRedirect({ id_token_hint: user.id_token });
@@ -164,6 +205,8 @@ export async function logout(): Promise<'redirected' | 'local'> {
 }
 
 export async function dropTokens() {
+  rememberCertificate(false);
+  setApiTarget('oidc');
   await manager?.removeUser();
   user = null;
 }

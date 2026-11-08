@@ -14,8 +14,8 @@ type State =
   | { status: 'signedOut'; error: string | null }
   | { status: 'signedIn'; principal: Principal; mode: AuthMode };
 
-// Asks the API who the caller is before anything else: a client certificate
-// may authenticate on its own, otherwise the Authentik login is needed.
+// Restores the tab's session before anything else; otherwise the login page
+// offers Authentik or a client certificate.
 function App() {
   const [state, setState] = useState<State>({ status: 'loading' });
 
@@ -62,7 +62,7 @@ function App() {
         ? {
             principal: state.principal,
             mode: state.mode,
-            logout: state.mode === 'oidc' ? signOut : null,
+            logout: signOut,
           }
         : null,
     [state, signOut],
@@ -81,7 +81,12 @@ function App() {
         </main>
       );
     case 'signedOut':
-      return <Login error={state.error} />;
+      return (
+        <Login
+          error={state.error}
+          onCertificate={(principal) => setState({ status: 'signedIn', principal, mode: 'proxy' })}
+        />
+      );
     case 'signedIn':
       return (
         <SessionContext value={session}>

@@ -16,8 +16,6 @@ export function setApiTarget(t: ApiTarget) {
   target = t;
 }
 
-export const hasSeparateMtlsApi = () => baseUrls.mtls !== baseUrls.oidc;
-
 type RuntimeConfig = {
   // Origin of universalGoApi for OIDC login. Empty or missing: keep
   // VITE_API_BASE_URL.

@@ -16,14 +16,14 @@ export function useNavActions() {
         window.location.reload();
         break;
       case 'logout':
-        logout?.().catch((err: unknown) =>
+        logout().catch((err: unknown) =>
           window.alert(`Cannot log out: ${err instanceof Error ? err.message : String(err)}`),
         );
         break;
     }
   };
 
-  const disabled = (action: NavAction) => action === 'logout' && logout === null;
+  const disabled = (_action: NavAction) => false;
 
   return { run, disabled };
 }

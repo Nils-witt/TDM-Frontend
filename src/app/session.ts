@@ -5,8 +5,8 @@ import type { AuthMode } from '@/auth/session';
 export type Session = {
   principal: Principal;
   mode: AuthMode;
-  // Only for OIDC: a client certificate cannot be logged out of.
-  logout: (() => Promise<void>) | null;
+  // For a client certificate, only returns to the login page.
+  logout: () => Promise<void>;
 };
 
 export const SessionContext = createContext<Session | null>(null);

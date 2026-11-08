@@ -1,21 +1,33 @@
 import { useState } from 'react';
-import { login } from '@/auth/session';
+import type { Principal } from '@/api/auth';
+import { login, loginWithCertificate } from '@/auth/session';
 import Alert from '@/components/Alert';
 import styles from './Login.module.scss';
 
-function Login({ error }: { error: string | null }) {
+type Props = {
+  error: string | null;
+  onCertificate: (principal: Principal) => void;
+};
+
+const message = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+function Login({ error, onCertificate }: Props) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
 
-  const start = () => {
+  const run = (attempt: () => Promise<void>) => {
     setBusy(true);
     setFailed(null);
-    // On success the browser leaves for Authentik.
-    login().catch((err: unknown) => {
+    attempt().catch((err: unknown) => {
       setBusy(false);
-      setFailed(err instanceof Error ? err.message : String(err));
+      setFailed(message(err));
     });
   };
+
+  // On success the browser leaves for Authentik.
+  const startOidc = () => run(login);
+
+  const startCertificate = () => run(async () => onCertificate(await loginWithCertificate()));
 
   const shown = failed ?? error;
   return (
@@ -23,9 +35,14 @@ function Login({ error }: { error: string | null }) {
       <div className="card">
         <h1 className="small">Universam</h1>
         {shown && <Alert severity="error">{shown}</Alert>}
-        <button type="button" className="btn primary mt" disabled={busy} onClick={start}>
-          Log In with Authentik
-        </button>
+        <div className={styles.actions}>
+          <button type="button" className="btn primary" disabled={busy} onClick={startOidc}>
+            Log In with Authentik
+          </button>
+          <button type="button" className="btn" disabled={busy} onClick={startCertificate}>
+            Log In with Client Certificate
+          </button>
+        </div>
       </div>
     </main>
   );

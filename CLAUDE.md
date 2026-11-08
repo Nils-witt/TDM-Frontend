@@ -6,7 +6,7 @@ Vite + React 19 (TypeScript) single-page application. Its base structure is copi
 
 - `src/main.tsx` renders `app/App.tsx`, the auth gate. Once signed in it renders `app/Shell.tsx`: `ResourceProvider` → `LayoutProvider` → `DashboardProvider` → `WidgetWindows` → `Nav` + `Dashboard`.
 - Auth (`src/auth/session.ts`, oidc-client-ts):
-  1. At startup it calls `GET /api/v1/whoami` without a token on the mTLS API URL. A 200 means an mTLS reverse proxy authenticated a client certificate (`mode: 'proxy'`), and that URL is used from then on; there is no login or logout. Otherwise the non-mTLS URL is used. With a separate mTLS URL any failure (TLS handshake, 400, 403) counts as "no certificate"; with a single URL only a 401 does.
+  1. The login page offers Authentik or a client certificate. The certificate button calls `GET /api/v1/whoami` without a token on the mTLS API URL; a 200 means an mTLS reverse proxy authenticated the certificate (`mode: 'proxy'`), and that URL is used from then on. The choice is kept in sessionStorage (`universam.clientCertificate`) so a reload re-checks it instead of showing the login page; Log Out and any 401 forget it. The mTLS URL is never contacted without the button, since a browser may prompt for a certificate.
   2. Otherwise it uses the Authentik authorization code + PKCE flow, configured from `GET /auth/config`. The redirect URI is `<origin>/callback`, and tokens are kept in sessionStorage.
   3. Tokens are renewed with the refresh token, which needs the `offline_access` scope in the API's `OIDC_SCOPES`. Without one, the session ends when the token expires.
   4. Logging out uses the provider's `end_session_endpoint`.

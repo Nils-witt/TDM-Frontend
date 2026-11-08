@@ -2,3 +2,10 @@
   max-width: 444px;
   padding-top: 4rem;
 }
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
