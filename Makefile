@@ -30,7 +30,7 @@ fmt: node_modules
 fmt-check: node_modules
 	npm run format:check
 
-## docker: Build the nginx image (set API_BASE_URL to the API's origin)
+## docker: Build the nginx image (API URL from a mounted config.json; API_BASE_URL is an optional fallback)
 docker:
 	docker build --build-arg VITE_API_BASE_URL=$(API_BASE_URL) -t universam-frontend .
 

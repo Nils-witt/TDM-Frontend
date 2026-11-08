@@ -1,4 +1,29 @@
-const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
+const trimSlashes = (url: string) => url.replace(/\/+$/, '');
+
+// Overridden by loadConfig() before the app renders.
+let baseUrl = trimSlashes(import.meta.env.VITE_API_BASE_URL ?? '');
+
+type RuntimeConfig = {
+  // Origin of universalGoApi. Empty or missing: keep VITE_API_BASE_URL.
+  apiBaseUrl?: string;
+};
+
+// config.json is mounted into the container at runtime, so one image can
+// serve any API without a rebuild.
+export async function loadConfig(): Promise<void> {
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}config.json`, { cache: 'no-store' });
+    if (!res.ok) {
+      return;
+    }
+    const config = (await res.json()) as RuntimeConfig;
+    if (config.apiBaseUrl) {
+      baseUrl = trimSlashes(config.apiBaseUrl);
+    }
+  } catch (err) {
+    console.warn('config.json not loaded, using the build-time API URL', err);
+  }
+}
 
 export const apiUrl = (path: string) => `${baseUrl}${path}`;
 

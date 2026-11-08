@@ -6,7 +6,8 @@ WORKDIR /src
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci
 COPY . .
-# Baked into the bundle: origin of universalGoApi.
+# Fallback origin of universalGoApi, baked into the bundle. A config.json
+# mounted at /usr/share/nginx/html/config.json overrides it at runtime.
 ARG VITE_API_BASE_URL=
 RUN VITE_API_BASE_URL=$VITE_API_BASE_URL npm run build
 

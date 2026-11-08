@@ -12,7 +12,7 @@ Vite + React 19 (TypeScript) single-page application. Its base structure is copi
   4. Logging out uses the provider's `end_session_endpoint`.
   5. Any 401 shows the login page again.
 - `useSession()` (`app/session.ts`) returns `{ principal, mode, logout }`.
-- `src/api/`: `client.ts` (`request` prefixes `VITE_API_BASE_URL`, sends `credentials: 'include'` and the Bearer token, throws `ApiError` with the RFC 9457 `detail`), `auth.ts` (`/auth/config`, `/api/v1/whoami`), `resource.ts` (`useResource(path)`: a shared, coalescing cache that loads when first shown and on `reload()`, with no change events), `setting.ts`.
+- `src/api/`: `client.ts` (`request` prefixes the API URL: `apiBaseUrl` from `/config.json`, loaded by `main.tsx` before rendering, else `VITE_API_BASE_URL`; sends `credentials: 'include'` and the Bearer token, throws `ApiError` with the RFC 9457 `detail`), `auth.ts` (`/auth/config`, `/api/v1/whoami`), `resource.ts` (`useResource(path)`: a shared, coalescing cache that loads when first shown and on `reload()`, with no change events), `setting.ts`.
 - `src/components/`: generic UI (`Alert`, `Spinner`, `ConfirmDialog`, `SuggestInput`, `form/`, `menu/`, `symbols/`, `widgetWindow/`).
 - `src/nav/`: macOS-style menu bar (`Nav.tsx`), `NavMenuItem` with `action` / `widget` / `href`, actions in `navActions.ts`, keyboard shortcuts in `shortcuts.ts`, the View menu (layouts), and the About, Clock, Fullscreen and channel indicators.
 - `src/pages/dashboard/`: the layout framework. The built-in layout is in `dashboard.json`. Layouts are kept in localStorage (`layoutStore.ts`, `universam.layouts`; the API has no layout endpoints), as is this browser's default layout. There is an edit mode with undo/redo and import/export, multi-monitor arrangements, and channels (BroadcastChannel) that share the `selection` event (`selectedId` in `dashboardContext`).
@@ -32,4 +32,4 @@ Vite + React 19 (TypeScript) single-page application. Its base structure is copi
 - Authentik: register `http://localhost:5173/callback` (and the production `<origin>/callback`) as redirect URIs. Add the SPA origin to the API's `CORS_ALLOWED_ORIGINS`.
 - `make build`: `tsc -b && vite build` into `dist/`.
 - `make lint` (oxlint), `make fmt` / `make fmt-check` (Prettier, `.prettierrc.json`).
-- `make docker API_BASE_URL=https://api.example.com`: nginx image that serves `dist/` and falls back to `index.html`. The API origin is baked in at build time.
+- `make docker API_BASE_URL=https://api.example.com`: nginx image that serves `dist/` and falls back to `index.html`. Set the API origin at runtime by mounting a `config.json` (`{"apiBaseUrl": "https://api.example.com"}`) at `/usr/share/nginx/html/config.json`. `API_BASE_URL` is an optional build-time fallback.
