@@ -1,6 +1,6 @@
 import { type User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import { type AuthConfig, getAuthConfig, type Principal, whoAmI } from '@/api/auth';
-import { ApiError, setAccessTokenSource } from '@/api/client';
+import { ApiError, hasSeparateMtlsApi, setAccessTokenSource, setApiTarget } from '@/api/client';
 
 // oidc: logged in through Authentik, with a bearer token. proxy: the reverse
 // proxy authenticated a TLS client certificate; there is no token and no
@@ -77,10 +77,29 @@ async function signInWithToken(m: UserManager): Promise<SessionStart> {
   }
 }
 
-async function start(): Promise<SessionStart> {
-  const m = await ensureManager();
+// The principal when a client certificate alone authenticates; then no login
+// is needed.
+async function probeClientCertificate(): Promise<Principal | null> {
+  try {
+    const principal = await whoAmI(true, 'mtls');
+    setApiTarget('mtls');
+    return principal;
+  } catch (err) {
+    setApiTarget('oidc');
+    // A proxy on its own URL may refuse a browser without a certificate
+    // during the TLS handshake (a network error) or with a 400 or 403, not
+    // only with a 401.
+    if (hasSeparateMtlsApi() || (err instanceof ApiError && err.status === 401)) {
+      return null;
+    }
+    throw err;
+  }
+}
 
+async function start(): Promise<SessionStart> {
   if (window.location.pathname === callbackPath) {
+    const m = await ensureManager();
+    setApiTarget('oidc');
     try {
       user = await m.signinRedirectCallback();
     } catch (err) {
@@ -92,13 +111,12 @@ async function start(): Promise<SessionStart> {
     return signInWithToken(m);
   }
 
-  // A client certificate alone may authenticate; then no login is needed.
-  try {
-    return { status: 'signedIn', principal: await whoAmI(true), mode: 'proxy' };
-  } catch (err) {
-    if (!(err instanceof ApiError && err.status === 401)) throw err;
+  const principal = await probeClientCertificate();
+  if (principal) {
+    return { status: 'signedIn', principal, mode: 'proxy' };
   }
 
+  const m = await ensureManager();
   user = await m.getUser();
   if (user?.expired && user.refresh_token) {
     try {

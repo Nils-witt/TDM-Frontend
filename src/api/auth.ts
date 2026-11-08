@@ -1,4 +1,4 @@
-import { request } from './client';
+import { type ApiTarget, request } from './client';
 
 // Public settings for the authorization code + PKCE flow.
 export type AuthConfig = {
@@ -26,5 +26,5 @@ export type Principal = {
 export const getAuthConfig = () =>
   request<AuthConfig>('/auth/config', undefined, { anonymous: true });
 
-export const whoAmI = (anonymous = false) =>
-  request<Principal>('/api/v1/whoami', undefined, { anonymous });
+export const whoAmI = (anonymous = false, target?: ApiTarget) =>
+  request<Principal>('/api/v1/whoami', undefined, { anonymous, target });

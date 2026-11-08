@@ -1,11 +1,29 @@
 const trimSlashes = (url: string) => url.replace(/\/+$/, '');
 
-// Overridden by loadConfig() before the app renders.
-let baseUrl = trimSlashes(import.meta.env.VITE_API_BASE_URL ?? '');
+// oidc: the API without client certificates, called with a bearer token.
+// mtls: the API behind the reverse proxy that requires a client certificate.
+export type ApiTarget = 'oidc' | 'mtls';
+
+// Overridden by loadConfig() before the app renders. Without a separate mTLS
+// URL both are the same API, which then accepts either.
+const fallbackUrl = trimSlashes(import.meta.env.VITE_API_BASE_URL ?? '');
+const baseUrls: Record<ApiTarget, string> = { oidc: fallbackUrl, mtls: fallbackUrl };
+
+// Chosen by the session: mtls once a client certificate authenticated.
+let target: ApiTarget = 'oidc';
+
+export function setApiTarget(t: ApiTarget) {
+  target = t;
+}
+
+export const hasSeparateMtlsApi = () => baseUrls.mtls !== baseUrls.oidc;
 
 type RuntimeConfig = {
-  // Origin of universalGoApi. Empty or missing: keep VITE_API_BASE_URL.
+  // Origin of universalGoApi for OIDC login. Empty or missing: keep
+  // VITE_API_BASE_URL.
   apiBaseUrl?: string;
+  // Origin that requires a client certificate. Empty or missing: apiBaseUrl.
+  mtlsApiBaseUrl?: string;
 };
 
 // config.json is mounted into the container at runtime, so one image can
@@ -18,14 +36,15 @@ export async function loadConfig(): Promise<void> {
     }
     const config = (await res.json()) as RuntimeConfig;
     if (config.apiBaseUrl) {
-      baseUrl = trimSlashes(config.apiBaseUrl);
+      baseUrls.oidc = trimSlashes(config.apiBaseUrl);
     }
+    baseUrls.mtls = config.mtlsApiBaseUrl ? trimSlashes(config.mtlsApiBaseUrl) : baseUrls.oidc;
   } catch (err) {
     console.warn('config.json not loaded, using the build-time API URL', err);
   }
 }
 
-export const apiUrl = (path: string) => `${baseUrl}${path}`;
+export const apiUrl = (path: string, t: ApiTarget = target) => `${baseUrls[t]}${path}`;
 
 // Dispatched on window on a 401 to an authenticated request: the app shows
 // the login page again.
@@ -53,17 +72,19 @@ type RequestOptions = {
   // Neither sends the token nor reports a 401: for public endpoints and for
   // probing whether the client certificate alone authenticates.
   anonymous?: boolean;
+  // Overrides the session's choice, for probing the mTLS API.
+  target?: ApiTarget;
 };
 
 export async function request<T>(
   path: string,
   init?: RequestInit,
-  { anonymous = false }: RequestOptions = {},
+  { anonymous = false, target: requestTarget }: RequestOptions = {},
 ): Promise<T> {
   // A FormData body sets its own multipart content type, with the boundary.
   const json = init?.body !== undefined && !(init.body instanceof FormData);
   const token = anonymous ? null : accessToken();
-  const res = await fetch(apiUrl(path), {
+  const res = await fetch(apiUrl(path, requestTarget), {
     ...init,
     // Lets the browser present a TLS client certificate to the API's origin.
     credentials: 'include',
