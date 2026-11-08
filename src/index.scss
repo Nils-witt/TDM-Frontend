@@ -1,0 +1,9 @@
+// Styles of a single component live in a CSS module next to it (Component.module.scss).
+@use 'styles/tokens';
+@use 'styles/base';
+@use 'styles/forms';
+@use 'styles/utilities';
+@use 'styles/layout';
+@use 'styles/buttons';
+@use 'styles/chips';
+@use 'styles/lists';

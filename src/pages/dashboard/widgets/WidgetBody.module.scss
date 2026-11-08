@@ -1,0 +1,29 @@
+// Outside the scrolling body, so its dropdowns are not clipped; no space while empty.
+.actions {
+  flex: none;
+
+  &:empty {
+    display: none;
+  }
+
+  // In a dashboard frame the bar is flush with the card's edges, past its
+  // padding, and rounded like its top corners.
+  &.frame {
+    margin: -1rem -1rem 0.75rem;
+
+    > * {
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+  }
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+
+  // A window has no padding of its own, so the content gets it.
+  &.window {
+    padding: 1rem;
+  }
+}

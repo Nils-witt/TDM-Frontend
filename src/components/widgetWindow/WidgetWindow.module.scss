@@ -1,0 +1,35 @@
+.window {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  resize: both;
+  border: 0.5px solid var(--dropdown-border);
+}
+
+// Dragging it moves the window.
+.title {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.25rem 0.25rem 1rem;
+  border-bottom: 1px solid var(--divider);
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+
+  h2 {
+    margin: 0;
+    overflow: hidden;
+    font-size: 15px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  :global(.icon-btn) {
+    padding: 4px;
+  }
+}

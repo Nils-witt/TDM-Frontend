@@ -1,0 +1,41 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+h1 {
+  font-size: 2.125rem;
+  font-weight: 400;
+  margin: 0 0 0.35em;
+}
+h2 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin: 1.5rem 0 0.35em;
+}
+h1.small,
+h2.small {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+p {
+  margin: 0 0 0.35em;
+}
+
+a {
+  color: var(--primary);
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875em;
+}

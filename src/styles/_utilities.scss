@@ -1,0 +1,19 @@
+.break {
+  word-break: break-all;
+}
+.muted {
+  color: var(--text-secondary);
+}
+.mt {
+  margin-top: 1rem;
+}
+.block {
+  display: block;
+}
+
+.text-error {
+  color: var(--error);
+}
+.text-warning {
+  color: var(--warning);
+}

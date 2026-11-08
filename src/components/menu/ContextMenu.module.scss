@@ -1,0 +1,4 @@
+// ContextMenu places it at the pointer.
+.dropdown {
+  composes: dropdown from './menuBase.module.css';
+}

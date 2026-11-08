@@ -1,0 +1,35 @@
+// Field layout is the WidgetForm components' (src/components/form/).
+
+input,
+select,
+textarea {
+  padding: 8.5px 14px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+textarea {
+  resize: vertical;
+}
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--text);
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+input[type='color'] {
+  width: 4rem;
+  height: 2.75rem;
+  padding: 4px;
+  cursor: pointer;
+}

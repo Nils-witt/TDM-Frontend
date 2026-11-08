@@ -1,0 +1,38 @@
+// The viewport below the menu bar. Widgets are placed absolutely in it, so percentages and "fill"
+// sizes are relative to it; widgets reaching past it scroll the page.
+.dashboard {
+  position: absolute;
+  inset: 1.75em 0 0 0;
+
+  &.editing {
+    background-image:
+      linear-gradient(to right, var(--divider) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--divider) 1px, transparent 1px);
+    background-size: 1em 1em;
+  }
+}
+
+.widget {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 1rem;
+
+  h2 {
+    margin-top: 0;
+  }
+
+  &.editing {
+    // Each widget stacks as a whole, so the handles and toolbar of a widget
+    // never show through one placed above it.
+    z-index: 0;
+    outline: 2px dashed var(--primary);
+    outline-offset: -1px;
+
+    // The widget under the pointer comes to the front, so overlapping
+    // widgets can still be reached.
+    &:hover {
+      z-index: 1;
+    }
+  }
+}

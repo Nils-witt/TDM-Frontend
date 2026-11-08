@@ -1,0 +1,49 @@
+.wrap {
+  position: relative;
+  display: flex;
+  min-width: 0;
+
+  > input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.list {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  z-index: 20;
+  min-width: 100%;
+  max-width: min(28rem, 90vw);
+  max-height: 16rem;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-size: 0.875rem;
+
+  li {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    padding: 3px 8px;
+    white-space: nowrap;
+    cursor: default;
+  }
+
+  .active {
+    background: var(--hover);
+  }
+}
+
+.detail {
+  overflow: hidden;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+}

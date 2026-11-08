@@ -1,0 +1,24 @@
+// Floats at the bottom center of the dashboard; as a WidgetForm it spaces its rows and makes its
+// controls compact.
+.bar {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  z-index: 4;
+  max-width: calc(100vw - 2rem);
+  padding: 0.5rem 0.75rem;
+  transform: translateX(-50%);
+  border: 0.5px solid var(--dropdown-border);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+
+  input {
+    width: 14rem;
+    max-width: 100%;
+  }
+}

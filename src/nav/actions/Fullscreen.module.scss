@@ -1,0 +1,11 @@
+// An icon, with less padding than a text item.
+.fullscreen {
+  composes: item from '../../components/menu/menuBase.module.css';
+  padding: 0 6px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+}

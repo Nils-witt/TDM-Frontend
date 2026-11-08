@@ -1,0 +1,11 @@
+// Fixed-width digits, so it does not jitter as it ticks; hidden on narrow screens.
+.clock {
+  composes: item from '../../components/menu/menuBase.module.css';
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .clock {
+    display: none;
+  }
+}

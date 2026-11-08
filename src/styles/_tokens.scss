@@ -1,0 +1,101 @@
+// Follows the system light/dark preference.
+
+:root {
+  color-scheme: light dark;
+  --bg: #fff;
+  --surface: #fff;
+  --text: rgba(0, 0, 0, 0.87);
+  --text-secondary: rgba(0, 0, 0, 0.6);
+  --text-disabled: rgba(0, 0, 0, 0.38);
+  --divider: rgba(0, 0, 0, 0.12);
+  --hover: rgba(0, 0, 0, 0.04);
+  --chip: rgba(0, 0, 0, 0.08);
+  --primary: #1976d2;
+  --primary-hover: #1565c0;
+  --on-primary: #fff;
+  --menubar: rgba(246, 246, 246, 0.72);
+  --on-menubar: rgba(0, 0, 0, 0.85);
+  --menubar-highlight: rgba(0, 0, 0, 0.1);
+  --dropdown: rgba(236, 236, 236, 0.8);
+  --dropdown-border: rgba(0, 0, 0, 0.15);
+  --dropdown-inner: rgba(255, 255, 255, 0.4);
+  --dropdown-separator: rgba(0, 0, 0, 0.1);
+  --dropdown-highlight: #0a64d6;
+  --success: #2e7d32;
+  --warning: #ed6c02;
+  --error: #d32f2f;
+  --alert-error-bg: #fdeded;
+  --alert-error-fg: #5f2120;
+  --alert-warning-bg: #fff4e5;
+  --alert-warning-fg: #663c00;
+  --alert-success-bg: #edf7ed;
+  --alert-success-fg: #1e4620;
+  --shadow:
+    0 2px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.12);
+  --radius: 4px;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212;
+    --surface: #1e1e1e;
+    --text: #fff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-disabled: rgba(255, 255, 255, 0.5);
+    --divider: rgba(255, 255, 255, 0.12);
+    --hover: rgba(255, 255, 255, 0.08);
+    --chip: rgba(255, 255, 255, 0.16);
+    --primary: #90caf9;
+    --primary-hover: #42a5f5;
+    --on-primary: rgba(0, 0, 0, 0.87);
+    --menubar: rgba(30, 30, 30, 0.72);
+    --on-menubar: #fff;
+    --menubar-highlight: rgba(255, 255, 255, 0.2);
+    --dropdown: rgba(40, 40, 40, 0.75);
+    --dropdown-border: rgba(0, 0, 0, 0.6);
+    --dropdown-inner: rgba(255, 255, 255, 0.15);
+    --dropdown-separator: rgba(255, 255, 255, 0.12);
+    --dropdown-highlight: rgba(255, 255, 255, 0.12);
+    --success: #66bb6a;
+    --warning: #ffa726;
+    --error: #f44336;
+    --alert-error-bg: #160b0b;
+    --alert-error-fg: #f4c7c7;
+    --alert-warning-bg: #191207;
+    --alert-warning-fg: #ffe2b7;
+    --alert-success-bg: #0c130d;
+    --alert-success-fg: #cce8cd;
+  }
+}
+
+// The names are those stored with a channel (see pages/dashboard/monitors/channels.ts).
+:root {
+  --channel-blue: #1976d2;
+  --channel-green: #2e7d32;
+  --channel-orange: #e65100;
+  --channel-purple: #7b1fa2;
+  --channel-teal: #00796b;
+  --channel-pink: #c2185b;
+  --channel-brown: #6d4c41;
+  --channel-indigo: #3949ab;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --channel-blue: #64b5f6;
+    --channel-green: #81c784;
+    --channel-orange: #ffb74d;
+    --channel-purple: #ce93d8;
+    --channel-teal: #4db6ac;
+    --channel-pink: #f48fb1;
+    --channel-brown: #bcaaa4;
+    --channel-indigo: #9fa8da;
+  }
+}

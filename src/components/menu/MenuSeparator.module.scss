@@ -1,0 +1,14 @@
+// Items hidden for the session render nothing, so a separator they leave at either end of the
+// dropdown or next to another separator is hidden too.
+.separator {
+  height: 1px;
+  margin: 5px 10px;
+  border: 0;
+  background: var(--dropdown-separator);
+
+  &:first-child,
+  &:last-child,
+  & + & {
+    display: none;
+  }
+}

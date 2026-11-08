@@ -1,0 +1,35 @@
+// An icon, with less padding than a text item.
+.indicator {
+  padding: 0 6px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+}
+
+// While this window is connected to no channel.
+.off svg {
+  opacity: 0.5;
+}
+
+.dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--channel);
+}
+
+.status {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+
+  &.connected {
+    background: var(--success);
+  }
+  &.disconnected {
+    background: var(--error);
+  }
+}

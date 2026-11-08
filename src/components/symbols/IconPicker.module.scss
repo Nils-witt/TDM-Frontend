@@ -1,0 +1,29 @@
+// Fixed width so the row does not shift.
+.current {
+  display: inline-flex;
+  justify-content: center;
+  width: 2rem;
+  font-size: 1.25rem;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.5rem, 1fr));
+  max-height: 14rem;
+  overflow-y: auto;
+
+  :global(.icon-btn)[aria-pressed='true'] {
+    background: var(--chip);
+  }
+}
+
+.gridIcon {
+  font-size: 1.5rem;
+}

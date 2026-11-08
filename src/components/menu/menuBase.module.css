@@ -1,0 +1,119 @@
+/*
+ * No component imports this module: each component's own module composes
+ * the classes it needs, and menuClasses hands them to code outside the menu
+ * components. It is plain CSS, as composes reads it without Sass.
+ */
+
+.items {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+}
+
+/* For menus at the right end of a bar. */
+.alignEnd {
+  --menu-dropdown-left: auto;
+  --menu-dropdown-right: 0;
+}
+
+/* active: its page is shown; open: its menu is. */
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: default;
+}
+.item:hover,
+.item.active,
+.item.open {
+  background: var(--menubar-highlight);
+}
+.item:disabled {
+  opacity: 0.4;
+}
+.item:disabled:hover {
+  background: transparent;
+}
+.item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 60%, transparent);
+  outline-offset: -2px;
+}
+/* Plain status text is not interactive, so it is never highlighted. */
+span.item:hover {
+  background: transparent;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: var(--menu-dropdown-left, 0);
+  right: var(--menu-dropdown-right, auto);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 270px;
+  padding: 5px;
+  border: 0.5px solid var(--dropdown-border);
+  border-radius: 10px;
+  background: var(--dropdown);
+  color: var(--on-menubar);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.25),
+    inset 0 0 0 0.5px var(--dropdown-inner);
+  -webkit-backdrop-filter: saturate(180%) blur(40px);
+  backdrop-filter: saturate(180%) blur(40px);
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 22px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: default;
+}
+.dropdownItem:focus {
+  outline: none;
+}
+/*
+ * Only keyboard focus highlights an item: a menu opened by mouse focuses
+ * its first item too, which must not look chosen.
+ */
+.dropdownItem:hover,
+.dropdownItem:focus-visible,
+.dropdownItem.active {
+  outline: none;
+  background: var(--dropdown-highlight);
+  color: #fff;
+}
+/* Never highlighted, like a native menu. */
+.dropdownItem:disabled {
+  background: transparent;
+  color: var(--text-disabled);
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 9px;
+  background: var(--chip);
+  font-size: 11px;
+  font-weight: 500;
+}

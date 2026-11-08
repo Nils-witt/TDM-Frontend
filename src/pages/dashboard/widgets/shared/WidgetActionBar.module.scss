@@ -1,0 +1,8 @@
+// Styled like the menu bar.
+.bar {
+  height: 26px;
+  padding: 0 4px;
+  border-bottom: 1px solid var(--divider);
+  background: var(--menubar);
+  color: var(--on-menubar);
+}

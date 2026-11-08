@@ -1,0 +1,27 @@
+.item {
+  composes: dropdownItem from './menuBase.module.css';
+}
+
+.icon {
+  display: inline-flex;
+
+  svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+  }
+}
+
+.label {
+  flex-grow: 1;
+}
+
+.trailing {
+  display: inline-flex;
+  margin-left: 1.5rem;
+
+  kbd {
+    font: inherit;
+    opacity: 0.5;
+  }
+}

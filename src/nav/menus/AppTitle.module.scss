@@ -1,0 +1,9 @@
+// Hidden on narrow screens, like the clock.
+.appName {
+  composes: item from '../../components/menu/menuBase.module.css';
+  font-weight: 700;
+
+  @media (max-width: 480px) {
+    display: none;
+  }
+}

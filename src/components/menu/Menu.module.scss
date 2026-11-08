@@ -1,0 +1,18 @@
+.menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.trigger {
+  composes: item from './menuBase.module.css';
+}
+
+.open {
+  composes: open from './menuBase.module.css';
+}
+
+.dropdown {
+  composes: dropdown from './menuBase.module.css';
+}

@@ -1,0 +1,116 @@
+// Monitors are placed absolutely in it, scaled to fit.
+.arrangement {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 12rem;
+  overflow: hidden;
+
+  &.editable {
+    background-image:
+      linear-gradient(to right, var(--divider) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--divider) 1px, transparent 1px);
+    background-size: 1em 1em;
+  }
+}
+
+.monitor {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  overflow: hidden;
+  border: 2px solid var(--divider);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: center;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+
+  .editable & {
+    cursor: move;
+    touch-action: none;
+    user-select: none;
+  }
+
+  &:hover {
+    border-color: var(--primary);
+  }
+
+  &.selected {
+    z-index: 1;
+    border-color: var(--primary);
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+  }
+}
+
+// A monitor in channels has a top bar in their colors, side by side: the
+// --channel-bar background shows through the transparent top border.
+.inChannel {
+  border-top: 0.375rem solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--channel-bar) border-box;
+}
+
+.channels {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 0.5rem;
+  max-width: 100%;
+}
+
+.channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dot {
+  flex: none;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--channel);
+}
+
+.name {
+  max-width: 100%;
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.detail,
+.size {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-top-left-radius: var(--radius);
+  background: var(--primary);
+  cursor: nwse-resize;
+}

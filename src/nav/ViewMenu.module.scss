@@ -1,0 +1,4 @@
+// How many monitors a layout spans, and Global.
+.badge {
+  composes: badge from '../components/menu/menuBase.module.css';
+}

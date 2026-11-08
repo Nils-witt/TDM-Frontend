@@ -1,0 +1,32 @@
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 6px 16px;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  margin: 1rem 0;
+
+  :global(.icon-btn) {
+    color: inherit;
+    padding: 4px;
+  }
+
+  &.error {
+    background: var(--alert-error-bg);
+    color: var(--alert-error-fg);
+  }
+  &.warning {
+    background: var(--alert-warning-bg);
+    color: var(--alert-warning-fg);
+  }
+  &.success {
+    background: var(--alert-success-bg);
+    color: var(--alert-success-fg);
+  }
+}
+
+.message {
+  flex: 1;
+  padding: 2px 0;
+}

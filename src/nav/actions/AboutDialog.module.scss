@@ -1,0 +1,37 @@
+// Styled like a macOS about window around a WidgetForm.
+.about {
+  width: 280px;
+  padding: 1.5rem 1.25rem 1.25rem;
+  border: 0.5px solid var(--dropdown-border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 12px;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  :global(.btn) {
+    flex: 1;
+    text-transform: none;
+  }
+}
+
+.head {
+  text-align: center;
+
+  h2 {
+    margin: 0.75rem 0 0;
+    font-size: 15px;
+    font-weight: 700;
+  }
+}
+
+.logo svg {
+  width: 56px;
+  height: 56px;
+  fill: var(--primary);
+}

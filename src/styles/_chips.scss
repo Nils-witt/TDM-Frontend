@@ -1,0 +1,31 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
+  background: var(--chip);
+  color: var(--text);
+  font-size: 0.8125rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+.chip.success {
+  background: var(--success);
+  color: #fff;
+}
+.chip.warning {
+  background: var(--warning);
+  color: #fff;
+}
+.chip.error {
+  background: var(--error);
+  color: #fff;
+}
+.chip.outlined {
+  background: transparent;
+  border: 1px solid var(--divider);
+}
+.chip.disabled {
+  opacity: 0.38;
+}

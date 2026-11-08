@@ -1,0 +1,10 @@
+// A menu title with an icon, like the app menu's logo: a little more padding than a text title.
+.logo {
+  padding: 0 11px;
+
+  svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+  }
+}
