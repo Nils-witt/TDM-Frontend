@@ -21,6 +21,9 @@ const AuditLogWidget = lazy(() => import('./AuditLog/AuditLog.tsx'));
 const MapWidget = lazy(() => import('./Map/Map.tsx'));
 const MapStylesWidget = lazy(() => import('./MapStyles/MapStyles.tsx'));
 const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
+const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
+const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
+const PdfViewerWidget = lazy(() => import('./PdfViewer/PdfViewer.tsx'));
 
 const Example: Widget = {
   id: 'Example',
@@ -193,6 +196,45 @@ const AttachmentViewer: Widget = {
   Component: AttachmentViewerWidget,
 };
 
+// The stored reports, to create and upload signed; the selected mission is the
+// one a new report is made of by default.
+const Reports: Widget = {
+  id: 'Reports',
+  name: 'Reports',
+  category: 'files',
+  description: 'The mission reports, to create and upload signed.',
+  consumes: ['selection'],
+  minWidth: 30,
+  maxWidth: 160,
+  minHeight: 10,
+  maxHeight: 800,
+  defaultWidth: 60,
+  defaultHeight: 30,
+  Component: ReportsWidget,
+};
+
+// path is the API path of the PDF (a printed mission or a report); name is
+// what Download saves it as.
+const PdfViewer: Widget = {
+  id: 'PdfViewer',
+  name: 'Document',
+  category: 'files',
+  description: 'Shows one PDF: a printed mission or a report.',
+  minWidth: 20,
+  maxWidth: 200,
+  minHeight: 10,
+  maxHeight: 200,
+  defaultWidth: 60,
+  defaultHeight: 60,
+  windowOnly: true,
+  options: [
+    { key: 'path', label: 'API path', type: 'text', default: '' },
+    { key: 'name', label: 'File name', type: 'text', default: '' },
+  ],
+  title: (o) => (o.name === '' ? 'Document' : String(o.name).replace(/\.pdf$/, '')),
+  Component: PdfViewerWidget,
+};
+
 // style picks one of the map styles admins configure (see MapStyles); latitude,
 // longitude and zoom the start view; show-<status> which missions it shows.
 // With a tile server configured in the API a switcher turns its overlays on
@@ -312,6 +354,19 @@ const Layouts: Widget = {
   Component: LayoutsWidget,
 };
 
+const ExportTemplates: Widget = {
+  ...adminWidget,
+  id: 'ExportTemplates',
+  name: 'Export templates',
+  description: 'The templates missions are printed and reports made with.',
+  minWidth: 40,
+  maxWidth: 160,
+  minHeight: 20,
+  defaultWidth: 80,
+  defaultHeight: 60,
+  Component: ExportTemplatesWidget,
+};
+
 // The options are the filter it starts with; the other admin widgets set them.
 const AuditLog: Widget = {
   ...adminWidget,
@@ -343,10 +398,13 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     LogbookForm,
     FileList,
     AttachmentViewer,
+    Reports,
+    PdfViewer,
     MissionTypes,
     LogbookTypes,
     FileTypes,
     MapStyles,
+    ExportTemplates,
     Layouts,
     Users,
     Groups,

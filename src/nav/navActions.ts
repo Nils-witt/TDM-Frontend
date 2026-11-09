@@ -7,11 +7,13 @@ import {
 } from '@/pages/dashboard/widgets/MissionDetails/missionSave';
 import { useAbout } from './aboutContext';
 import { useMissionClose } from './missionCloseContext';
+import { useMissionPrint } from './missionPrintContext';
 
 // saveMission saves the open Mission Details form (as its Save button);
-// clearMission deselects the selected mission; closeMission asks first.
+// clearMission deselects the selected mission; closeMission asks first;
+// printMission asks for the export template.
 export type NavAction =
-  'about' | 'reload' | 'logout' | 'saveMission' | 'clearMission' | 'closeMission';
+  'about' | 'reload' | 'logout' | 'saveMission' | 'clearMission' | 'closeMission' | 'printMission';
 
 export function useNavActions() {
   const about = useAbout();
@@ -19,6 +21,7 @@ export function useNavActions() {
   const { selectedId, update } = useDashboard();
   const { mission } = useSelectedMission();
   const close = useMissionClose();
+  const printer = useMissionPrint();
   const canSave = useCanSaveMission();
 
   const run = (action: NavAction) => {
@@ -43,6 +46,9 @@ export function useNavActions() {
       case 'closeMission':
         if (mission) close.confirm(mission);
         break;
+      case 'printMission':
+        if (mission) printer.print(mission);
+        break;
     }
   };
 
@@ -54,6 +60,8 @@ export function useNavActions() {
         return selectedId === null;
       case 'closeMission':
         return mission === null || mission.status === 'closed';
+      case 'printMission':
+        return mission === null;
       default:
         return false;
     }

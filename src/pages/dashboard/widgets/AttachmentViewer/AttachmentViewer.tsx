@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { requestBlob } from '@/api/client';
+import { useState } from 'react';
 import { fileContentPath } from '@/api/logbook';
 import Alert from '@/components/Alert';
 import type { WidgetProps } from '../widgetOptions';
 import { previewKind } from '../shared/attachmentPreview';
+import { downloadUrl, useBlobContent } from '../shared/blobContent';
 import { formatSize } from '../shared/logbookEntries';
 import WidgetActionBar, { WidgetAction } from '../shared/WidgetActionBar';
 import styles from './AttachmentViewer.module.scss';
@@ -11,46 +11,6 @@ import styles from './AttachmentViewer.module.scss';
 // The rest of a text file is only downloaded, so a large log does not stall the
 // page.
 const maxTextBytes = 1 << 20;
-
-type Content =
-  | { state: 'loading' }
-  | { state: 'error'; message: string }
-  | { state: 'ready'; url: string; text: string | null; size: number };
-
-// The object URL is revoked when the viewer closes. A window's options, and so
-// path, never change, so the content is not reset to loading.
-function useContent(path: string, mediaType: string, text: boolean): Content {
-  const [content, setContent] = useState<Content>({ state: 'loading' });
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    let url: string | null = null;
-    (async () => {
-      // The blob gets the file's own media type: without it a PDF or image
-      // would not render from the object URL.
-      const blob = new Blob([await requestBlob(path, ctrl.signal)], { type: mediaType });
-      const shown = text ? await blob.slice(0, maxTextBytes).text() : null;
-      if (ctrl.signal.aborted) return;
-      url = URL.createObjectURL(blob);
-      setContent({ state: 'ready', url, text: shown, size: blob.size });
-    })().catch((err: unknown) => {
-      if (!ctrl.signal.aborted) setContent({ state: 'error', message: (err as Error).message });
-    });
-    return () => {
-      ctrl.abort();
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [path, mediaType, text]);
-
-  return content;
-}
-
-function download(url: string, name: string) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  a.click();
-}
 
 // Opened in a window from a file list. The content needs the token, so it is
 // fetched into an object URL.
@@ -60,7 +20,7 @@ function AttachmentViewerWidget({ options }: WidgetProps) {
   const mediaType = String(options.mediaType);
   const kind = previewKind({ name, media_type: mediaType });
   const path = fileContentPath(fileId);
-  const content = useContent(path, mediaType, kind === 'text');
+  const content = useBlobContent(path, mediaType, kind === 'text' ? maxTextBytes : 0);
   const [actualSize, setActualSize] = useState(false);
 
   if (fileId === '' || kind === null) {
@@ -72,7 +32,7 @@ function AttachmentViewerWidget({ options }: WidgetProps) {
       <WidgetActionBar label="Attachment">
         <WidgetAction
           disabled={content.state !== 'ready'}
-          onClick={() => content.state === 'ready' && download(content.url, name)}
+          onClick={() => content.state === 'ready' && downloadUrl(content.url, name)}
         >
           Download
         </WidgetAction>
