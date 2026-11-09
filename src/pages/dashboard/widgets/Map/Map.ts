@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { type Mission, type MissionStatus, shortLocation } from '@/api/missions';
 import { useCatalogs } from '@/data/catalogContext';
 import { useMissions } from '@/data/missionsContext';
-import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import type { ResolvedOptions } from '../widgetOptions';
 
 export type MapMarker = {
@@ -15,11 +14,11 @@ export type MapMarker = {
 };
 
 // Missions with coordinates whose status the options show, plus the selected
-// mission whatever its status.
-export function useMapWidget(options: ResolvedOptions) {
+// mission whatever its status. The selection is the caller's: the dashboard's
+// on the desktop, the URL's in the responsive UI.
+export function useMapMarkers(options: ResolvedOptions, selectedId: string | null) {
   const { items, error } = useMissions();
   const { missionTypes } = useCatalogs();
-  const { selectedId, update } = useDashboard();
 
   const markers = useMemo<MapMarker[]>(() => {
     const title = (m: Mission) => {
@@ -46,6 +45,5 @@ export function useMapWidget(options: ResolvedOptions) {
   }, [items, missionTypes, selectedId, options]);
 
   const selected = markers.find((m) => m.selected);
-  const select = (id: string) => update({ selectedId: id });
-  return { markers, selected, select, error };
+  return { markers, selected, error };
 }

@@ -5,7 +5,11 @@ import LiveIndicator from '@/nav/actions/LiveIndicator';
 import { responsivePaths } from './paths';
 import styles from './AppFrame.module.scss';
 
-const sections = [{ to: responsivePaths.missions, label: 'Missions', icon: 'list_alt' }];
+const sections = [
+  { to: responsivePaths.missions, label: 'Missions', icon: 'list_alt' },
+  { to: responsivePaths.map, label: 'Map', icon: 'map' },
+  { to: responsivePaths.settings, label: 'Settings', icon: 'settings' },
+];
 
 // One nav element that is a bottom tab bar on phones and a sidebar from
 // tablet width up; only the CSS differs.

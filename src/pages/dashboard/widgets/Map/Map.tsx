@@ -7,7 +7,7 @@ import {
   setWorkerUrl,
 } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { apiUrl, authHeaders } from '@/api/client';
 import {
   fetchOverlayBounds,
@@ -18,8 +18,9 @@ import {
   useOverlays,
 } from '@/api/maps';
 import Alert from '@/components/Alert';
+import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import type { WidgetProps } from '../widgetOptions';
-import { type MapMarker, useMapWidget } from './Map.ts';
+import { type MapMarker, useMapMarkers } from './Map.ts';
 import styles from './Map.module.scss';
 import OverlaySwitcher from './OverlaySwitcher';
 import { defaultOverlayState, type OverlayState } from './overlayState';
@@ -103,15 +104,44 @@ function applyOverlays(
   }
 }
 
-// Every overlay starts off. show-<status> off leaves those missions out, except
-// the selected one.
-function MapWidget({ options }: WidgetProps) {
-  const { markers, selected, select, error } = useMapWidget(options);
+export type OverlayControl = {
+  state: Readonly<Record<string, OverlayState>>;
+  onChange: (id: string, state: OverlayState) => void;
+};
+
+// Without overlayControl every overlay starts off and the map shows a switcher;
+// with it the caller keeps the state and offers the switch elsewhere (the
+// responsive UI's Settings). show-<status> off leaves those missions out,
+// except the selected one.
+export function MissionMap({
+  options,
+  selectedId,
+  onSelect: select,
+  overlayControl,
+  onViewChange,
+}: WidgetProps & {
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  overlayControl?: OverlayControl;
+  // Called after each pan or zoom (and fly to the selected mission).
+  onViewChange?: (view: { latitude: number; longitude: number; zoom: number }) => void;
+}) {
+  const { markers, selected, error } = useMapMarkers(options, selectedId);
   const mapStyles = useMapStyles();
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
   const { overlays, error: overlaysError } = useOverlays();
-  const [overlayState, setOverlayState] = useState<Record<string, OverlayState>>({});
+  const [ownOverlayState, setOwnOverlayState] = useState<Record<string, OverlayState>>({});
+  const overlayState = overlayControl?.state ?? ownOverlayState;
+  const setOverlay =
+    overlayControl?.onChange ??
+    ((id: string, st: OverlayState) => setOwnOverlayState((prev) => ({ ...prev, [id]: st })));
+  // Lets the bounds' callbacks turn an overlay off with the latest setter and
+  // state.
+  const overlayRef = useRef({ overlayState, setOverlay });
+  useEffect(() => {
+    overlayRef.current = { overlayState, setOverlay };
+  });
   const [overlayBounds, setOverlayBounds] = useState<Record<string, OverlayBounds>>({});
   const [overlayError, setOverlayError] = useState<string | null>(null);
   const boundsLoading = useRef(new Set<string>());
@@ -127,8 +157,10 @@ function MapWidget({ options }: WidgetProps) {
   const initial = useRef({ latitude, longitude, zoom });
   // Lets the markers' click handlers call the latest select.
   const selectRef = useRef(select);
+  const viewChangeRef = useRef(onViewChange);
   useEffect(() => {
     selectRef.current = select;
+    viewChangeRef.current = onViewChange;
   });
 
   // Created once, sized to the widget as its frame is resized; the style is set
@@ -145,6 +177,10 @@ function MapWidget({ options }: WidgetProps) {
     });
     m.addControl(new NavigationControl(), 'top-right');
     m.on('style.load', () => setStyleLoads((n) => n + 1));
+    m.on('moveend', () => {
+      const { lng, lat } = m.getCenter();
+      viewChangeRef.current?.({ latitude: lat, longitude: lng, zoom: m.getZoom() });
+    });
     const resize = new ResizeObserver(() => m.resize());
     resize.observe(container.current);
     map.current = m;
@@ -169,12 +205,14 @@ function MapWidget({ options }: WidgetProps) {
     }
   }, [overlayState, overlayBounds, styleLoads]);
 
-  // Fetches the overlay's bounds the first time it is turned on; an overlay
-  // whose bounds cannot be read is turned off again.
-  const changeOverlay = useCallback(
-    (id: string, s: OverlayState) => {
-      setOverlayState((prev) => ({ ...prev, [id]: s }));
-      if (!s.on || overlayBounds[id] || boundsLoading.current.has(id)) return;
+  // Fetches an overlay's bounds once it is on, whether turned on here or
+  // stored; an overlay whose bounds cannot be read is turned off again. Only
+  // overlays the API lists, as a stored one may be gone.
+  const listed = overlays?.enabled ? overlays.overlays : undefined;
+  useEffect(() => {
+    if (!listed) return;
+    for (const { id } of listed) {
+      if (!overlayState[id]?.on || overlayBounds[id] || boundsLoading.current.has(id)) continue;
       boundsLoading.current.add(id);
       fetchOverlayBounds(id)
         .then((b) => {
@@ -183,15 +221,12 @@ function MapWidget({ options }: WidgetProps) {
         })
         .catch((err: Error) => {
           setOverlayError(err.message);
-          setOverlayState((prev) => ({
-            ...prev,
-            [id]: { ...(prev[id] ?? defaultOverlayState), on: false },
-          }));
+          const { overlayState: current, setOverlay: set } = overlayRef.current;
+          set(id, { ...(current[id] ?? defaultOverlayState), on: false });
         })
         .finally(() => boundsLoading.current.delete(id));
-    },
-    [overlayBounds],
-  );
+    }
+  }, [listed, overlayState, overlayBounds]);
 
   useEffect(() => {
     const i = initial.current;
@@ -241,15 +276,22 @@ function MapWidget({ options }: WidgetProps) {
       )}
       <div className={styles.mapFrame}>
         <div ref={container} className={styles.map} />
-        {overlays?.enabled && overlays.overlays.length > 0 && (
-          <OverlaySwitcher
-            overlays={overlays.overlays}
-            state={overlayState}
-            onChange={changeOverlay}
-          />
+        {!overlayControl && listed && listed.length > 0 && (
+          <OverlaySwitcher overlays={listed} state={overlayState} onChange={setOverlay} />
         )}
       </div>
     </div>
+  );
+}
+
+function MapWidget({ options }: WidgetProps) {
+  const { selectedId, update } = useDashboard();
+  return (
+    <MissionMap
+      options={options}
+      selectedId={selectedId}
+      onSelect={(id) => update({ selectedId: id })}
+    />
   );
 }
 

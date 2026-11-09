@@ -1,12 +1,18 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 import EventsProvider from '@/api/EventsProvider';
 import ResourceProvider from '@/api/ResourceProvider';
 import { useSession } from '@/app/session';
 import DataProvider from '@/data/DataProvider';
+import Spinner from '@/components/Spinner';
 import AppFrame from './AppFrame';
 import MissionPage from './pages/MissionPage';
 import MissionsPage from './pages/MissionsPage';
+import SettingsPage from './pages/SettingsPage';
 import WidgetSheets from './WidgetSheets';
+
+// MapLibre is large; only the map tab loads it.
+const MapPage = lazy(() => import('./pages/MapPage'));
 
 // Shares the data layer and some widgets with the desktop Shell, but no
 // dashboard, layouts or selection. WidgetSheets shows what widgets open in a
@@ -23,6 +29,15 @@ function ResponsiveShell() {
                 <Route index element={<Navigate to="missions" replace />} />
                 <Route path="missions" element={<MissionsPage />} />
                 <Route path="missions/:id" element={<MissionPage />} />
+                <Route
+                  path="map"
+                  element={
+                    <Suspense fallback={<Spinner />}>
+                      <MapPage />
+                    </Suspense>
+                  }
+                />
+                <Route path="settings" element={<SettingsPage />} />
                 <Route path="*" element={<Navigate to="missions" replace />} />
               </Route>
             </Routes>
