@@ -8,4 +8,6 @@ export const responsivePaths = {
   map: `${mobileBasePath}/map`,
   settings: `${mobileBasePath}/settings`,
   mission: (id: string) => `${mobileBasePath}/missions/${encodeURIComponent(id)}`,
+  // The Map page selects the mission and flies to it.
+  missionOnMap: (id: string) => `${mobileBasePath}/map?mission=${encodeURIComponent(id)}`,
 };

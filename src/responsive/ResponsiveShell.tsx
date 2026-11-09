@@ -13,38 +13,45 @@ import WidgetSheets from './WidgetSheets';
 
 // MapLibre is large; only the map tab loads it.
 const MapPage = lazy(() => import('./pages/MapPage'));
+const ThemeScope = lazy(() => import('./widgets/ThemeScope'));
 
 // Shares the data layer and some widgets with the desktop Shell, but no
 // dashboard, layouts or selection. WidgetSheets shows what widgets open in a
-// window. Routes are relative to the /m mount in App.tsx.
+// window. Routes are relative to the /m mount in App.tsx. The MUI theme is for
+// the widgets' MUI variants (widgets/); no CssBaseline, as the global styles
+// already set the page up.
 function ResponsiveShell() {
   const { mode } = useSession();
   return (
-    <ResourceProvider>
-      <EventsProvider mode={mode}>
-        <DataProvider>
-          <WidgetSheets>
-            <Routes>
-              <Route element={<AppFrame />}>
-                <Route index element={<Navigate to="missions" replace />} />
-                <Route path="missions" element={<MissionsPage />} />
-                <Route path="missions/:id" element={<MissionPage />} />
-                <Route
-                  path="map"
-                  element={
-                    <Suspense fallback={<Spinner />}>
-                      <MapPage />
-                    </Suspense>
-                  }
-                />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="*" element={<Navigate to="missions" replace />} />
-              </Route>
-            </Routes>
-          </WidgetSheets>
-        </DataProvider>
-      </EventsProvider>
-    </ResourceProvider>
+    <Suspense fallback={<Spinner />}>
+      <ThemeScope>
+        <ResourceProvider>
+          <EventsProvider mode={mode}>
+            <DataProvider>
+              <WidgetSheets>
+                <Routes>
+                  <Route element={<AppFrame />}>
+                    <Route index element={<Navigate to="missions" replace />} />
+                    <Route path="missions" element={<MissionsPage />} />
+                    <Route path="missions/:id" element={<MissionPage />} />
+                    <Route
+                      path="map"
+                      element={
+                        <Suspense fallback={<Spinner />}>
+                          <MapPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route path="settings" element={<SettingsPage />} />
+                    <Route path="*" element={<Navigate to="missions" replace />} />
+                  </Route>
+                </Routes>
+              </WidgetSheets>
+            </DataProvider>
+          </EventsProvider>
+        </ResourceProvider>
+      </ThemeScope>
+    </Suspense>
   );
 }
 

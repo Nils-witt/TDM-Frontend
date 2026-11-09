@@ -1,8 +1,10 @@
 // Field layout is the WidgetForm components' (src/components/form/).
+// The bare-element rules skip MUI's inputs (the responsive UI's widgets), which
+// style themselves; :where keeps their specificity that of a bare element.
 
-input,
-select,
-textarea {
+input:where(:not([class*='Mui'], [class*='PrivateSwitchBase'])),
+select:where(:not([class*='Mui'], [class*='PrivateSwitchBase'])),
+textarea:where(:not([class*='Mui'], [class*='PrivateSwitchBase'])) {
   padding: 8.5px 14px;
   border: 1px solid var(--divider);
   border-radius: var(--radius);
@@ -11,17 +13,17 @@ textarea {
   font: inherit;
   font-size: 1rem;
 }
-textarea {
+textarea:where(:not([class*='Mui'], [class*='PrivateSwitchBase'])) {
   resize: vertical;
 }
-input:hover,
-select:hover,
-textarea:hover {
+input:where(:not([class*='Mui'], [class*='PrivateSwitchBase'])):hover,
+select:where(:not([class*='Mui'], [class*='PrivateSwitchBase'])):hover,
+textarea:where(:not([class*='Mui'], [class*='PrivateSwitchBase'])):hover {
   border-color: var(--text);
 }
-input:focus,
-select:focus,
-textarea:focus {
+input:where(:not([class*='Mui'], [class*='PrivateSwitchBase'])):focus,
+select:where(:not([class*='Mui'], [class*='PrivateSwitchBase'])):focus,
+textarea:where(:not([class*='Mui'], [class*='PrivateSwitchBase'])):focus {
   outline: 2px solid var(--primary);
   outline-offset: -1px;
   border-color: transparent;

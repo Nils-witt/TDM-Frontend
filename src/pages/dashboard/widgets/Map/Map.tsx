@@ -82,11 +82,12 @@ function applyOverlays(
   for (const [id, s] of Object.entries(state)) {
     const key = overlaySourceId(id);
     const b = bounds[id];
+    console.log(overlayTilePath(id),apiUrl(overlayTilePath(id)));
     if (s.on && b) {
       if (!m.getSource(key)) {
         m.addSource(key, {
           type: 'raster',
-          tiles: [absolute(apiUrl(overlayTilePath(id)))],
+          tiles: [apiUrl(overlayTilePath(id))],
           tileSize: 256,
           bounds: [b.west, b.south, b.east, b.north],
           minzoom: b.min_zoom,

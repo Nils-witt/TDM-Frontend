@@ -6,11 +6,11 @@ import {
   CurrentWidgetWindowContext,
   WidgetWindowContext,
 } from '@/components/widgetWindow/widgetWindowContext';
-import { widgets } from '@/pages/dashboard/widgets/registry';
 import WidgetBody from '@/pages/dashboard/widgets/WidgetBody';
 import WidgetContent from '@/pages/dashboard/widgets/WidgetContent';
 import { resolveOptions, type WidgetOptionValues } from '@/pages/dashboard/widgets/widgetOptions';
 import styles from './WidgetSheets.module.scss';
+import { responsiveWidget } from './widgets/registry';
 
 type Sheet = { key: number; widgetId: string; options?: WidgetOptionValues };
 
@@ -60,7 +60,7 @@ function WidgetSheets({ children }: { children: ReactNode }) {
 }
 
 function SheetView({ sheet, onClose }: { sheet: Sheet; onClose: (key: number) => void }) {
-  const widget = widgets[sheet.widgetId];
+  const widget = responsiveWidget(sheet.widgetId);
   const close = useCallback(() => onClose(sheet.key), [onClose, sheet.key]);
   const title = widget
     ? (widget.title?.(resolveOptions(widget.options, sheet.options)) ?? widget.name)
