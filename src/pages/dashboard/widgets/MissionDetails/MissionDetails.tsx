@@ -14,6 +14,8 @@ import type { Mission } from '@/api/missions';
 import { formatTime } from '../shared/logbookEntries';
 import { StatusSelect } from '../shared/MissionStatus';
 import { MissionTypeInputs } from '../shared/MissionType';
+import { type AddressField, useAddressSuggest } from '../shared/AddressSuggest';
+import { SuggestInput } from '@/components/SuggestInput';
 import { type TextKey, useMissionDetailsWidget, useMissionForm } from './MissionDetails.ts';
 import { useRegisterMissionSave } from './missionSave';
 
@@ -52,6 +54,14 @@ function MissionForm({
   // The menu bar's Save Mission (⌘S) submits it.
   const [form, setForm] = useState<HTMLFormElement | null>(null);
   useRegisterMissionSave(form, !readOnly && canSubmit && !busy);
+  const suggest = useAddressSuggest(
+    (k) => value(`address_${k}`),
+    (k, v) => set(`address_${k}`, v),
+    (lat, lon) => {
+      set('lat', lat);
+      set('lon', lon);
+    },
+  );
 
   const text = (k: TextKey, label: string, className = 'grow', inputId?: string) => (
     <input
@@ -60,6 +70,16 @@ function MissionForm({
       aria-label={inputId ? undefined : label}
       value={value(k)}
       onChange={(e) => set(k, e.target.value)}
+    />
+  );
+
+  // Suggests values from the API's address directory, if it has one.
+  const address = (k: AddressField, label: string, className = 'grow', inputId?: string) => (
+    <SuggestInput
+      {...suggest[k]}
+      id={inputId}
+      className={className}
+      aria-label={inputId ? undefined : label}
     />
   );
 
@@ -99,12 +119,12 @@ function MissionForm({
             {text('address_object_name', 'Object', 'grow', id('object'))}
           </FieldRow>
           <FieldRow id={id('street')} label="Street / No.">
-            {text('address_street', 'Street', 'grow', id('street'))}
-            {text('address_house_number', 'No.', fieldWidth.narrow)}
+            {address('street', 'Street', 'grow', id('street'))}
+            {address('house_number', 'No.', fieldWidth.narrow)}
           </FieldRow>
           <FieldRow id={id('city')} label="City / District">
-            {text('address_city', 'City', 'grow', id('city'))}
-            {text('address_district', 'District')}
+            {address('city', 'City', 'grow', id('city'))}
+            {address('district', 'District')}
           </FieldRow>
           <FieldRow id={id('lat')} label="Lat / Lon">
             {(
