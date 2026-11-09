@@ -145,7 +145,7 @@ export function useAddressSuggestions(
 }
 
 // The house number nearest to a coordinate, with its street.
-export type ReverseAddress = {
+type NearbyAddress = {
   street: string;
   house_number: string; // with its addition, e.g. "12a"
   postcode: string;
@@ -157,13 +157,31 @@ export type ReverseAddress = {
   distance_meters: number;
 };
 
-// The directory always answers its nearest house number, however far away.
-// Beyond this, a click (in a field, on a road) is at no listed address and a
-// neighbour's would be wrong.
-const maxReverseDistance = 50;
+// The geo object nearest to a coordinate, measured to its own position.
+type NearbyGeoObject = GeoObjectSuggestion & { distance_meters: number };
+
+type ReverseResult = { addresses: NearbyAddress[]; geo_objects: NearbyGeoObject[] };
+
+// What was found at a coordinate: a geo object's name and address, or a
+// house number's address with an empty object_name.
+export type ReverseAddress = {
+  object_name: string;
+  street: string;
+  house_number: string;
+  district: string;
+  city: string;
+};
+
+// The directory always answers its nearest house number and geo object,
+// however far away. Beyond these, a click (in a field, on a road) is at no
+// listed address and a neighbour's would be wrong. Objects are points
+// (a hydrant, a building's entrance), so a click names one only close by.
+const maxAddressDistance = 50;
+const maxObjectDistance = 25;
 
 // The address at p, or null if none is near or the lookup fails: the
-// address only helps, the coordinates are kept either way.
+// address only helps, the coordinates are kept either way. A nearby geo
+// object wins over the nearest house number, as it names the place.
 export async function reverseGeocode(
   p: Coordinates,
   signal?: AbortSignal,
@@ -171,16 +189,26 @@ export async function reverseGeocode(
   if (!available) return null;
   try {
     const q = new URLSearchParams({ lat: String(p.lat), lon: String(p.lon) });
-    const [nearest] = await request<ReverseAddress[]>(`/api/v1/address/reverse?${q}`, { signal });
-    return nearest && nearest.distance_meters <= maxReverseDistance ? nearest : null;
+    const found = await request<ReverseResult>(`/api/v1/address/reverse?${q}`, { signal });
+    const [object] = found.geo_objects;
+    if (object && object.distance_meters <= maxObjectDistance) {
+      return { ...object, object_name: object.name };
+    }
+    const [address] = found.addresses;
+    if (address && address.distance_meters <= maxAddressDistance) {
+      return { ...address, object_name: '' };
+    }
+    return null;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) available = false;
     return null;
   }
 }
 
-// What a mission takes from a found address; its object name is left as it is.
+// What a mission takes from a found address. Without an object nearby, its
+// object name is left as it is.
 export const addressFields = (a: ReverseAddress): MissionFields => ({
+  ...(a.object_name !== '' && { address_object_name: a.object_name }),
   address_street: a.street,
   address_house_number: a.house_number,
   address_city: a.city,
@@ -188,4 +216,6 @@ export const addressFields = (a: ReverseAddress): MissionFields => ({
 });
 
 export const formatAddress = (a: ReverseAddress) =>
-  [[a.street, a.house_number].filter(Boolean).join(' '), a.city].filter(Boolean).join(', ');
+  [a.object_name, [a.street, a.house_number].filter(Boolean).join(' '), a.city]
+    .filter(Boolean)
+    .join(', ');

@@ -15,8 +15,9 @@ export const formatPlace = (p: Coordinates, address: ReverseAddress | null | und
 
 // The map's context menu: create a mission at the clicked position, or move
 // the selected one there. A closed mission cannot be moved. The position is
-// looked up in the address directory as the menu opens, and a nearby address
-// is written along with the coordinates. The dashboard and
+// looked up in the address directory as the menu opens, and a nearby geo
+// object's name and address, or else a nearby address, is written along with
+// the coordinates. The dashboard and
 // the responsive UI render it each in their own components.
 export function useMapActions(selected: Mission | null, onCreated: (m: Mission) => void) {
   const missions = useMissions();
