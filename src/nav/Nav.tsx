@@ -43,6 +43,7 @@ function Nav() {
               <NavMenuItem label="Missions" widget="MissionsList" />
               <NavMenuItem label="Mission Details" widget="MissionDetails" />
               <NavMenuItem label="Active Missions" widget="ActiveMissions" />
+              <NavMenuItem label="Map" widget="Map" />
             </TopLevelMenu>
             <TopLevelMenu label="Logbook">
               <NavMenuItem label="New Entry" widget="LogbookForm" shortcut="newLogEntry" />
@@ -54,6 +55,7 @@ function Nav() {
                 <NavMenuItem label="Mission Types" widget="MissionTypes" />
                 <NavMenuItem label="Logbook Types" widget="LogbookTypes" />
                 <NavMenuItem label="File Types" widget="FileTypes" />
+                <NavMenuItem label="Map Styles" widget="MapStyles" />
                 <MenuSeparator />
                 <NavMenuItem label="Users" widget="Users" />
                 <NavMenuItem label="Groups" widget="Groups" />

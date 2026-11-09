@@ -17,8 +17,10 @@ type SelectOption = BaseOption<'select', string> & {
 };
 // By ID.
 type LogbookTypesOption = BaseOption<'logbookTypes', readonly string[]>;
+// A map style's ID; empty, or one no longer configured, is the default style.
+type MapStyleOption = BaseOption<'mapStyle', string>;
 export type WidgetOption =
-  BooleanOption | TextOption | NumberOption | SelectOption | LogbookTypesOption;
+  BooleanOption | TextOption | NumberOption | SelectOption | LogbookTypesOption | MapStyleOption;
 
 export type OptionValue = boolean | string | number | readonly string[];
 
@@ -35,6 +37,7 @@ function validValue(def: WidgetOption, v: unknown): OptionValue | undefined {
     case 'boolean':
       return typeof v === 'boolean' ? v : undefined;
     case 'text':
+    case 'mapStyle':
       return typeof v === 'string' ? v : undefined;
     case 'number':
       if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;

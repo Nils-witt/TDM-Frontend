@@ -18,6 +18,8 @@ const FileTypesWidget = lazy(() => import('./FileTypes/FileTypes.tsx'));
 const UsersWidget = lazy(() => import('./Users/Users.tsx'));
 const GroupsWidget = lazy(() => import('./Groups/Groups.tsx'));
 const AuditLogWidget = lazy(() => import('./AuditLog/AuditLog.tsx'));
+const MapWidget = lazy(() => import('./Map/Map.tsx'));
+const MapStylesWidget = lazy(() => import('./MapStyles/MapStyles.tsx'));
 
 const Example: Widget = {
   id: 'Example',
@@ -190,6 +192,45 @@ const AttachmentViewer: Widget = {
   Component: AttachmentViewerWidget,
 };
 
+// style picks one of the map styles admins configure (see MapStyles); latitude,
+// longitude and zoom the start view; show-<status> which missions it shows.
+// With a tile server configured in the API a switcher turns its overlays on
+// and off.
+const MapView: Widget = {
+  id: 'Map',
+  name: 'Map',
+  category: 'map',
+  description: 'Missions on a map; click a mission to select it.',
+  emits: ['selection'],
+  consumes: ['selection'],
+  minWidth: 15,
+  maxWidth: 200,
+  minHeight: 10,
+  maxHeight: 800,
+  defaultWidth: 50,
+  defaultHeight: 40,
+  options: [
+    { key: 'style', label: 'Map style', type: 'mapStyle', default: '' },
+    { key: 'latitude', label: 'Start latitude', type: 'number', default: 51.16, min: -90, max: 90 },
+    {
+      key: 'longitude',
+      label: 'Start longitude',
+      type: 'number',
+      default: 10.45,
+      min: -180,
+      max: 180,
+    },
+    { key: 'zoom', label: 'Start zoom', type: 'number', default: 5, min: 0, max: 22 },
+    ...missionStatuses.map((s) => ({
+      key: `show-${s.value}`,
+      label: `Show "${s.label}"`,
+      type: 'boolean' as const,
+      default: true,
+    })),
+  ],
+  Component: MapWidget,
+};
+
 // The admin widgets open from the Admin menu only (shown to admins), so the
 // picker leaves them out; a layout holding one shows non-admins a notice.
 const adminWidget = {
@@ -250,6 +291,15 @@ const Groups: Widget = {
   Component: GroupsWidget,
 };
 
+const MapStyles: Widget = {
+  ...adminWidget,
+  id: 'MapStyles',
+  name: 'Map styles',
+  description: 'Manages the map styles the Map widget can show.',
+  defaultWidth: 70,
+  Component: MapStylesWidget,
+};
+
 // The options are the filter it starts with; the other admin widgets set them.
 const AuditLog: Widget = {
   ...adminWidget,
@@ -275,6 +325,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
   [
     MissionsList,
     MissionDetails,
+    MapView,
     ActiveMissions,
     Logbook,
     LogbookForm,
@@ -283,6 +334,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     MissionTypes,
     LogbookTypes,
     FileTypes,
+    MapStyles,
     Users,
     Groups,
     AuditLog,

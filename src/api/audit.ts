@@ -14,6 +14,7 @@ export const auditEntityTypes = [
   'log_entries',
   'log_files',
   'tasks',
+  'map_styles',
 ] as const;
 
 export type AuditEntityType = (typeof auditEntityTypes)[number];

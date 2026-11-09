@@ -3,6 +3,7 @@ export const widgetCategories = [
   { id: 'missions', label: 'Missions' },
   { id: 'logbook', label: 'Logbook' },
   { id: 'files', label: 'Files' },
+  { id: 'map', label: 'Map' },
   { id: 'general', label: 'General' },
   { id: 'admin', label: 'Admin' },
 ] as const;

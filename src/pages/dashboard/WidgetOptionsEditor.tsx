@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { resolveMapStyle, useMapStyles } from '@/api/maps';
 import { compactControls, FieldRow, Section } from '@/components/form';
 import { useCatalogs } from '@/data/catalogContext';
 import type { Widget } from './widgets/widget';
@@ -50,6 +51,39 @@ function LogbookTypesInput({
           </label>
         ))}
       </span>
+    </FieldRow>
+  );
+}
+
+// A style no longer configured stays a choice, marked as showing the default.
+function MapStyleInput({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const { items } = useMapStyles();
+  const fallback = resolveMapStyle(items, '');
+  const unknown = value !== '' && !items.some((s) => s.id === value);
+
+  return (
+    <FieldRow id={id} label={label} wrapLabel>
+      <select id={id} className="grow" value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">Default{fallback ? ` (${fallback.name})` : ''}</option>
+        {items
+          .toSorted((a, b) => a.name.localeCompare(b.name))
+          .map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        {unknown && <option value={value}>Deleted style (shows the default)</option>}
+      </select>
     </FieldRow>
   );
 }
@@ -114,6 +148,16 @@ function WidgetOptionsEditor({ widget, options, onChange }: Props) {
                 id={inputId}
                 label={def.label}
                 value={Array.isArray(value) ? value : def.default}
+                onChange={(v) => set(def, v)}
+              />
+            );
+          case 'mapStyle':
+            return (
+              <MapStyleInput
+                key={def.key}
+                id={inputId}
+                label={def.label}
+                value={String(value)}
                 onChange={(v) => set(def, v)}
               />
             );

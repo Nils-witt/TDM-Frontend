@@ -56,6 +56,13 @@ export function setAccessTokenSource(source: () => string | null) {
   accessToken = source;
 }
 
+// For requests the app does not make through request(), such as the map's
+// tile loads: the token, if the session has one.
+export function authHeaders(): Record<string, string> {
+  const token = accessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export class ApiError extends Error {
   readonly status: number;
 
