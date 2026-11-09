@@ -137,6 +137,7 @@ const actionLabels: Record<AuditEntry['action'], string> = {
   create: 'Created',
   update: 'Updated',
   delete: 'Deleted',
+  intermediate_report: 'Intermediate report of',
 };
 
 // Strings as they are; anything else as JSON. Absent (null) shows a dash.

@@ -2,7 +2,8 @@ import { createContext, use } from 'react';
 import type { Mission } from '@/api/missions';
 
 type MissionPrintContextValue = {
-  // Asks for the export template, then opens the PDF in a window.
+  // Asks for the export template, then opens the intermediate report in a
+  // window.
   print: (mission: Mission) => void;
 };
 

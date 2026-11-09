@@ -24,6 +24,11 @@ const variables: { name: string; fields: string }[] = [
       'the tasks not archived, scheduled ones first by time: id, name, description, scheduled_at, done, done_at, done_by, created_by, created_at',
   },
   { name: 'exported_at, exported_by', fields: 'when and by whom the mission is exported' },
+  {
+    name: 'is_intermediate',
+    fields:
+      'true for an intermediate report, false for a final one: {% if not is_intermediate %}…{% endif %} leaves out what belongs only in a final report, such as signature fields',
+  },
 ];
 
 function VariablesReference() {

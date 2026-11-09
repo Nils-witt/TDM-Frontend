@@ -1,7 +1,8 @@
 import { type FormEvent, useEffect, useId, useRef, useState } from 'react';
-import { missionExportPath, useExportTemplates } from '@/api/exportTemplates';
+import { intermediateReport, useExportTemplates } from '@/api/exportTemplates';
 import { FieldRow, FormActions, FormError, SectionText, WidgetForm } from '@/components/form';
 import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
+import { putPdfDocument } from '@/pages/dashboard/widgets/shared/pdfDocuments';
 import styles from '@/components/ConfirmDialog.module.scss';
 
 type Props = {
@@ -11,10 +12,12 @@ type Props = {
   onClose: () => void;
 };
 
-// Printing opens the PDF the API makes in a window; nothing is stored (see the
-// Reports widget for that). Opens when mounted; Escape, the backdrop and Cancel
-// close it.
-function PrintDialog({ missionId, event, onClose }: Props) {
+// An intermediate report is a watermarked PDF of a mission in any status, shown
+// in a window. It is not stored (see the Reports widget for final reports),
+// but the API records each one in the mission's audit log, so it is fetched
+// here, once per submit, and handed to the window. Opens when mounted; Escape,
+// the backdrop and Cancel close it.
+function IntermediateReportDialog({ missionId, event, onClose }: Props) {
   const id = useId();
   const ref = useRef<HTMLDialogElement>(null);
   const templates = useExportTemplates();
@@ -22,6 +25,8 @@ function PrintDialog({ missionId, event, onClose }: Props) {
   const sorted = templates.items.toSorted((a, b) => a.name.localeCompare(b.name));
   const [picked, setPicked] = useState('');
   const templateId = picked || sorted[0]?.id || '';
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -29,14 +34,22 @@ function PrintDialog({ missionId, event, onClose }: Props) {
     return () => dialog?.close();
   }, []);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (templateId === '') return;
-    openWidget('PdfViewer', {
-      path: missionExportPath(missionId, templateId),
-      name: `${event}.pdf`,
-    });
-    onClose();
+    if (templateId === '' || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const pdf = await intermediateReport(missionId, templateId);
+      openWidget('PdfViewer', {
+        document: putPdfDocument(new Blob([pdf], { type: 'application/pdf' })),
+        name: `${event} (intermediate report).pdf`,
+      });
+      onClose();
+    } catch (err) {
+      setError((err as Error).message);
+      setBusy(false);
+    }
   };
 
   return (
@@ -54,10 +67,12 @@ function PrintDialog({ missionId, event, onClose }: Props) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <WidgetForm onSubmit={submit}>
-        <h2 id={`${id}-title`}>Print mission</h2>
+      <WidgetForm onSubmit={(e) => void submit(e)}>
+        <h2 id={`${id}-title`}>Intermediate report</h2>
         <SectionText>
-          Print <strong>{event}</strong> as a PDF. It opens in a window.
+          Create an intermediate report of <strong>{event}</strong> as a PDF. It opens in a window.
+          Every page is marked as an intermediate report. The PDF is not stored, but the creation is
+          recorded.
         </SectionText>
         {sorted.length === 0 && templates.error === null ? (
           <SectionText>
@@ -85,15 +100,19 @@ function PrintDialog({ missionId, event, onClose }: Props) {
           </FieldRow>
         )}
         <FormActions
-          submitLabel="Print"
+          submitLabel={busy ? 'Creating…' : 'Create'}
           canSubmit={templateId !== ''}
+          busy={busy}
           onDiscard={onClose}
           discardLabel="Cancel"
         />
-        <FormError error={templates.error} onClose={onClose} />
+        <FormError
+          error={error ?? templates.error}
+          onClose={error === null ? onClose : () => setError(null)}
+        />
       </WidgetForm>
     </dialog>
   );
 }
 
-export default PrintDialog;
+export default IntermediateReportDialog;

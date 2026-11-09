@@ -42,7 +42,11 @@ function Nav() {
                 <NavMenuItem label="Save Mission" action="saveMission" shortcut="saveMission" />
                 <NavMenuItem label="Clear Mission" action="clearMission" shortcut="clearMission" />
                 <NavMenuItem label="Close Mission" action="closeMission" shortcut="closeMission" />
-                <NavMenuItem label="Print" action="printMission" shortcut="printMission" />
+                <NavMenuItem
+                  label="Intermediate Report…"
+                  action="printMission"
+                  shortcut="printMission"
+                />
                 <NavMenuItem label="Create Report…" action="createReport" />
                 <NavMenuItem label="Reports" widget="Reports" />
                 <MenuSeparator />

@@ -1,6 +1,6 @@
 import { type ReactNode, useMemo, useState } from 'react';
 import type { Mission } from '@/api/missions';
-import PrintDialog from './PrintDialog';
+import IntermediateReportDialog from './IntermediateReportDialog';
 import { MissionPrintContext } from './missionPrintContext';
 
 // The dialog lives here, not in the menu item that opened it, so closing the
@@ -13,7 +13,7 @@ function MissionPrintProvider({ children }: { children: ReactNode }) {
     <MissionPrintContext value={value}>
       {children}
       {printing && (
-        <PrintDialog
+        <IntermediateReportDialog
           missionId={printing.id}
           event={printing.occurred_event}
           onClose={() => setPrinting(null)}

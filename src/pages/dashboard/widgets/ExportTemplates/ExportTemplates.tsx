@@ -32,7 +32,7 @@ const starter = `<style>
 </table>
 `;
 
-// The collection is the shared one the Print dialog and the Reports widget
+// The collection is the shared one the Intermediate Report dialog and the Reports widget
 // read, so a reload after a write updates their template pickers.
 function ExportTemplatesWidget() {
   const templates = useExportTemplates();
@@ -74,8 +74,8 @@ function ExportTemplatesWidget() {
   return (
     <div className={sectionStack}>
       <SectionText>
-        Missions are printed with these templates as PDF, and reports are made with them. Every user
-        picks one under Missions → Print or when creating a report.
+        Intermediate and final reports are made with these templates as PDF. Every user picks one
+        under Missions → Intermediate Report or when creating a report.
       </SectionText>
       <SectionHeading>Export templates</SectionHeading>
       {templates.loading ? (

@@ -32,7 +32,8 @@ export function TemplateEditor({ template, starter, onSave, onCancel }: Props) {
     [missions.items],
   );
   const previewMission = missionId || options[0]?.id || '';
-  const preview = usePreview(previewMission, source);
+  const [intermediate, setIntermediate] = useState(false);
+  const preview = usePreview(previewMission, source, intermediate);
 
   const dirty = template === null || name !== template.name || source !== template.source;
 
@@ -92,6 +93,14 @@ export function TemplateEditor({ template, starter, onSave, onCancel }: Props) {
               ))}
             </select>
           </FieldRow>
+          <label className="row">
+            <input
+              type="checkbox"
+              checked={intermediate}
+              onChange={(e) => setIntermediate(e.target.checked)}
+            />
+            As an intermediate report (<code>is_intermediate</code>, with the watermark)
+          </label>
           {preview.error !== null ? (
             <pre className={styles.previewError} role="alert">
               {preview.error}
@@ -120,7 +129,7 @@ export function TemplateEditor({ template, starter, onSave, onCancel }: Props) {
 
 // Renders a while after either last changed; error is why it failed, such as
 // the template's line with a syntax error.
-function usePreview(missionId: string, source: string) {
+function usePreview(missionId: string, source: string, intermediate: boolean) {
   const [state, setState] = useState<{ html: string; error: string | null }>({
     html: '',
     error: null,
@@ -130,7 +139,7 @@ function usePreview(missionId: string, source: string) {
     if (missionId === '') return;
     let current = true;
     const timer = window.setTimeout(() => {
-      exportTemplatesApi.preview(missionId, source).then(
+      exportTemplatesApi.preview(missionId, source, intermediate).then(
         (html) => current && setState({ html, error: null }),
         (err: Error) => current && setState((s) => ({ ...s, error: err.message })),
       );
@@ -139,7 +148,7 @@ function usePreview(missionId: string, source: string) {
       current = false;
       window.clearTimeout(timer);
     };
-  }, [missionId, source]);
+  }, [missionId, source, intermediate]);
 
   return missionId === ''
     ? { html: '', error: 'Pick a mission to preview the template with.' }

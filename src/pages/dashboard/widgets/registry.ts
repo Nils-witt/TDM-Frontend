@@ -238,7 +238,7 @@ const PdfViewer: Widget = {
   id: 'PdfViewer',
   name: 'Document',
   category: 'files',
-  description: 'Shows one PDF: a printed mission or a report.',
+  description: 'Shows one PDF: an intermediate report or a report.',
   minWidth: 20,
   maxWidth: 200,
   minHeight: 10,
@@ -248,6 +248,8 @@ const PdfViewer: Widget = {
   windowOnly: true,
   options: [
     { key: 'path', label: 'API path', type: 'text', default: '' },
+    // An intermediate report fetched before the window opened (pdfDocuments.ts).
+    { key: 'document', label: 'Document', type: 'text', default: '' },
     { key: 'name', label: 'File name', type: 'text', default: '' },
   ],
   title: (o) => (o.name === '' ? 'Document' : String(o.name).replace(/\.pdf$/, '')),

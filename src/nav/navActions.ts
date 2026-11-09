@@ -13,7 +13,8 @@ import { useMissionPrint } from './missionPrintContext';
 
 // saveMission saves the open Mission Details form (as its Save button);
 // clearMission deselects the selected mission; closeMission asks first;
-// printMission asks for the export template; createReport opens Create Report
+// printMission asks for the export template of an intermediate report of the
+// selected mission, in any status; createReport opens Create Report
 // for the selected mission, which must be done or closed.
 export type NavAction =
   | 'about'

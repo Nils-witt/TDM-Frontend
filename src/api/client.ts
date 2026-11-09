@@ -148,8 +148,12 @@ export async function request<T>(
 
 // For content that needs the token, so a plain link or <img src> cannot load
 // it.
-export async function requestBlob(path: string, signal?: AbortSignal): Promise<Blob> {
-  const res = await send(path, { signal, headers: { Accept: '*/*' } }, {});
+export async function requestBlob(
+  path: string,
+  signal?: AbortSignal,
+  init?: RequestInit,
+): Promise<Blob> {
+  const res = await send(path, { ...init, signal, headers: { Accept: '*/*' } }, {});
   return res.blob();
 }
 

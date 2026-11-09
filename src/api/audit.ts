@@ -26,8 +26,9 @@ export type AuditEntry = {
   actor: string;
   entity_type: string;
   entity_id: string;
-  // Setting deleted_at is recorded as delete.
-  action: 'create' | 'update' | 'delete';
+  // Setting deleted_at is recorded as delete. intermediate_report records
+  // that an intermediate report of the mission was made.
+  action: 'create' | 'update' | 'delete' | 'intermediate_report';
   // old is null on create, new on delete.
   changes: Record<string, { old: unknown; new: unknown }>;
 };

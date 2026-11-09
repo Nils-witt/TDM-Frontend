@@ -1,21 +1,49 @@
+import { useEffect, useState } from 'react';
 import Alert from '@/components/Alert';
 import type { WidgetProps } from '../widgetOptions';
-import { downloadUrl, useBlobContent } from '../shared/blobContent';
+import { type BlobContent, downloadUrl, useBlobContent } from '../shared/blobContent';
+import { holdPdfDocument, peekPdfDocument, releasePdfDocument } from '../shared/pdfDocuments';
 import WidgetActionBar, { WidgetAction } from '../shared/WidgetActionBar';
 import styles from '../AttachmentViewer/AttachmentViewer.module.scss';
 
-// Opened in a window by Print and the Reports widget. The PDF needs the token,
-// so it is fetched into an object URL; a printed mission is rendered anew each
-// time the window opens.
+// Opened in a window by Intermediate Report and the Reports widget. The PDF
+// needs the token, so it is fetched into an object URL. Either path names an
+// API path to load (a stored report), or document a PDF already fetched (an
+// intermediate report, see pdfDocuments.ts).
 function PdfViewerWidget({ options }: WidgetProps) {
-  const path = String(options.path);
-  const name = String(options.name) || 'document.pdf';
-  const content = useBlobContent(path, 'application/pdf');
+  const held = String(options.document ?? '');
+  return held !== '' ? (
+    <HeldDocument documentKey={held} name={String(options.name ?? '')} />
+  ) : (
+    <ApiDocument path={String(options.path ?? '')} name={String(options.name ?? '')} />
+  );
+}
 
+function ApiDocument({ path, name }: { path: string; name: string }) {
+  const content = useBlobContent(path, 'application/pdf');
   if (!path.startsWith('/api/')) {
     return <Alert severity="warning">This document cannot be shown here.</Alert>;
   }
+  return <Viewer content={content} name={name} />;
+}
 
+function HeldDocument({ documentKey, name }: { documentKey: string; name: string }) {
+  const [doc] = useState(() => peekPdfDocument(documentKey));
+
+  useEffect(() => {
+    holdPdfDocument(documentKey);
+    return () => releasePdfDocument(documentKey);
+  }, [documentKey]);
+
+  const content: BlobContent =
+    doc === null
+      ? { state: 'error', message: 'This document is no longer available. Create it again.' }
+      : { state: 'ready', url: doc.url, text: null, size: doc.size };
+  return <Viewer content={content} name={name} />;
+}
+
+function Viewer({ content, name: given }: { content: BlobContent; name: string }) {
+  const name = given || 'document.pdf';
   return (
     <div className={styles.viewer}>
       <WidgetActionBar label="Document">
