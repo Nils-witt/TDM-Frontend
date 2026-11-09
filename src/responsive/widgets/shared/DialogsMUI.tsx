@@ -161,3 +161,57 @@ export function RevokeDialogMUI({
     </DialogShell>
   );
 }
+
+// As the dashboard Map's New mission dialog: the occurred event is required.
+export function NewMissionDialogMUI({
+  where,
+  onCreate,
+  onCancel,
+}: {
+  where: string;
+  onCreate: (occurredEvent: string) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [event, setEvent] = useState('');
+  const trimmed = event.trim();
+  const { busy, error, setError, run, cancel } = useDialogAction(onCancel);
+  return (
+    <DialogShell
+      title="New mission"
+      onCancel={cancel}
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (trimmed !== '') void run(() => onCreate(trimmed));
+      }}
+    >
+      <DialogContent>
+        <TextField
+          label="Occurred event"
+          value={event}
+          onChange={(e) => setEvent(e.target.value)}
+          required
+          autoFocus
+          fullWidth
+          disabled={busy}
+          margin="dense"
+        />
+        <DialogContentText variant="body2" sx={{ mt: 1 }}>
+          At {where}
+        </DialogContentText>
+        {error && (
+          <Alert severity="error" onClose={() => setError(null)} sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={cancel} disabled={busy}>
+          Cancel
+        </Button>
+        <Button type="submit" variant="contained" disabled={busy || trimmed === ''}>
+          Create
+        </Button>
+      </DialogActions>
+    </DialogShell>
+  );
+}

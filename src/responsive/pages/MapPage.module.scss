@@ -58,3 +58,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+// Over the map's top edge, clear of its zoom buttons.
+.error {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 3.5rem;
+  z-index: 3;
+}

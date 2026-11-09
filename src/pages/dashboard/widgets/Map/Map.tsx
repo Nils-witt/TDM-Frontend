@@ -7,8 +7,9 @@ import {
   setWorkerUrl,
 } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { apiUrl, authHeaders } from '@/api/client';
+import type { Coordinates } from '@/api/missions';
 import {
   fetchOverlayBounds,
   type OverlayBounds,
@@ -18,9 +19,17 @@ import {
   useOverlays,
 } from '@/api/maps';
 import Alert from '@/components/Alert';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { FieldRow, SectionText } from '@/components/form';
+import { LocationIcon } from '@/components/icons';
+import ContextMenu from '@/components/menu/ContextMenu';
+import MenuItem from '@/components/menu/MenuItem';
+import type { Point } from '@/components/menu/useContextMenu';
+import { useSelectedMission } from '@/data/selectedMissionContext';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import type { WidgetProps } from '../widgetOptions';
 import { type MapMarker, useMapMarkers } from './Map.ts';
+import { formatPosition, useMapActions } from './mapActions';
 import styles from './Map.module.scss';
 import OverlaySwitcher from './OverlaySwitcher';
 import { defaultOverlayState, type OverlayState } from './overlayState';
@@ -31,6 +40,9 @@ setWorkerUrl(workerUrl);
 
 // The least zoom the map flies to for the selected mission.
 const selectedZoom = 15;
+
+// As long as Android waits before its context menu.
+const longPressMs = 500;
 
 // MapLibre loads tiles itself, so it needs absolute URLs.
 const absolute = (url: string) => new URL(url, window.location.href).href;
@@ -82,7 +94,7 @@ function applyOverlays(
   for (const [id, s] of Object.entries(state)) {
     const key = overlaySourceId(id);
     const b = bounds[id];
-    console.log(overlayTilePath(id),apiUrl(overlayTilePath(id)));
+    console.log(overlayTilePath(id), apiUrl(overlayTilePath(id)));
     if (s.on && b) {
       if (!m.getSource(key)) {
         m.addSource(key, {
@@ -120,12 +132,19 @@ export function MissionMap({
   onSelect: select,
   overlayControl,
   onViewChange,
+  onContextMenu,
+  notice,
 }: WidgetProps & {
   selectedId: string | null;
   onSelect: (id: string) => void;
   overlayControl?: OverlayControl;
   // Called after each pan or zoom (and fly to the selected mission).
   onViewChange?: (view: { latitude: number; longitude: number; zoom: number }) => void;
+  // A right click or long press on the map, with the viewport point and the
+  // position under it; without it the browser's own menu shows.
+  onContextMenu?: (at: Point, position: Coordinates) => void;
+  // Shown with the map's own alerts.
+  notice?: ReactNode;
 }) {
   const { markers, selected, error } = useMapMarkers(options, selectedId);
   const mapStyles = useMapStyles();
@@ -159,9 +178,11 @@ export function MissionMap({
   // Lets the markers' click handlers call the latest select.
   const selectRef = useRef(select);
   const viewChangeRef = useRef(onViewChange);
+  const contextMenuRef = useRef(onContextMenu);
   useEffect(() => {
     selectRef.current = select;
     viewChangeRef.current = onViewChange;
+    contextMenuRef.current = onContextMenu;
   });
 
   // Created once, sized to the widget as its frame is resized; the style is set
@@ -182,10 +203,60 @@ export function MissionMap({
       const { lng, lat } = m.getCenter();
       viewChangeRef.current?.({ latitude: lat, longitude: lng, zoom: m.getZoom() });
     });
+    // Past the antimeridian the map repeats; the API wants -180..180.
+    const openMenu = (x: number, y: number, at: { lng: number; lat: number }) =>
+      contextMenuRef.current?.({ x, y }, { lat: at.lat, lon: at.lng });
+    // iOS fires no contextmenu on a long press, Android does; whichever comes
+    // first opens the menu, and the other is ignored.
+    let pressTimer: ReturnType<typeof setTimeout> | undefined;
+    let pressStart: { x: number; y: number } | null = null;
+    let pressedAt = 0;
+    const cancelPress = () => {
+      clearTimeout(pressTimer);
+      pressStart = null;
+    };
+    m.on('contextmenu', (e) => {
+      if (!contextMenuRef.current) return;
+      e.originalEvent.preventDefault();
+      cancelPress();
+      if (Date.now() - pressedAt < 1000) return;
+      openMenu(e.originalEvent.clientX, e.originalEvent.clientY, e.lngLat.wrap());
+    });
+    m.on('touchstart', (e) => {
+      cancelPress();
+      const touches = e.originalEvent.touches;
+      if (!contextMenuRef.current || touches.length !== 1) return;
+      const { clientX: x, clientY: y } = touches[0];
+      const lngLat = e.lngLat.wrap();
+      pressStart = { x, y };
+      pressTimer = setTimeout(() => {
+        pressedAt = Date.now();
+        pressStart = null;
+        openMenu(x, y, lngLat);
+      }, longPressMs);
+    });
+    // A drag or a second finger is a pan or pinch, not a press.
+    m.on('touchmove', (e) => {
+      const t = e.originalEvent.touches;
+      if (
+        pressStart &&
+        (t.length !== 1 ||
+          Math.hypot(t[0].clientX - pressStart.x, t[0].clientY - pressStart.y) > 10)
+      ) {
+        cancelPress();
+      }
+    });
+    m.on('touchend', cancelPress);
+    m.on('touchcancel', cancelPress);
+    m.on('movestart', (e) => {
+      // Only the user's own moves, not flying to the selected mission.
+      if (e.originalEvent) cancelPress();
+    });
     const resize = new ResizeObserver(() => m.resize());
     resize.observe(container.current);
     map.current = m;
     return () => {
+      clearTimeout(pressTimer);
       resize.disconnect();
       m.remove();
       map.current = null;
@@ -264,6 +335,7 @@ export function MissionMap({
 
   return (
     <div className={styles.wrapper}>
+      {notice}
       {error && <Alert severity="error">{error}</Alert>}
       {mapStyles.error && <Alert severity="error">Map styles: {mapStyles.error}</Alert>}
       {!mapStyles.loading && !mapStyles.error && mapStyles.items.length === 0 && (
@@ -285,14 +357,72 @@ export function MissionMap({
   );
 }
 
+// The context menu is useMapActions'.
 function MapWidget({ options }: WidgetProps) {
   const { selectedId, update } = useDashboard();
+  const { mission } = useSelectedMission();
+  const actions = useMapActions(mission, (m) => update({ selectedId: m.id }));
+  const [event, setEvent] = useState('');
+
   return (
-    <MissionMap
-      options={options}
-      selectedId={selectedId}
-      onSelect={(id) => update({ selectedId: id })}
-    />
+    <>
+      <MissionMap
+        options={options}
+        selectedId={selectedId}
+        onSelect={(id) => update({ selectedId: id })}
+        notice={
+          actions.error && (
+            <Alert severity="error" onClose={actions.clearError}>
+              {actions.error}
+            </Alert>
+          )
+        }
+        onContextMenu={actions.open}
+      />
+      <ContextMenu at={actions.menu?.at ?? null} onClose={actions.closeMenu} label="Map">
+        <MenuItem
+          onClick={() => {
+            setEvent('');
+            actions.startCreate();
+          }}
+        >
+          Create New Mission Here…
+        </MenuItem>
+        <MenuItem
+          icon={<LocationIcon />}
+          disabled={!actions.canSetLocation}
+          title={actions.selectedClosed ? 'The selected mission is closed' : undefined}
+          onClick={() => void actions.setLocation()}
+        >
+          Set Location of Selected Mission
+        </MenuItem>
+      </ContextMenu>
+      {actions.creating && (
+        <ConfirmDialog
+          title="New mission"
+          message={
+            <>
+              <FieldRow id="map-new-mission-event" label="Occurred event" marked>
+                <input
+                  id="map-new-mission-event"
+                  className="grow"
+                  // Before the dialog's buttons, so it gets the focus.
+                  autoFocus
+                  value={event}
+                  onChange={(e) => setEvent(e.target.value)}
+                />
+              </FieldRow>
+              <SectionText>
+                <span className="muted">At {formatPosition(actions.creating)}</span>
+              </SectionText>
+            </>
+          }
+          confirmLabel="Create mission"
+          onConfirm={() => actions.create(event)}
+          onCancel={actions.cancelCreate}
+        />
+      )}
+    </>
   );
 }
 
