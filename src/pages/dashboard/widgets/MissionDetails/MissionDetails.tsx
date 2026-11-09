@@ -116,7 +116,7 @@ export function MissionForm({
         </Section>
         <Section legend="Address" disabled={readOnly}>
           <FieldRow id={id('object')} label="Object">
-            {text('address_object_name', 'Object', 'grow', id('object'))}
+            {address('object_name', 'Object', 'grow', id('object'))}
           </FieldRow>
           <FieldRow id={id('street')} label="Street / No.">
             {address('street', 'Street', 'grow', id('street'))}

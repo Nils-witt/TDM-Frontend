@@ -23,16 +23,43 @@ type HouseNumberSuggestion = {
 
 type DistrictSuggestion = { name: string; city: string };
 
-export type AddressQuery = { street: string; house_number: string; city: string; district: string };
+// A named object of the directory (a hydrant, a building, …) with its address.
+type GeoObjectSuggestion = {
+  name: string;
+  group: string;
+  street: string;
+  house_number: string; // with its addition; empty if the object has none
+  postcode: string;
+  district: string;
+  city: string;
+  country: string;
+  latitude: number; // the object's own position
+  longitude: number;
+};
+
+export type AddressQuery = {
+  object_name: string;
+  street: string;
+  house_number: string;
+  city: string;
+  district: string;
+};
 
 export type AddressSuggestions = {
   streets: StreetSuggestion[];
   houseNumbers: HouseNumberSuggestion[];
   cities: string[];
   districts: DistrictSuggestion[];
+  objects: GeoObjectSuggestion[];
 };
 
-const none: AddressSuggestions = { streets: [], houseNumbers: [], cities: [], districts: [] };
+const none: AddressSuggestions = {
+  streets: [],
+  houseNumbers: [],
+  cities: [],
+  districts: [],
+  objects: [],
+};
 
 const debounceMs = 250;
 
@@ -86,7 +113,7 @@ function useLookup<T>(path: string, params: Record<string, string> | null): T[] 
 }
 
 // Only the active field is looked up. Streets are suggested from two characters
-// on; house numbers once a street is typed in.
+// and objects from two characters on; house numbers once a street is typed in.
 export function useAddressSuggestions(
   q: AddressQuery,
   active: keyof AddressQuery | null,
@@ -108,7 +135,13 @@ export function useAddressSuggestions(
     'districts',
     active === 'district' ? { name: q.district, city: q.city } : null,
   );
-  return active === null ? none : { streets, houseNumbers, cities, districts };
+  const objects = useLookup<GeoObjectSuggestion>(
+    'geo-objects',
+    active === 'object_name' && q.object_name.trim().length >= 2
+      ? { name: q.object_name, city: q.city, district: q.district }
+      : null,
+  );
+  return active === null ? none : { streets, houseNumbers, cities, districts, objects };
 }
 
 // The house number nearest to a coordinate, with its street.

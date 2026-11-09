@@ -114,7 +114,7 @@ export function MissionFormMUI({
           </FieldRowMUI>
         </FormSectionMUI>
         <FormSectionMUI legend="Address" disabled={readOnly}>
-          {text('address_object_name', 'Object')}
+          {address('object_name', 'Object')}
           <FieldRowMUI>
             {address('street', 'Street')}
             {address('house_number', 'No.')}

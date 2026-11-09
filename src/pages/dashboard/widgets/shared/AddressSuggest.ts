@@ -8,9 +8,9 @@ const maxShown = 50;
 
 const coordText = (v: number) => String(v);
 
-// Picking a suggestion fills in what it knows: a street its city, district and
-// position, a house number its position, a district its city. Everything stays
-// editable as text.
+// Picking a suggestion fills in what it knows: an object its whole address and
+// position, a street its city, district and position, a house number its
+// position, a district its city. Everything stays editable as text.
 export function useAddressSuggest(
   value: (k: AddressField) => string,
   set: (k: AddressField, v: string) => void,
@@ -18,6 +18,7 @@ export function useAddressSuggest(
 ) {
   const [active, setActive] = useState<AddressField | null>(null);
   const q: AddressQuery = {
+    object_name: value('object_name'),
     street: value('street'),
     house_number: value('house_number'),
     city: value('city'),
@@ -62,6 +63,28 @@ export function useAddressSuggest(
     onPick: () => fill({ city: d.city }),
   }));
 
+  // An object's address replaces the typed one, as its parts belong
+  // together; a number left from another address would be wrong.
+  const objects: Suggestion[] = found.objects.slice(0, maxShown).map((o) => ({
+    key: `${o.name}|${o.group}|${o.latitude}|${o.longitude}`,
+    value: o.name,
+    detail: [o.group, [o.street, o.house_number].filter(Boolean).join(' '), o.city]
+      .filter(Boolean)
+      .join(' · '),
+    onPick: () => {
+      const address = {
+        street: o.street,
+        house_number: o.house_number,
+        city: o.city,
+        district: o.district,
+      };
+      for (const [k, v] of Object.entries(address) as [AddressField, string][]) {
+        if (v !== value(k)) set(k, v);
+      }
+      setPosition(coordText(o.latitude), coordText(o.longitude));
+    },
+  }));
+
   const props = (k: AddressField, suggestions: Suggestion[]) => ({
     value: value(k),
     onChange: (v: string) => set(k, v),
@@ -70,6 +93,7 @@ export function useAddressSuggest(
   });
 
   return {
+    object_name: props('object_name', objects),
     street: props('street', streets),
     house_number: props('house_number', houseNumbers),
     city: props('city', cities),
