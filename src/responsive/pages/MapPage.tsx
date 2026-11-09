@@ -10,7 +10,7 @@ import SymbolIcon from '@/components/symbols/SymbolIcon';
 import { useMissions } from '@/data/missionsContext';
 import { useMissionTypeName } from '@/data/missionTypeName';
 import { MissionMap } from '@/pages/dashboard/widgets/Map/Map.tsx';
-import { formatPosition, useMapActions } from '@/pages/dashboard/widgets/Map/mapActions';
+import { formatPlace, useMapActions } from '@/pages/dashboard/widgets/Map/mapActions';
 import { NewMissionDialogMUI } from '../widgets/shared/DialogsMUI';
 import { readMapView, saveMapView } from '../mapView';
 import { setOverlay, useOverlaySettings } from '../overlaySettings';
@@ -118,7 +118,7 @@ function MapPage() {
       </Menu>
       {actions.creating && (
         <NewMissionDialogMUI
-          where={formatPosition(actions.creating)}
+          where={formatPlace(actions.creating, actions.address)}
           onCreate={actions.create}
           onCancel={actions.cancelCreate}
         />

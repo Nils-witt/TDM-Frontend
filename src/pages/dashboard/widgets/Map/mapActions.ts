@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { addressFields, formatAddress, type ReverseAddress, reverseGeocode } from '@/api/address';
 import { type Coordinates, createMission, type Mission, patchMission } from '@/api/missions';
 import type { Point } from '@/components/menu/useContextMenu';
 import { useMissions } from '@/data/missionsContext';
@@ -8,8 +9,14 @@ const round = (v: number) => Math.round(v * 1e6) / 1e6;
 
 export const formatPosition = (p: Coordinates) => `${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}`;
 
+// The address at p if one was found, else its coordinates.
+export const formatPlace = (p: Coordinates, address: ReverseAddress | null | undefined) =>
+  address ? `${formatAddress(address)} (${formatPosition(p)})` : formatPosition(p);
+
 // The map's context menu: create a mission at the clicked position, or move
-// the selected one there. A closed mission cannot be moved. The dashboard and
+// the selected one there. A closed mission cannot be moved. The position is
+// looked up in the address directory as the menu opens, and a nearby address
+// is written along with the coordinates. The dashboard and
 // the responsive UI render it each in their own components.
 export function useMapActions(selected: Mission | null, onCreated: (m: Mission) => void) {
   const missions = useMissions();
@@ -17,9 +24,29 @@ export function useMapActions(selected: Mission | null, onCreated: (m: Mission) 
   // Where the new mission's dialog creates it.
   const [creating, setCreating] = useState<Coordinates | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The address at the menu's position; undefined while it is looked up.
+  const [address, setAddress] = useState<ReverseAddress | null | undefined>(undefined);
+  // Awaited by the actions, so one chosen before the answer still gets it.
+  const lookup = useRef<{ result: Promise<ReverseAddress | null>; ctl: AbortController } | null>(
+    null,
+  );
 
-  const open = (at: Point, p: Coordinates) =>
-    setMenu({ at, position: { lat: round(p.lat), lon: round(p.lon) } });
+  useEffect(() => () => lookup.current?.ctl.abort(), []);
+
+  const open = (at: Point, p: Coordinates) => {
+    const position = { lat: round(p.lat), lon: round(p.lon) };
+    lookup.current?.ctl.abort();
+    const ctl = new AbortController();
+    const current = { result: reverseGeocode(position, ctl.signal), ctl };
+    lookup.current = current;
+    setAddress(undefined);
+    void current.result.then((a) => {
+      if (lookup.current === current) setAddress(a);
+    });
+    setMenu({ at, position });
+  };
+
+  const foundAddress = async () => (await lookup.current?.result) ?? null;
 
   const startCreate = () => {
     if (menu) setCreating(menu.position);
@@ -31,7 +58,11 @@ export function useMapActions(selected: Mission | null, onCreated: (m: Mission) 
     setMenu(null);
     if (!selected || !position) return;
     try {
-      await patchMission(selected.id, { address_coordinates: position });
+      const a = await foundAddress();
+      await patchMission(selected.id, {
+        address_coordinates: position,
+        ...(a && addressFields(a)),
+      });
       await missions.reload();
       setError(null);
     } catch (err) {
@@ -44,7 +75,12 @@ export function useMapActions(selected: Mission | null, onCreated: (m: Mission) 
     if (!creating) return;
     const occurred = occurredEvent.trim();
     if (occurred === '') throw new Error('Enter the occurred event');
-    const m = await createMission({ occurred_event: occurred, address_coordinates: creating });
+    const a = await foundAddress();
+    const m = await createMission({
+      occurred_event: occurred,
+      address_coordinates: creating,
+      ...(a && addressFields(a)),
+    });
     await missions.reload();
     setCreating(null);
     onCreated(m);
@@ -59,6 +95,8 @@ export function useMapActions(selected: Mission | null, onCreated: (m: Mission) 
     startCreate,
     setLocation,
     creating,
+    // Of the menu's position, and so of creating.
+    address,
     create,
     cancelCreate: () => setCreating(null),
     error,

@@ -29,7 +29,7 @@ import { useSelectedMission } from '@/data/selectedMissionContext';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import type { WidgetProps } from '../widgetOptions';
 import { type MapMarker, useMapMarkers } from './Map.ts';
-import { formatPosition, useMapActions } from './mapActions';
+import { formatPlace, useMapActions } from './mapActions';
 import styles from './Map.module.scss';
 import OverlaySwitcher from './OverlaySwitcher';
 import { defaultOverlayState, type OverlayState } from './overlayState';
@@ -413,7 +413,7 @@ function MapWidget({ options }: WidgetProps) {
                 />
               </FieldRow>
               <SectionText>
-                <span className="muted">At {formatPosition(actions.creating)}</span>
+                <span className="muted">At {formatPlace(actions.creating, actions.address)}</span>
               </SectionText>
             </>
           }

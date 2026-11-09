@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ApiError, request } from './client';
+import type { Coordinates, MissionFields } from './missions';
 
 // Suggestions come from the API's address directory, if it has one, and only
 // help: every address field stays free text.
@@ -109,3 +110,49 @@ export function useAddressSuggestions(
   );
   return active === null ? none : { streets, houseNumbers, cities, districts };
 }
+
+// The house number nearest to a coordinate, with its street.
+export type ReverseAddress = {
+  street: string;
+  house_number: string; // with its addition, e.g. "12a"
+  postcode: string;
+  district: string;
+  city: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  distance_meters: number;
+};
+
+// The directory always answers its nearest house number, however far away.
+// Beyond this, a click (in a field, on a road) is at no listed address and a
+// neighbour's would be wrong.
+const maxReverseDistance = 50;
+
+// The address at p, or null if none is near or the lookup fails: the
+// address only helps, the coordinates are kept either way.
+export async function reverseGeocode(
+  p: Coordinates,
+  signal?: AbortSignal,
+): Promise<ReverseAddress | null> {
+  if (!available) return null;
+  try {
+    const q = new URLSearchParams({ lat: String(p.lat), lon: String(p.lon) });
+    const [nearest] = await request<ReverseAddress[]>(`/api/v1/address/reverse?${q}`, { signal });
+    return nearest && nearest.distance_meters <= maxReverseDistance ? nearest : null;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) available = false;
+    return null;
+  }
+}
+
+// What a mission takes from a found address; its object name is left as it is.
+export const addressFields = (a: ReverseAddress): MissionFields => ({
+  address_street: a.street,
+  address_house_number: a.house_number,
+  address_city: a.city,
+  address_district: a.district,
+});
+
+export const formatAddress = (a: ReverseAddress) =>
+  [[a.street, a.house_number].filter(Boolean).join(' '), a.city].filter(Boolean).join(', ');
