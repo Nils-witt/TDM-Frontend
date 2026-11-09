@@ -1,5 +1,5 @@
 import { createContext, use } from 'react';
-import type { Channel, Layout, Monitor } from '@/pages/dashboard/layoutStore';
+import type { Channel, Layout, LayoutScope, Monitor } from '@/api/layouts';
 import { dashboardLayout, type LayoutItem } from './layout';
 import type { LayoutFile } from './layoutFile';
 
@@ -11,7 +11,7 @@ export const builtinLayoutId = 'builtin';
 export type ActiveLayout = {
   id: string;
   name: string;
-  builtin?: boolean;
+  scope: LayoutScope | 'builtin';
   monitors: Monitor[]; // at least one
   channels: Channel[];
 };
@@ -19,7 +19,7 @@ export type ActiveLayout = {
 export const builtinLayout: ActiveLayout = {
   id: builtinLayoutId,
   name: 'Default',
-  builtin: true,
+  scope: 'builtin',
   monitors: [
     {
       id: 'main',
@@ -46,10 +46,11 @@ export type ArrangementPatch =
   | ((draft: ArrangementDraft) => Partial<Omit<ArrangementDraft, 'target'>>);
 
 // The widgets of one monitor being edited. target is null for a new layout;
-// channels are copied to a new layout.
+// channels are copied to a new layout. Only admins can choose the scope.
 export type LayoutDraft = {
   target: Layout | null;
   name: string;
+  scope: LayoutScope;
   monitors: Monitor[];
   channels: Channel[];
   monitorId: string;
@@ -58,8 +59,8 @@ export type LayoutDraft = {
 
 // The function form is for handlers that do not read the draft themselves.
 export type DraftPatch =
-  | Partial<Pick<LayoutDraft, 'name' | 'widgets'>>
-  | ((draft: LayoutDraft) => Partial<Pick<LayoutDraft, 'name' | 'widgets'>>);
+  | Partial<Pick<LayoutDraft, 'name' | 'scope' | 'widgets'>>
+  | ((draft: LayoutDraft) => Partial<Pick<LayoutDraft, 'name' | 'scope' | 'widgets'>>);
 
 export type LayoutView = {
   layouts: Layout[];
@@ -76,15 +77,20 @@ export type LayoutView = {
   setChannelConnected: (channelId: string, on: boolean) => void;
   channelsChanged: boolean;
   resetChannels: () => void;
-  // The built-in layout is shown when localDefault (this browser) names no
-  // stored layout.
-  localDefault: string | null;
-  setLocalDefault: (id: string | null) => void;
+  // The user's default layout in every browser (from the API), or
+  // builtinLayoutId when it names none or one that is gone. setUserDefault
+  // rejects with the API's message.
+  userDefault: string;
+  setUserDefault: (id: string) => Promise<void>;
+  canWrite: (scope: LayoutScope) => boolean;
   canEdit: (layout: ActiveLayout) => boolean;
   editing: boolean;
   startEdit: (asNew: boolean) => void;
   startImport: (file: LayoutFile) => void;
   remove: (id: string) => Promise<void>;
+  // Admins only: global makes a layout usable by everyone, user makes it the
+  // admin's own. Rejects with the API's message.
+  setScope: (id: string, scope: LayoutScope) => Promise<void>;
   startArrangementEdit: () => void;
 };
 
@@ -92,13 +98,13 @@ export type LayoutDraftState = {
   draft: LayoutDraft | null;
   canUndo: boolean;
   canRedo: boolean;
-  // save rejects with the store's message.
+  // save rejects with the API's message.
   save: () => Promise<void>;
 };
 
 export type ArrangementState = {
   arrangement: ArrangementDraft | null;
-  // saveArrangement rejects with the store's message.
+  // saveArrangement rejects with the API's message.
   saveArrangement: () => Promise<void>;
 };
 

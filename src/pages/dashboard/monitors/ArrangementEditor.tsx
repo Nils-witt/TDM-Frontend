@@ -1,5 +1,6 @@
 import { type CSSProperties, type FormEvent, useEffect, useId, useState } from 'react';
-import type { Channel, ChannelEvent, Monitor } from '@/pages/dashboard/layoutStore';
+import type { Channel, ChannelEvent, Monitor } from '@/api/layouts';
+import { menuBadgeClass } from '@/components/menu/menuClasses';
 import {
   FieldRow,
   FormActions,
@@ -46,7 +47,7 @@ function ArrangementEditor() {
 
   if (!arrangement) return null;
 
-  const { monitors, channels } = arrangement;
+  const { monitors, channels, target } = arrangement;
   const selected = monitors.find((m) => m.id === selectedId) ?? null;
 
   const setMonitors = (next: Monitor[]) => updateArrangement({ monitors: next });
@@ -124,6 +125,9 @@ function ArrangementEditor() {
             required
             onChange={(e) => updateArrangement({ name: e.target.value })}
           />
+          <span className={menuBadgeClass}>
+            {target.scope === 'global' ? 'Shared' : 'My layout'}
+          </span>
           <button
             type="button"
             className="btn"

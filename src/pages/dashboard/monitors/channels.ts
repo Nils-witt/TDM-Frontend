@@ -1,4 +1,4 @@
-import type { Channel, ChannelEvent } from '@/pages/dashboard/layoutStore';
+import type { Channel, ChannelEvent } from '@/api/layouts';
 
 // Each has a --channel-<name> token for light and dark.
 const channelColors = [

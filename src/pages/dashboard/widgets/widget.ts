@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import type { ChannelEvent } from '@/pages/dashboard/layoutStore';
+import type { ChannelEvent } from '@/api/layouts';
 import type { WidgetCategory } from './widgetCategories';
 import type { ResolvedOptions, WidgetOption, WidgetProps } from './widgetOptions';
 

@@ -1,4 +1,4 @@
-import type { ChannelEvent } from '@/pages/dashboard/layoutStore';
+import type { ChannelEvent } from '@/api/layouts';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardContext, type DashboardState, initialDashboardState } from './dashboardContext';
 import { useLayoutView } from './layoutContext';

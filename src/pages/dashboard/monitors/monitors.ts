@@ -1,4 +1,4 @@
-import type { Monitor } from '@/pages/dashboard/layoutStore';
+import type { Monitor } from '@/api/layouts';
 
 // The limit per layout.
 export const maxMonitors = 16;

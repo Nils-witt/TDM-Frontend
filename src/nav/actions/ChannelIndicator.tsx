@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { Channel } from '@/pages/dashboard/layoutStore';
+import type { Channel } from '@/api/layouts';
 import { LinkIcon, LinkOffIcon } from '@/components/icons.tsx';
 import Menu from '@/components/menu/Menu.tsx';
 import MenuItem from '@/components/menu/MenuItem.tsx';

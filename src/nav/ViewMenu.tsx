@@ -19,9 +19,32 @@ function ViewMenu() {
     chooseMonitor,
     startArrangementEdit,
     editing,
+    userDefault,
+    setUserDefault,
+    canWrite,
+    setScope,
   } = useLayoutView();
   const importInput = useRef<HTMLInputElement>(null);
   const multiMonitor = active.monitors.length > 1;
+
+  const makeDefault = () =>
+    setUserDefault(active.id).catch((err: unknown) =>
+      window.alert(err instanceof Error ? err.message : String(err)),
+    );
+
+  const shared = active.scope === 'global';
+
+  // Making a shared layout personal hides it from everyone else.
+  const toggleShared = () => {
+    if (
+      shared &&
+      !window.confirm(`Make “${active.name}” your own? Other users will no longer see or use it.`)
+    )
+      return;
+    setScope(active.id, shared ? 'user' : 'global').catch((err: unknown) =>
+      window.alert(err instanceof Error ? err.message : String(err)),
+    );
+  };
 
   const removeActive = () => {
     if (!window.confirm(`Delete the layout “${active.name}”?`)) return;
@@ -56,6 +79,8 @@ function ViewMenu() {
                 {l.monitors.length > 1 && (
                   <span className={styles.badge}>{l.monitors.length} monitors</span>
                 )}
+                {l.scope === 'global' && <span className={styles.badge}>Shared</span>}
+                {l.id === userDefault && <span className={styles.badge}>Default</span>}
                 {l.id === active.id && <span aria-label="active">✓</span>}
               </>
             }
@@ -74,6 +99,12 @@ function ViewMenu() {
         )}
         <MenuSeparator />
         <MenuItem
+          disabled={editing || active.id === userDefault}
+          onClick={() => void makeDefault()}
+        >
+          Use as My Default
+        </MenuItem>
+        <MenuItem
           disabled={editing || !canEdit(active) || !monitor}
           onClick={() => startEdit(false)}
         >
@@ -85,6 +116,11 @@ function ViewMenu() {
         <MenuItem disabled={editing} onClick={() => startEdit(true)}>
           New Layout…
         </MenuItem>
+        {canWrite('global') && (
+          <MenuItem disabled={editing || active.scope === 'builtin'} onClick={toggleShared}>
+            {shared ? 'Make Personal…' : 'Share with Everyone'}
+          </MenuItem>
+        )}
         <MenuItem disabled={editing || !canEdit(active)} onClick={removeActive}>
           Delete Layout…
         </MenuItem>

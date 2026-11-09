@@ -1,12 +1,12 @@
-import type { Channel, Monitor } from '@/pages/dashboard/layoutStore';
+import type { Channel, Monitor } from '@/api/layouts';
 import type { ActiveLayout } from './layoutContext';
 
 // The version rises when a change makes older builds unable to read the file.
 const layoutFileFormat = 'universam.layout';
 const layoutFileVersion = 1;
 
-// Without id and timestamps, which belong to the browser the layout was
-// stored in.
+// Without id, scope, owner and timestamps, which belong to the API the layout
+// was stored in.
 export type LayoutFile = {
   name: string;
   monitors: Monitor[]; // at least one

@@ -1,5 +1,5 @@
 import { type CSSProperties, type PointerEvent, useLayoutEffect, useRef, useState } from 'react';
-import type { Channel, Monitor } from '@/pages/dashboard/layoutStore';
+import type { Channel, Monitor } from '@/api/layouts';
 import { channelBar, channelColor, channelsOf } from './channels';
 import { fitView, normalized, type View } from './monitors';
 import styles from './MonitorArrangement.module.scss';

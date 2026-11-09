@@ -1,4 +1,4 @@
-import type { ChannelEvent } from '@/pages/dashboard/layoutStore';
+import type { ChannelEvent } from '@/api/layouts';
 
 type ChannelState = { selection: string | null };
 

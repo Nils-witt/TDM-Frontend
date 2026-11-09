@@ -1,7 +1,8 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { FormActions, FormError, WidgetForm } from '@/components/form';
 import { defaultItem } from './layout';
-import { useLayoutActions, useLayoutDraft } from './layoutContext';
+import { menuBadgeClass } from '@/components/menu/menuClasses';
+import { useLayoutActions, useLayoutDraft, useLayoutView } from './layoutContext';
 import { widgets } from './widgets/registry';
 import WidgetPicker from './WidgetPicker';
 import styles from './LayoutEditBar.module.scss';
@@ -9,6 +10,7 @@ import styles from './LayoutEditBar.module.scss';
 function LayoutEditBar() {
   const { draft, canUndo, canRedo, save } = useLayoutDraft();
   const { updateDraft, undo, redo, cancelEdit } = useLayoutActions();
+  const { canWrite } = useLayoutView();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [picking, setPicking] = useState(false);
@@ -55,6 +57,9 @@ function LayoutEditBar() {
     if (w) updateDraft({ widgets: [...draft.widgets, defaultItem(id, w)] });
   };
 
+  // Admins may share a layout with everyone, or make a shared one their own.
+  const scopes = (['user', 'global'] as const).filter(canWrite);
+
   return (
     <>
       <WidgetForm
@@ -71,6 +76,23 @@ function LayoutEditBar() {
             required
             onChange={(e) => updateDraft({ name: e.target.value })}
           />
+          {scopes.length < 2 ? (
+            <span className={menuBadgeClass}>
+              {draft.scope === 'global' ? 'Shared' : 'My layout'}
+            </span>
+          ) : (
+            <select
+              aria-label="Visible to"
+              value={draft.scope}
+              onChange={(e) => updateDraft({ scope: e.target.value as 'user' | 'global' })}
+            >
+              {scopes.map((s) => (
+                <option key={s} value={s}>
+                  {s === 'global' ? 'Shared (everyone)' : 'My layout'}
+                </option>
+              ))}
+            </select>
+          )}
           <button type="button" className="btn" onClick={() => setPicking(true)}>
             Add widget…
           </button>

@@ -1,11 +1,16 @@
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createLayout,
   deleteLayout,
   type Layout,
+  type LayoutScope,
   updateLayout,
   useLayouts,
-} from '@/pages/dashboard/layoutStore';
+  usePreferences,
+} from '@/api/layouts';
+import { useIsAdmin } from '@/app/session';
+import Spinner from '@/components/Spinner';
+import { migrateLocalLayouts } from './localLayouts';
 import {
   type ActiveLayout,
   type ArrangementDraft,
@@ -33,26 +38,6 @@ type Edit = {
 };
 
 const historyLimit = 100;
-
-const localDefaultKey = 'universam.dashboard.defaultLayout';
-
-// Storage may be unavailable; the built-in layout is used then.
-function loadLocalDefault(): string | null {
-  try {
-    return localStorage.getItem(localDefaultKey);
-  } catch {
-    return null;
-  }
-}
-
-function storeLocalDefault(id: string | null) {
-  try {
-    if (id === null) localStorage.removeItem(localDefaultKey);
-    else localStorage.setItem(localDefaultKey, id);
-  } catch {
-    // not remembered
-  }
-}
 
 // Session storage is per tab and survives reloads, so each window keeps its
 // monitor.
@@ -116,10 +101,17 @@ function LayoutProvider({ children }: { children: ReactNode }) {
     return window.name;
   }, []);
 
-  const { layouts, reload } = useLayouts();
+  const isAdmin = useIsAdmin();
+  const { layouts, loaded: layoutsLoaded, reload } = useLayouts();
+  const { preferences, loaded: preferencesLoaded, setDefaultLayout } = usePreferences();
+  const storedDefault = preferences?.default_layout_id ?? null;
+  // One that is gone or not loaded yet is the built-in layout.
+  const userDefault =
+    storedDefault !== null && layouts.some((l) => l.id === storedDefault)
+      ? storedDefault
+      : builtinLayoutId;
   // Chosen during this visit; null shows the default.
   const [selected, setSelected] = useState<string | null>(null);
-  const [localDefault, setLocal] = useState(loadLocalDefault);
   const [edit, setEdit] = useState<Edit | null>(null);
   const draft = edit?.draft ?? null;
   const [arrangement, setArrangement] = useState<ArrangementDraft | null>(null);
@@ -130,16 +122,30 @@ function LayoutProvider({ children }: { children: ReactNode }) {
   // read from session storage.
   const [channelChoices, setChannelChoices] = useState<Record<string, ChannelChoice>>({});
 
+  // Layouts this browser kept before the API stored them become the user's
+  // own, once; the browser's default becomes the user's unless one is set.
+  const migrated = useRef(false);
+  useEffect(() => {
+    if (!preferences || migrated.current) return;
+    migrated.current = true;
+    const hadDefault = preferences.default_layout_id !== null;
+    void migrateLocalLayouts().then(async ({ count, defaultId }) => {
+      if (count === 0) return;
+      await reload();
+      if (defaultId && !hadDefault) await setDefaultLayout(defaultId);
+    });
+  }, [preferences, reload, setDefaultLayout]);
+
   // A layout that is gone, deleted or not visible falls back to the next
-  // one: the selected one, the browser's default, the built-in layout.
+  // one: the selected one, the user's default, the built-in layout.
   const active: ActiveLayout = useMemo(() => {
-    for (const id of [selected, localDefault]) {
+    for (const id of [selected, userDefault]) {
       if (id === builtinLayoutId) return builtinLayout;
       const l = id ? layouts.find((l) => l.id === id) : undefined;
       if (l) return l;
     }
     return builtinLayout;
-  }, [layouts, selected, localDefault]);
+  }, [layouts, selected, userDefault]);
 
   const select = useCallback((id: string) => setSelected(id), []);
 
@@ -205,12 +211,17 @@ function LayoutProvider({ children }: { children: ReactNode }) {
     [active.id, chooseMonitorOf],
   );
 
-  const setLocalDefault = useCallback((id: string | null) => {
-    setLocal(id);
-    storeLocalDefault(id);
-  }, []);
+  const setUserDefault = useCallback(
+    (id: string) => setDefaultLayout(id === builtinLayoutId ? null : id),
+    [setDefaultLayout],
+  );
 
-  const canEdit = useCallback((l: ActiveLayout) => !l.builtin, []);
+  const canWrite = useCallback((scope: LayoutScope) => scope === 'user' || isAdmin, [isAdmin]);
+
+  const canEdit = useCallback(
+    (l: ActiveLayout) => l.scope !== 'builtin' && canWrite(l.scope),
+    [canWrite],
+  );
 
   const startEdit = useCallback(
     (asNew: boolean) => {
@@ -222,6 +233,7 @@ function LayoutProvider({ children }: { children: ReactNode }) {
         draft: {
           target,
           name: target ? target.name : `${active.name} copy`,
+          scope: target?.scope ?? 'user',
           monitors: active.monitors,
           channels: active.channels,
           monitorId: m.id,
@@ -243,6 +255,7 @@ function LayoutProvider({ children }: { children: ReactNode }) {
       draft: {
         target: null,
         name: file.name,
+        scope: 'user',
         monitors: file.monitors,
         channels: file.channels,
         monitorId: m.id,
@@ -305,9 +318,14 @@ function LayoutProvider({ children }: { children: ReactNode }) {
       m.id === draft.monitorId ? { ...m, widgets: draft.widgets } : m,
     );
     const saved: Layout = draft.target
-      ? await updateLayout(draft.target.id, { name: draft.name, monitors })
+      ? await updateLayout(draft.target.id, {
+          name: draft.name,
+          monitors,
+          ...(draft.scope !== draft.target.scope && { scope: draft.scope }),
+        })
       : await createLayout({
           name: draft.name,
+          scope: draft.scope,
           monitors,
           channels: draft.channels,
         });
@@ -357,6 +375,14 @@ function LayoutProvider({ children }: { children: ReactNode }) {
     [reload],
   );
 
+  const setScope = useCallback(
+    async (id: string, scope: LayoutScope) => {
+      await updateLayout(id, { scope });
+      await reload();
+    },
+    [reload],
+  );
+
   const editing = edit !== null || arrangement !== null;
 
   const view = useMemo(
@@ -370,13 +396,15 @@ function LayoutProvider({ children }: { children: ReactNode }) {
       setChannelConnected,
       channelsChanged,
       resetChannels,
-      localDefault,
-      setLocalDefault,
+      userDefault,
+      setUserDefault,
+      canWrite,
       canEdit,
       editing,
       startEdit,
       startImport,
       remove,
+      setScope,
       startArrangementEdit,
     }),
     [
@@ -389,13 +417,15 @@ function LayoutProvider({ children }: { children: ReactNode }) {
       setChannelConnected,
       channelsChanged,
       resetChannels,
-      localDefault,
-      setLocalDefault,
+      userDefault,
+      setUserDefault,
+      canWrite,
       canEdit,
       editing,
       startEdit,
       startImport,
       remove,
+      setScope,
       startArrangementEdit,
     ],
   );
@@ -414,6 +444,10 @@ function LayoutProvider({ children }: { children: ReactNode }) {
     () => ({ updateDraft, undo, redo, cancelEdit, updateArrangement, cancelArrangement }),
     [updateDraft, undo, redo, cancelEdit, updateArrangement, cancelArrangement],
   );
+
+  // Waits for the user's default rather than showing the built-in layout
+  // first; a failed load shows the built-in one.
+  if (!layoutsLoaded || !preferencesLoaded) return <Spinner />;
 
   return (
     <LayoutActionsContext value={actions}>
