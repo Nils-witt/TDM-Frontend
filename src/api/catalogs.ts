@@ -1,4 +1,5 @@
 import type { EntityMeta } from './entity';
+import { request } from './client';
 import { listFetcher } from './list';
 
 // Names are unique (case-insensitive) among the active entries of a catalog.
@@ -20,3 +21,29 @@ export const fetchMissionTypeGroups = listFetcher<MissionTypeGroup>('mission_typ
 export const fetchMissionTypes = listFetcher<MissionType>('mission_types');
 export const fetchLogbookTypes = listFetcher<LogbookType>('logbook_types');
 export const fetchFileTypes = listFetcher<FileType>('file_types');
+
+// What a create sends; group_id is for mission types only.
+export type CatalogInput = { name: string; group_id?: string };
+
+// The writes need the admin group. Delete is soft: what refers to an entry
+// keeps it, but it is no longer listed or offered.
+export type CatalogApi<T extends CatalogEntry> = {
+  create: (input: CatalogInput) => Promise<T>;
+  patch: (id: string, input: Partial<CatalogInput>) => Promise<T>;
+  remove: (id: string) => Promise<void>;
+};
+
+const catalogApi = <T extends CatalogEntry>(path: string): CatalogApi<T> => ({
+  create: (input) => request<T>(path, { method: 'POST', body: JSON.stringify(input) }),
+  patch: (id, input) =>
+    request<T>(`${path}/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+  remove: (id) => request<void>(`${path}/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+});
+
+export const missionTypeGroupsApi = catalogApi<MissionTypeGroup>(missionTypeGroupsPath);
+export const missionTypesApi = catalogApi<MissionType>(missionTypesPath);
+export const logbookTypesApi = catalogApi<LogbookType>(logbookTypesPath);
+export const fileTypesApi = catalogApi<FileType>(fileTypesPath);

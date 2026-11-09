@@ -1,0 +1,10 @@
+// The groups beside the members of the chosen one; stacked when narrow.
+.split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+
+.pane {
+  min-width: 0;
+}

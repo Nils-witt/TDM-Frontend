@@ -4,6 +4,7 @@ export const widgetCategories = [
   { id: 'logbook', label: 'Logbook' },
   { id: 'files', label: 'Files' },
   { id: 'general', label: 'General' },
+  { id: 'admin', label: 'Admin' },
 ] as const;
 
 export type WidgetCategory = (typeof widgetCategories)[number]['id'];

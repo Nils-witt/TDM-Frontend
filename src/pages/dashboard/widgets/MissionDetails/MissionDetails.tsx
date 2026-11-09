@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Alert from '@/components/Alert';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
@@ -14,6 +15,7 @@ import { formatTime } from '../shared/logbookEntries';
 import { StatusSelect } from '../shared/MissionStatus';
 import { MissionTypeInputs } from '../shared/MissionType';
 import { type TextKey, useMissionDetailsWidget, useMissionForm } from './MissionDetails.ts';
+import { useRegisterMissionSave } from './missionSave';
 
 // Without a mission it creates one, with the same layout. A closed mission is
 // shown read-only.
@@ -47,6 +49,9 @@ function MissionForm({
     resetKey,
     id,
   } = useMissionForm(mission, onSaved);
+  // The menu bar's Save Mission (⌘S) submits it.
+  const [form, setForm] = useState<HTMLFormElement | null>(null);
+  useRegisterMissionSave(form, !readOnly && canSubmit && !busy);
 
   const text = (k: TextKey, label: string, className = 'grow', inputId?: string) => (
     <input
@@ -61,7 +66,7 @@ function MissionForm({
   // The dialog holds a form of its own, so it is not nested in this one.
   return (
     <>
-      <WidgetForm onSubmit={(e) => void save(e)}>
+      <WidgetForm ref={setForm} onSubmit={(e) => void save(e)}>
         {readOnly && (
           <Alert severity="warning">Closed: this mission and its logbook are read-only.</Alert>
         )}

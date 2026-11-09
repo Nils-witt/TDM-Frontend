@@ -18,3 +18,8 @@ export function useSession(): Session {
 }
 
 export const displayName = (p: Principal) => p.name || p.username || p.sub;
+
+// Only hides what the API would refuse with 403 anyway.
+export const isAdmin = (p: Principal) => p.permissions?.includes('admin') ?? false;
+
+export const useIsAdmin = () => isAdmin(useSession().principal);

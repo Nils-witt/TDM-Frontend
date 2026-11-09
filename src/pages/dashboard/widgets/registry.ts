@@ -12,6 +12,12 @@ const LogbookWidget = lazy(() => import('./Logbook/Logbook.tsx'));
 const LogbookFormWidget = lazy(() => import('./LogbookForm/LogbookForm.tsx'));
 const FileListWidget = lazy(() => import('./FileList/FileList.tsx'));
 const AttachmentViewerWidget = lazy(() => import('./AttachmentViewer/AttachmentViewer.tsx'));
+const MissionTypesWidget = lazy(() => import('./MissionTypes/MissionTypes.tsx'));
+const LogbookTypesWidget = lazy(() => import('./LogbookTypes/LogbookTypes.tsx'));
+const FileTypesWidget = lazy(() => import('./FileTypes/FileTypes.tsx'));
+const UsersWidget = lazy(() => import('./Users/Users.tsx'));
+const GroupsWidget = lazy(() => import('./Groups/Groups.tsx'));
+const AuditLogWidget = lazy(() => import('./AuditLog/AuditLog.tsx'));
 
 const Example: Widget = {
   id: 'Example',
@@ -184,6 +190,87 @@ const AttachmentViewer: Widget = {
   Component: AttachmentViewerWidget,
 };
 
+// The admin widgets open from the Admin menu only (shown to admins), so the
+// picker leaves them out; a layout holding one shows non-admins a notice.
+const adminWidget = {
+  category: 'admin',
+  adminOnly: true,
+  hiddenInPicker: true,
+  minWidth: 30,
+  maxWidth: 120,
+  minHeight: 15,
+  maxHeight: 800,
+  defaultWidth: 50,
+  defaultHeight: 45,
+} as const;
+
+const MissionTypes: Widget = {
+  ...adminWidget,
+  id: 'MissionTypes',
+  name: 'Mission types',
+  description: 'Manages the mission type groups and mission types, with CSV import and export.',
+  defaultHeight: 55,
+  Component: MissionTypesWidget,
+};
+
+const LogbookTypes: Widget = {
+  ...adminWidget,
+  id: 'LogbookTypes',
+  name: 'Logbook types',
+  description: 'Manages the types of logbook entries.',
+  Component: LogbookTypesWidget,
+};
+
+const FileTypes: Widget = {
+  ...adminWidget,
+  id: 'FileTypes',
+  name: 'File types',
+  description: 'Manages the types of attached files.',
+  Component: FileTypesWidget,
+};
+
+// userId highlights a user; Groups sets it.
+const Users: Widget = {
+  ...adminWidget,
+  id: 'Users',
+  name: 'Users',
+  description: 'The users synced from LDAP, with their groups.',
+  defaultWidth: 70,
+  options: [{ key: 'userId', label: 'Highlighted user ID', type: 'text', default: '' }],
+  Component: UsersWidget,
+};
+
+// groupId is the group shown first; Users sets it.
+const Groups: Widget = {
+  ...adminWidget,
+  id: 'Groups',
+  name: 'Groups',
+  description: 'The LDAP groups and their members.',
+  options: [{ key: 'groupId', label: 'Group ID', type: 'text', default: '' }],
+  Component: GroupsWidget,
+};
+
+// The options are the filter it starts with; the other admin widgets set them.
+const AuditLog: Widget = {
+  ...adminWidget,
+  id: 'AuditLog',
+  name: 'Audit log',
+  description: 'Every recorded change, newest first, filterable by entity and actor.',
+  defaultWidth: 60,
+  defaultHeight: 50,
+  options: [
+    { key: 'entityType', label: 'Entity type', type: 'text', default: '' },
+    { key: 'entityId', label: 'Entity ID', type: 'text', default: '' },
+    { key: 'actor', label: 'Actor', type: 'text', default: '' },
+  ],
+  title: (o) => {
+    if (o.actor !== '') return `Audit log: changes by ${String(o.actor)}`;
+    if (o.entityType !== '') return `Audit log: ${String(o.entityType)}`;
+    return 'Audit log';
+  },
+  Component: AuditLogWidget,
+};
+
 export const widgets: Record<string, Widget> = Object.fromEntries(
   [
     MissionsList,
@@ -193,6 +280,12 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     LogbookForm,
     FileList,
     AttachmentViewer,
+    MissionTypes,
+    LogbookTypes,
+    FileTypes,
+    Users,
+    Groups,
+    AuditLog,
     Example,
   ].map((w) => [w.id, w]),
 );

@@ -1,0 +1,66 @@
+// Wider than a narrow widget, the table scrolls sideways. The admin widgets'
+// tables share these styles.
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 0.375rem 0.5rem;
+    border-bottom: 1px solid var(--divider);
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  th {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  tbody tr:hover {
+    background: var(--hover);
+  }
+
+  input,
+  select {
+    min-width: 8rem;
+  }
+}
+
+// The row another widget linked to.
+.highlight {
+  background: var(--hover);
+}
+
+.dimmed {
+  color: var(--text-secondary);
+}
+
+.meta {
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+// Read by screen readers only.
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

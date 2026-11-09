@@ -26,6 +26,8 @@ interface BaseWidget {
   windowOnly?: boolean;
   // Left out of the widget picker only; layouts that hold it still show it.
   hiddenInPicker?: boolean;
+  // Non-admins see a notice instead, so the widget never calls the API.
+  adminOnly?: boolean;
   // A window's title for the options it was opened with; else name.
   title?: (options: ResolvedOptions) => string;
 }

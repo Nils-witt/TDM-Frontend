@@ -21,6 +21,9 @@ export type Principal = {
   groups: string[];
   // Absent for proxy (client certificate) auth.
   expires_at?: string;
+  // `admin` for members of the API's ADMIN_GROUP. Absent from an API older
+  // than the field, which counts as no permissions.
+  permissions?: string[];
 };
 
 export const getAuthConfig = () =>

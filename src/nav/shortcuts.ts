@@ -5,7 +5,10 @@ export type NavShortcut = { shortcut: string } & ({ action: NavAction } | { widg
 
 // The menus show them by key.
 export const navShortcuts = {
-  example: { shortcut: 'Alt+Shift+E', widget: 'Example' },
+  saveMission: { shortcut: 'Mod+S', action: 'saveMission' },
+  clearMission: { shortcut: 'Alt+Shift+C', action: 'clearMission' },
+  closeMission: { shortcut: 'Alt+Shift+L', action: 'closeMission' },
+  newLogEntry: { shortcut: 'Alt+Shift+N', widget: 'LogbookForm' },
 } satisfies Record<string, NavShortcut>;
 
 export type NavShortcutKey = keyof typeof navShortcuts;

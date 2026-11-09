@@ -1,7 +1,9 @@
+import { useIsAdmin } from '../app/session';
 import { InfoIcon, LocationIcon } from '../components/icons';
 import MenuBar from '../components/menu/MenuBar';
 import MenuSeparator from '../components/menu/MenuSeparator';
 import AboutProvider from './AboutProvider';
+import MissionCloseProvider from './MissionCloseProvider';
 import NavShortcuts from './NavShortcuts';
 import NavMenuItem from './NavMenuItem';
 import TopLevelMenu from './TopLevelMenu';
@@ -14,32 +16,64 @@ import UserMenu from './actions/UserMenu';
 import styles from './Nav.module.scss';
 
 // Styled like the macOS menu bar; each status indicator on the right keeps its
-// own state.
+// own state. The menus follow missioncontroller's, without what universalGoApi
+// lacks (units, nodes, roles, reopening, printing). The Admin menu is shown to
+// members of the API's admin group only.
 function Nav() {
+  const admin = useIsAdmin();
   return (
-    <AboutProvider>
-      <NavShortcuts />
-      <MenuBar className={styles.bar}>
-        <nav className={styles.left} aria-label="Main">
-          <TopLevelMenu label="Universam menu" icon={<LocationIcon />}>
-            <NavMenuItem label="About Universam" action="about" icon={<InfoIcon />} />
-            <MenuSeparator />
-            <NavMenuItem label="Reload" action="reload" keys="Mod+R" />
-          </TopLevelMenu>
-          <AppTitle />
-          <TopLevelMenu label="Widgets">
-            <NavMenuItem label="Example" widget="Example" shortcut="example" />
-          </TopLevelMenu>
-          <ViewMenu />
-        </nav>
-        <div className={styles.right}>
-          <ChannelIndicator />
-          <UserMenu />
-          <Clock />
-          <Fullscreen />
-        </div>
-      </MenuBar>
-    </AboutProvider>
+    <MissionCloseProvider>
+      <AboutProvider>
+        <NavShortcuts />
+        <MenuBar className={styles.bar}>
+          <nav className={styles.left} aria-label="Main">
+            <TopLevelMenu label="Universam menu" icon={<LocationIcon />}>
+              <NavMenuItem label="About Universam" action="about" icon={<InfoIcon />} />
+              <MenuSeparator />
+              <NavMenuItem label="Reload" action="reload" keys="Mod+R" />
+              <MenuSeparator />
+              <NavMenuItem label="Log Out…" action="logout" />
+            </TopLevelMenu>
+            <AppTitle />
+            <TopLevelMenu label="Missions">
+              <NavMenuItem label="Save Mission" action="saveMission" shortcut="saveMission" />
+              <NavMenuItem label="Clear Mission" action="clearMission" shortcut="clearMission" />
+              <NavMenuItem label="Close Mission" action="closeMission" shortcut="closeMission" />
+              <MenuSeparator />
+              <NavMenuItem label="Missions" widget="MissionsList" />
+              <NavMenuItem label="Mission Details" widget="MissionDetails" />
+              <NavMenuItem label="Active Missions" widget="ActiveMissions" />
+            </TopLevelMenu>
+            <TopLevelMenu label="Logbook">
+              <NavMenuItem label="New Entry" widget="LogbookForm" shortcut="newLogEntry" />
+              <NavMenuItem label="Logbook" widget="Logbook" />
+              <NavMenuItem label="Files" widget="FileList" />
+            </TopLevelMenu>
+            {admin && (
+              <TopLevelMenu label="Admin">
+                <NavMenuItem label="Mission Types" widget="MissionTypes" />
+                <NavMenuItem label="Logbook Types" widget="LogbookTypes" />
+                <NavMenuItem label="File Types" widget="FileTypes" />
+                <MenuSeparator />
+                <NavMenuItem label="Users" widget="Users" />
+                <NavMenuItem label="Groups" widget="Groups" />
+                <NavMenuItem label="Audit Log" widget="AuditLog" />
+              </TopLevelMenu>
+            )}
+            <ViewMenu />
+            <TopLevelMenu label="Help">
+              <NavMenuItem label="Source Code" href="https://github.com/Nils-witt/TDM-Frontend" />
+            </TopLevelMenu>
+          </nav>
+          <div className={styles.right}>
+            <ChannelIndicator />
+            <UserMenu />
+            <Clock />
+            <Fullscreen />
+          </div>
+        </MenuBar>
+      </AboutProvider>
+    </MissionCloseProvider>
   );
 }
 
