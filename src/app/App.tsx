@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { type Principal } from '@/api/auth';
 import { unauthorizedEvent } from '@/api/client';
 import { type AuthMode, dropTokens, logout, onTokenExpired, startSession } from '@/auth/session';
 import Alert from '@/components/Alert';
 import Spinner from '@/components/Spinner';
+import MobileShell from '@/mobile/MobileShell';
 import Login from '@/pages/Login';
 import { SessionContext } from './session';
 import Shell from './Shell';
@@ -90,7 +92,14 @@ function App() {
     case 'signedIn':
       return (
         <SessionContext value={session}>
-          <Shell />
+          {/* Mounted only now: startSession may have replaced the URL (the
+              login's return path), which a router mounted earlier would miss. */}
+          <BrowserRouter>
+            <Routes>
+              <Route path="/mobile/*" element={<MobileShell />} />
+              <Route path="*" element={<Shell />} />
+            </Routes>
+          </BrowserRouter>
         </SessionContext>
       );
   }

@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router';
+import { mobileBasePath, preferDesktop } from '@/app/mobileRoute';
 import { useSession } from '@/app/session';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
@@ -15,10 +17,12 @@ import { useMissionPrint } from './missionPrintContext';
 // clearMission deselects the selected mission; closeMission asks first;
 // printMission asks for the export template of an intermediate report of the
 // selected mission, in any status; createReport opens Create Report
-// for the selected mission, which must be done or closed.
+// for the selected mission, which must be done or closed; mobileView switches
+// to the phone UI and stops preferring the desktop one.
 export type NavAction =
   | 'about'
   | 'reload'
+  | 'mobileView'
   | 'logout'
   | 'saveMission'
   | 'clearMission'
@@ -35,6 +39,7 @@ export function useNavActions() {
   const printer = useMissionPrint();
   const canSave = useCanSaveMission();
   const { openWidget } = useWidgetWindows();
+  const navigate = useNavigate();
 
   const run = (action: NavAction) => {
     switch (action) {
@@ -43,6 +48,10 @@ export function useNavActions() {
         break;
       case 'reload':
         window.location.reload();
+        break;
+      case 'mobileView':
+        preferDesktop(false);
+        void navigate(mobileBasePath);
         break;
       case 'logout':
         logout().catch((err: unknown) =>

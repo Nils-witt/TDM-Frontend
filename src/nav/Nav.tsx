@@ -34,6 +34,7 @@ function Nav() {
                 <NavMenuItem label="About Universam" action="about" icon={<InfoIcon />} />
                 <MenuSeparator />
                 <NavMenuItem label="Reload" action="reload" keys="Mod+R" />
+                <NavMenuItem label="Mobile View" action="mobileView" />
                 <MenuSeparator />
                 <NavMenuItem label="Log Out…" action="logout" />
               </TopLevelMenu>
