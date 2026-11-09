@@ -31,6 +31,14 @@ $wide: 768px;
   font-weight: 500;
 }
 
+.headerEnd {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  // The button's own padding would otherwise indent it from the edge.
+  margin-right: -8px;
+}
+
 .main {
   grid-area: main;
   min-height: 0;
@@ -50,16 +58,6 @@ $wide: 768px;
     padding: 0.5rem;
     border-top: 0;
     border-right: 1px solid var(--divider);
-  }
-}
-
-// Only the sidebar pushes Desktop and Log out to its foot.
-.spacer {
-  display: none;
-
-  @media (min-width: $wide) {
-    display: block;
-    flex: 1;
   }
 }
 

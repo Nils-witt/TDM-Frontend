@@ -42,16 +42,21 @@ function MissionPage() {
       <h1 className={styles.title}>{mission.occurred_event || 'Untitled mission'}</h1>
       {/* Keyed by id so unsaved edits do not carry over to another mission. The
           missions are reloaded after a save, so the list shows the change. */}
-      <MissionForm key={mission.id} mission={mission} onSaved={() => missions.reload()} />
-      <SelectedMissionContext value={data}>
-        {/* Keyed like on the dashboard, so a draft entry stays with its mission. */}
-        <div className={styles.widgets} key={mission.id}>
-          {/* The mission is named in the heading above already. */}
-          <EmbeddedWidget widgetId="LogbookForm" options={{ showMission: false }} />
-          {/* Its Create action would open the form shown just above. */}
-          <EmbeddedWidget widgetId="Logbook" options={{ showCreate: false }} />
+      {/* Stacked on narrow screens; on wide ones the mission beside its logbook. */}
+      <div className={styles.columns}>
+        <div className={styles.details}>
+          <MissionForm key={mission.id} mission={mission} onSaved={() => missions.reload()} />
         </div>
-      </SelectedMissionContext>
+        <SelectedMissionContext value={data}>
+          {/* Keyed like on the dashboard, so a draft entry stays with its mission. */}
+          <div className={styles.widgets} key={mission.id}>
+            {/* The mission is named in the heading above already. */}
+            <EmbeddedWidget widgetId="LogbookForm" options={{ showMission: false }} />
+            {/* Its Create action would open the form shown just above. */}
+            <EmbeddedWidget widgetId="Logbook" options={{ showCreate: false }} />
+          </div>
+        </SelectedMissionContext>
+      </div>
     </div>
   );
 }

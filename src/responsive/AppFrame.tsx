@@ -1,5 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router';
-import { preferDesktop } from '@/app/mobileRoute';
+import { NavLink, Outlet } from 'react-router';
 import { useSession } from '@/app/session';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
 import LiveIndicator from '@/nav/actions/LiveIndicator';
@@ -12,12 +11,7 @@ const sections = [{ to: responsivePaths.missions, label: 'Missions', icon: 'list
 // tablet width up; only the CSS differs.
 function AppFrame() {
   const { logout } = useSession();
-  const navigate = useNavigate();
 
-  const desktop = () => {
-    preferDesktop(true);
-    void navigate('/');
-  };
   const signOut = () => {
     logout().catch((err: unknown) =>
       window.alert(`Cannot log out: ${err instanceof Error ? err.message : String(err)}`),
@@ -27,8 +21,19 @@ function AppFrame() {
   return (
     <div className={styles.frame}>
       <header className={styles.header}>
-        <span className={styles.brand}>Universam</span>
-        <LiveIndicator />
+        <span className={styles.brand}>TMD</span>
+        <span className={styles.headerEnd}>
+          <LiveIndicator />
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Log out"
+            title="Log out"
+            onClick={signOut}
+          >
+            <SymbolIcon name="logout" />
+          </button>
+        </span>
       </header>
       <nav className={styles.nav} aria-label="Main">
         {sections.map((s) => (
@@ -41,15 +46,6 @@ function AppFrame() {
             <span>{s.label}</span>
           </NavLink>
         ))}
-        <span className={styles.spacer} />
-        <button type="button" className={styles.item} onClick={desktop}>
-          <SymbolIcon name="desktop_windows" className={styles.icon} />
-          <span>Desktop</span>
-        </button>
-        <button type="button" className={styles.item} onClick={signOut}>
-          <SymbolIcon name="logout" className={styles.icon} />
-          <span>Log out</span>
-        </button>
       </nav>
       <main className={styles.main}>
         <Outlet />
