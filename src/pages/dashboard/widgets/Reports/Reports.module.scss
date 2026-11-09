@@ -25,3 +25,18 @@
   color: var(--text-secondary);
   font-size: 0.75rem;
 }
+
+// The users or groups to share with, scrolled when there are many.
+.shareList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 10rem;
+  overflow-y: auto;
+  margin: 0.375rem 0;
+}
+
+.shared {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}

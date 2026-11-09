@@ -13,8 +13,9 @@ import { formatTime } from '../shared/logbookEntries';
 import { EmptyState } from '../shared/WidgetStates';
 import table from '../shared/CatalogManager.module.scss';
 import CreateReportDialog from './CreateReportDialog';
+import ShareReportDialog from './ShareReportDialog';
 import SignReportDialog from './SignReportDialog';
-import { canSign, isFinished } from './reportHelpers';
+import { canShare, canSign, isFinished } from './reportHelpers';
 import styles from './Reports.module.scss';
 
 type SignedFilter = 'all' | 'signed' | 'unsigned';
@@ -39,8 +40,9 @@ const userById = (users: Users, id: string) => {
 };
 
 // The reports the caller may see: admins all, anyone else the ones they
-// created or sign. The report's creator or an admin uploads the signed PDF,
-// once. PDFs open in a window, as they need the token.
+// created, sign, or that are shared with them or their groups. The report's
+// creator or an admin uploads the signed PDF, once, and shares it. PDFs open
+// in a window, as they need the token.
 function ReportsWidget() {
   const { principal } = useSession();
   const missions = useMissions();
@@ -63,6 +65,7 @@ function ReportsWidget() {
   const [error, setError] = useErrorState(reports.error);
   const [creating, setCreating] = useState(false);
   const [signing, setSigning] = useState<Report | null>(null);
+  const [sharing, setSharing] = useState<Report | null>(null);
 
   const finished = missions.items
     .filter(isFinished)
@@ -77,6 +80,7 @@ function ReportsWidget() {
   const done = () => {
     setCreating(false);
     setSigning(null);
+    setSharing(null);
     setError(null);
     void reports.reload();
   };
@@ -85,7 +89,7 @@ function ReportsWidget() {
     <div className={sectionStack}>
       <SectionText>
         Stored mission reports: the PDF and the data it was made from. Whoever created a report, or
-        an admin, uploads its signed PDF once.
+        an admin, uploads its signed PDF once and may share it with users or groups.
       </SectionText>
       <div className={`${styles.filters} ${compactControls}`}>
         <select
@@ -126,7 +130,9 @@ function ReportsWidget() {
           missions={missions.byId}
           users={users}
           canSign={(r) => canSign(r, principal)}
+          canShare={(r) => canShare(r, principal)}
           onSign={setSigning}
+          onShare={setSharing}
           onOpen={openPdf}
         />
       )}
@@ -151,6 +157,15 @@ function ReportsWidget() {
           onClose={() => setSigning(null)}
         />
       )}
+      {sharing && (
+        <ShareReportDialog
+          report={sharing}
+          event={missionName(missions.byId, sharing.mission)}
+          users={userList ?? []}
+          onShared={done}
+          onClose={() => setSharing(null)}
+        />
+      )}
     </div>
   );
 }
@@ -160,14 +175,18 @@ function ReportTable({
   missions,
   users,
   canSign,
+  canShare,
   onSign,
+  onShare,
   onOpen,
 }: {
   reports: readonly Report[];
   missions: ReadonlyMap<string, Mission>;
   users: Users;
   canSign: (r: Report) => boolean;
+  canShare: (r: Report) => boolean;
   onSign: (r: Report) => void;
+  onShare: (r: Report) => void;
   onOpen: (r: Report, signed?: boolean) => void;
 }) {
   return (
@@ -191,6 +210,7 @@ function ReportTable({
                 {formatTime(r.created_at)}
                 <br />
                 {userByName(users, r.created_by)}
+                <Shares report={r} users={users} />
               </td>
               <td>
                 {r.signed === null ? (
@@ -215,6 +235,11 @@ function ReportTable({
                       </button>
                     )
                   )}
+                  {canShare(r) && (
+                    <button type="button" className="btn" onClick={() => onShare(r)}>
+                      Share…
+                    </button>
+                  )}
                 </span>
               </td>
             </tr>
@@ -223,6 +248,15 @@ function ReportTable({
       </table>
     </div>
   );
+}
+
+function Shares({ report, users }: { report: Report; users: Users }) {
+  const names = [
+    ...report.shared_users.map((id) => userById(users, id)),
+    ...report.shared_groups.map((g) => `${g} (group)`),
+  ];
+  if (names.length === 0) return null;
+  return <div className={styles.shared}>Shared with {names.join(', ')}</div>;
 }
 
 function Signatures({ signatures, users }: { signatures: Signature[]; users: Users }) {

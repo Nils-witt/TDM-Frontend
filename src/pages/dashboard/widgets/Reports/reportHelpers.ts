@@ -11,6 +11,10 @@ export const isFinished = (m: Mission) => m.status === 'done' || m.status === 'c
 export const canSign = (r: Report, p: Principal) =>
   r.signed === null && (isAdmin(p) || p.username?.toLowerCase() === r.created_by);
 
+// By its creator or an admin, signed or not.
+export const canShare = (r: Report, p: Principal) =>
+  isAdmin(p) || p.username?.toLowerCase() === r.created_by;
+
 // In the browser's time zone, to the minute.
 export const localInputValue = (t: Date) => {
   const local = new Date(t.getTime() - t.getTimezoneOffset() * 60_000);

@@ -22,9 +22,10 @@ export type ReportSigning = {
 };
 
 // The PDF an export template rendered of a done or closed mission, and the data
-// it was rendered from. Admins see every report, anyone else those they created
-// or sign as a user. The creator or an admin uploads the signed PDF, once.
-// Reports are never deleted. created_by is the creator's username.
+// it was rendered from. Admins see every report, anyone else those they
+// created, sign as a user, or that are shared with them or one of their
+// groups. The creator or an admin uploads the signed PDF, once, and changes
+// the shares. Reports are never deleted. created_by is the creator's username.
 export type Report = EntityMeta & {
   id: string;
   mission: string;
@@ -32,6 +33,10 @@ export type Report = EntityMeta & {
   pdf_size: number;
   // null until uploaded.
   signed: ReportSigning | null;
+  // User IDs (users.id) and group names (as in whoami's groups) that may read
+  // the report and its PDFs, but not sign or share it.
+  shared_users: string[];
+  shared_groups: string[];
   // Only a single report carries the data it was rendered from.
   data?: unknown;
 };
@@ -71,6 +76,12 @@ export const reportsApi = {
     body.append('file', file);
     return request<Report>(`${reportPath(id)}/signed`, { method: 'POST', body });
   },
+  // Replaces both lists; users added must be enabled.
+  share: (id: string, users: string[], groups: string[]) =>
+    request<Report>(`${reportPath(id)}/shares`, {
+      method: 'PUT',
+      body: JSON.stringify({ users, groups }),
+    }),
 };
 
 // The PDFs need the token, so they are loaded with requestBlob (see PdfViewer).
