@@ -1,20 +1,22 @@
 import { Link, useParams } from 'react-router';
-import { shortLocation } from '@/api/missions';
 import Alert from '@/components/Alert';
 import Spinner from '@/components/Spinner';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
+import { useMissionData } from '@/data/missionData';
 import { useMissions } from '@/data/missionsContext';
-import { useMissionTypeName } from '@/data/missionTypeName';
-import StatusChip from '../StatusChip';
+import { SelectedMissionContext } from '@/data/selectedMissionContext';
+import { MissionForm } from '@/pages/dashboard/widgets/MissionDetails/MissionDetails.tsx';
+import EmbeddedWidget from '../EmbeddedWidget';
 import { responsivePaths } from '../paths';
 import styles from './MissionPage.module.scss';
 
-// A placeholder until the mission page gets its own sections (logbook, files…).
+// The desktop Mission Details form, then the Logbook Form and Logbook widgets.
+// The widgets read the selected mission, which here is the one in the URL.
 function MissionPage() {
   const { id = '' } = useParams();
-  const { byId, loading, error } = useMissions();
-  const mission = byId.get(id);
-  const type = useMissionTypeName(mission?.mission_type ?? null);
+  const missions = useMissions();
+  const mission = missions.byId.get(id);
+  const data = useMissionData(id);
 
   const back = (
     <Link to={responsivePaths.missions} className={styles.back}>
@@ -23,8 +25,8 @@ function MissionPage() {
     </Link>
   );
 
-  if (error) return <Alert severity="error">{error}</Alert>;
-  if (loading) return <Spinner />;
+  if (missions.error) return <Alert severity="error">{missions.error}</Alert>;
+  if (missions.loading) return <Spinner />;
   if (!mission) {
     return (
       <div className={styles.page}>
@@ -34,49 +36,22 @@ function MissionPage() {
     );
   }
 
-  const address = [
-    shortLocation(mission),
-    [mission.address_district, mission.address_city].filter(Boolean).join(', '),
-  ].filter(Boolean);
-
   return (
     <div className={styles.page}>
       {back}
-      <h1 className={styles.title}>
-        {mission.occurred_event || 'Untitled mission'} <StatusChip status={mission.status} />
-      </h1>
-      <dl className={styles.fields}>
-        {type && (
-          <>
-            <dt>Type</dt>
-            <dd>{type}</dd>
-          </>
-        )}
-        {address.length > 0 && (
-          <>
-            <dt>Location</dt>
-            <dd>{address.join(' · ')}</dd>
-          </>
-        )}
-        {mission.callee && (
-          <>
-            <dt>Caller</dt>
-            <dd>
-              {mission.callee}
-              {mission.callee_phone && (
-                <>
-                  {' · '}
-                  <a href={`tel:${mission.callee_phone}`}>{mission.callee_phone}</a>
-                </>
-              )}
-            </dd>
-          </>
-        )}
-        <dt>Created</dt>
-        <dd>
-          {new Date(mission.created_at).toLocaleString()} by {mission.created_by}
-        </dd>
-      </dl>
+      <h1 className={styles.title}>{mission.occurred_event || 'Untitled mission'}</h1>
+      {/* Keyed by id so unsaved edits do not carry over to another mission. The
+          missions are reloaded after a save, so the list shows the change. */}
+      <MissionForm key={mission.id} mission={mission} onSaved={() => missions.reload()} />
+      <SelectedMissionContext value={data}>
+        {/* Keyed like on the dashboard, so a draft entry stays with its mission. */}
+        <div className={styles.widgets} key={mission.id}>
+          {/* The mission is named in the heading above already. */}
+          <EmbeddedWidget widgetId="LogbookForm" options={{ showMission: false }} />
+          {/* Its Create action would open the form shown just above. */}
+          <EmbeddedWidget widgetId="Logbook" options={{ showCreate: false }} />
+        </div>
+      </SelectedMissionContext>
     </div>
   );
 }

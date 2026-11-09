@@ -21,7 +21,7 @@ import { useRegisterMissionSave } from './missionSave';
 
 // Without a mission it creates one, with the same layout. A closed mission is
 // shown read-only.
-function MissionForm({
+export function MissionForm({
   mission,
   onSaved,
 }: {

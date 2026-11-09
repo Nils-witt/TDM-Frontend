@@ -1,5 +1,7 @@
+$wide: 768px;
+
 .page {
-  max-width: 960px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 0.75rem 1rem 1rem;
 }
@@ -13,27 +15,26 @@
 }
 
 .title {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
   font-size: 1.25rem;
   font-weight: 500;
   margin: 0.5rem 0 1rem;
+  overflow-wrap: anywhere;
 }
 
-.fields {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.5rem 1rem;
-  margin: 0;
+.widgets {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
 
-  dt {
-    color: var(--text-secondary);
-  }
-
-  dd {
-    margin: 0;
-    overflow-wrap: anywhere;
+// The forms are sized for dashboard widgets. On phones their fields get 16px text,
+// which keeps iOS Safari from zooming in on focus, and room for a finger.
+@media (max-width: #{$wide - 1px}) {
+  .page :global(form) input,
+  .page :global(form) select,
+  .page :global(form) textarea {
+    min-height: 40px;
+    font-size: 1rem;
   }
 }

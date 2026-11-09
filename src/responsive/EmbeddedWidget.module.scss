@@ -1,0 +1,16 @@
+// The padding matches a dashboard frame's, which WidgetBody's action bar
+// extends past to sit flush with the edges; so the heading is outside.
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.heading {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+}

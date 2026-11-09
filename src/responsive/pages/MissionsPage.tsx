@@ -105,7 +105,7 @@ function MissionsPage() {
       const text = searchText(m);
       return words.every((w) => text.includes(w));
     });
-  }, [items, filter, deferredQuery, searchText]);
+  }, [items, deferredQuery, searchText, filter.statuses]);
 
   return (
     <div className={styles.page}>

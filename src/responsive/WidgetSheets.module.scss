@@ -1,0 +1,29 @@
+// Covers the whole frame, bars included.
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: calc(0.25rem + env(safe-area-inset-top)) 0.5rem 0.25rem;
+  border-bottom: 1px solid var(--divider);
+  background: var(--surface);
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
