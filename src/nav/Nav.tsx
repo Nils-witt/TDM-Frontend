@@ -12,6 +12,7 @@ import ViewMenu from './ViewMenu';
 import AppTitle from './menus/AppTitle';
 import ChannelIndicator from './actions/ChannelIndicator';
 import Clock from './actions/Clock';
+import LiveIndicator from './actions/LiveIndicator';
 import Fullscreen from './actions/Fullscreen';
 import UserMenu from './actions/UserMenu';
 import styles from './Nav.module.scss';
@@ -75,6 +76,7 @@ function Nav() {
               </TopLevelMenu>
             </nav>
             <div className={styles.right}>
+              <LiveIndicator />
               <ChannelIndicator />
               <UserMenu />
               <Clock />

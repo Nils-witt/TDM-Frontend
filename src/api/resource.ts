@@ -30,6 +30,9 @@ export type ResourceCache = {
   load: (path: string, fetch?: Fetcher) => Promise<void>;
   // For data a write returned.
   put: (path: string, data: unknown) => void;
+  // Reloads the shown paths match accepts. Paths nobody shows load anyway
+  // when they are shown again.
+  reloadShown: (match: (path: string) => boolean) => void;
 };
 
 const initial: ResourceState<never> = { data: undefined, error: null };
@@ -101,7 +104,13 @@ export function createResourceCache(): ResourceCache {
     if (e.inflight) void load(path);
   };
 
-  return { subscribe, state: (path) => entry(path).state, load, put };
+  const reloadShown = (match: (path: string) => boolean) => {
+    for (const [path, e] of entries) {
+      if (e.listeners.size > 0 && match(path)) void load(path);
+    }
+  };
+
+  return { subscribe, state: (path) => entry(path).state, load, put, reloadShown };
 }
 
 export const ResourceCacheContext = createContext<ResourceCache | null>(null);

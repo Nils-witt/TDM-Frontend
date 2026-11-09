@@ -1,6 +1,6 @@
 import { type User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import { type AuthConfig, getAuthConfig, type Principal, whoAmI } from '@/api/auth';
-import { ApiError, setAccessTokenSource, setApiTarget } from '@/api/client';
+import { accessTokenRenewed, ApiError, setAccessTokenSource, setApiTarget } from '@/api/client';
 
 // oidc: logged in through Authentik, with a bearer token. proxy: the reverse
 // proxy authenticated a TLS client certificate; there is no token.
@@ -47,6 +47,7 @@ function createManager(c: AuthConfig): UserManager {
   });
   m.events.addUserLoaded((u) => {
     user = u;
+    accessTokenRenewed();
   });
   m.events.addUserUnloaded(() => {
     user = null;

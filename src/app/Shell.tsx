@@ -1,4 +1,6 @@
+import EventsProvider from '@/api/EventsProvider';
 import ResourceProvider from '@/api/ResourceProvider';
+import { useSession } from '@/app/session';
 import WidgetWindows from '@/components/widgetWindow/WidgetWindows';
 import DataProvider from '@/data/DataProvider';
 import SelectedMissionProvider from '@/data/SelectedMissionProvider';
@@ -8,20 +10,23 @@ import DashboardProvider from '@/pages/dashboard/DashboardProvider';
 import LayoutProvider from '@/pages/dashboard/LayoutProvider';
 
 function Shell() {
+  const { mode } = useSession();
   return (
     <ResourceProvider>
-      <DataProvider>
-        <LayoutProvider>
-          <DashboardProvider>
-            <SelectedMissionProvider>
-              <WidgetWindows>
-                <Nav />
-                <Dashboard />
-              </WidgetWindows>
-            </SelectedMissionProvider>
-          </DashboardProvider>
-        </LayoutProvider>
-      </DataProvider>
+      <EventsProvider mode={mode}>
+        <DataProvider>
+          <LayoutProvider>
+            <DashboardProvider>
+              <SelectedMissionProvider>
+                <WidgetWindows>
+                  <Nav />
+                  <Dashboard />
+                </WidgetWindows>
+              </SelectedMissionProvider>
+            </DashboardProvider>
+          </LayoutProvider>
+        </DataProvider>
+      </EventsProvider>
     </ResourceProvider>
   );
 }

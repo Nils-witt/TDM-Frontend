@@ -44,6 +44,13 @@ export async function loadConfig(): Promise<void> {
 
 export const apiUrl = (path: string, t: ApiTarget = target) => `${baseUrls[t]}${path}`;
 
+// The API URL is empty when the SPA and the API share an origin.
+export function websocketUrl(path: string): string {
+  const url = new URL(apiUrl(path), window.location.href);
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  return url.href;
+}
+
 // Dispatched on window on a 401 to an authenticated request: the app shows
 // the login page again.
 export const unauthorizedEvent = 'universam:unauthorized';
@@ -54,6 +61,24 @@ let accessToken: () => string | null = () => null;
 
 export function setAccessTokenSource(source: () => string | null) {
   accessToken = source;
+}
+
+export const currentAccessToken = () => accessToken();
+
+const tokenListeners = new Set<() => void>();
+
+// The session calls accessTokenRenewed after each renewal, so the event
+// stream (api/events.ts) can hand the API the new token before the old one
+// expires.
+export function onAccessTokenRenewed(listener: () => void): () => void {
+  tokenListeners.add(listener);
+  return () => {
+    tokenListeners.delete(listener);
+  };
+}
+
+export function accessTokenRenewed() {
+  tokenListeners.forEach((l) => l());
 }
 
 // For requests the app does not make through request(), such as the map's
