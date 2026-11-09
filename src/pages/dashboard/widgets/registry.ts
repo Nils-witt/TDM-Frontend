@@ -23,6 +23,7 @@ const MapStylesWidget = lazy(() => import('./MapStyles/MapStyles.tsx'));
 const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
+const CreateReportWidget = lazy(() => import('./CreateReport/CreateReport.tsx'));
 const PdfViewerWidget = lazy(() => import('./PdfViewer/PdfViewer.tsx'));
 
 const Example: Widget = {
@@ -213,6 +214,24 @@ const Reports: Widget = {
   Component: ReportsWidget,
 };
 
+// Missions → Create Report opens it for the selected mission; missionId is
+// fixed, so it does not follow the selection.
+const CreateReport: Widget = {
+  id: 'CreateReport',
+  name: 'Create report',
+  category: 'files',
+  description: 'Creates a report of one done or closed mission.',
+  minWidth: 25,
+  maxWidth: 80,
+  minHeight: 10,
+  maxHeight: 40,
+  defaultWidth: 35,
+  defaultHeight: 14,
+  windowOnly: true,
+  options: [{ key: 'missionId', label: 'Mission ID', type: 'text', default: '' }],
+  Component: CreateReportWidget,
+};
+
 // path is the API path of the PDF (a printed mission or a report); name is
 // what Download saves it as.
 const PdfViewer: Widget = {
@@ -399,6 +418,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     FileList,
     AttachmentViewer,
     Reports,
+    CreateReport,
     PdfViewer,
     MissionTypes,
     LogbookTypes,

@@ -42,6 +42,7 @@ function Nav() {
                 <NavMenuItem label="Clear Mission" action="clearMission" shortcut="clearMission" />
                 <NavMenuItem label="Close Mission" action="closeMission" shortcut="closeMission" />
                 <NavMenuItem label="Print" action="printMission" shortcut="printMission" />
+                <NavMenuItem label="Create Report…" action="createReport" />
                 <NavMenuItem label="Reports" widget="Reports" />
                 <MenuSeparator />
                 <NavMenuItem label="Missions" widget="MissionsList" />

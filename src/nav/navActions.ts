@@ -1,19 +1,29 @@
 import { useSession } from '@/app/session';
 import { useSelectedMission } from '@/data/selectedMissionContext';
+import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import {
   saveMission,
   useCanSaveMission,
 } from '@/pages/dashboard/widgets/MissionDetails/missionSave';
+import { isFinished } from '@/pages/dashboard/widgets/Reports/reportHelpers';
 import { useAbout } from './aboutContext';
 import { useMissionClose } from './missionCloseContext';
 import { useMissionPrint } from './missionPrintContext';
 
 // saveMission saves the open Mission Details form (as its Save button);
 // clearMission deselects the selected mission; closeMission asks first;
-// printMission asks for the export template.
+// printMission asks for the export template; createReport opens Create Report
+// for the selected mission, which must be done or closed.
 export type NavAction =
-  'about' | 'reload' | 'logout' | 'saveMission' | 'clearMission' | 'closeMission' | 'printMission';
+  | 'about'
+  | 'reload'
+  | 'logout'
+  | 'saveMission'
+  | 'clearMission'
+  | 'closeMission'
+  | 'printMission'
+  | 'createReport';
 
 export function useNavActions() {
   const about = useAbout();
@@ -23,6 +33,7 @@ export function useNavActions() {
   const close = useMissionClose();
   const printer = useMissionPrint();
   const canSave = useCanSaveMission();
+  const { openWidget } = useWidgetWindows();
 
   const run = (action: NavAction) => {
     switch (action) {
@@ -49,6 +60,9 @@ export function useNavActions() {
       case 'printMission':
         if (mission) printer.print(mission);
         break;
+      case 'createReport':
+        if (mission && isFinished(mission)) openWidget('CreateReport', { missionId: mission.id });
+        break;
     }
   };
 
@@ -62,6 +76,8 @@ export function useNavActions() {
         return mission === null || mission.status === 'closed';
       case 'printMission':
         return mission === null;
+      case 'createReport':
+        return mission === null || !isFinished(mission);
       default:
         return false;
     }
