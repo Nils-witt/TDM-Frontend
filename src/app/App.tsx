@@ -5,8 +5,8 @@ import { unauthorizedEvent } from '@/api/client';
 import { type AuthMode, dropTokens, logout, onTokenExpired, startSession } from '@/auth/session';
 import Alert from '@/components/Alert';
 import Spinner from '@/components/Spinner';
-import MobileShell from '@/mobile/MobileShell';
 import Login from '@/pages/Login';
+import ResponsiveShell from '@/responsive/ResponsiveShell';
 import { SessionContext } from './session';
 import Shell from './Shell';
 
@@ -15,9 +15,6 @@ type State =
   | { status: 'unavailable'; error: string }
   | { status: 'signedOut'; error: string | null }
   | { status: 'signedIn'; principal: Principal; mode: AuthMode };
-
-// Restores the tab's session before anything else; otherwise the login page
-// offers Authentik or a client certificate.
 function App() {
   const [state, setState] = useState<State>({ status: 'loading' });
 
@@ -96,7 +93,7 @@ function App() {
               login's return path), which a router mounted earlier would miss. */}
           <BrowserRouter>
             <Routes>
-              <Route path="/mobile/*" element={<MobileShell />} />
+              <Route path="/m/*" element={<ResponsiveShell />} />
               <Route path="*" element={<Shell />} />
             </Routes>
           </BrowserRouter>

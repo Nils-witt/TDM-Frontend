@@ -1,7 +1,7 @@
 import { type Mission, shortLocation } from '@/api/missions';
 import Alert from '@/components/Alert';
 import { StatusChip } from '../shared/MissionStatus';
-import { useMissionTypeName } from '../shared/missionTypeName';
+import { useMissionTypeName } from '@/data/missionTypeName';
 import { EmptyState } from '../shared/WidgetStates';
 import type { WidgetProps } from '../widgetOptions';
 import { useMissionsListWidget } from './MissionsList.ts';

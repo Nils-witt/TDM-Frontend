@@ -1,0 +1,125 @@
+$wide: 768px;
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 0 1rem;
+}
+
+// Stays on top while the list scrolls, so search and filter are always reachable.
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--divider);
+}
+
+.heading {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.search {
+  width: 100%;
+  min-height: 40px;
+  // 16px keeps iOS Safari from zooming in on focus.
+  font-size: 1rem;
+}
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+}
+
+.filter {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 0 0.875rem;
+  border: 1px solid var(--divider);
+  border-radius: 16px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.selected {
+  border-color: transparent;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  > li + li {
+    border-top: 1px solid var(--divider);
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 56px;
+  padding: 0.625rem 1rem;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.secondary {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+@media (min-width: $wide) {
+  .toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+  }
+
+  .search {
+    flex: 1;
+    width: auto;
+    min-width: 200px;
+  }
+}

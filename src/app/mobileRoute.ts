@@ -1,8 +1,8 @@
-// Phones opening / are sent to /mobile unless they chose the desktop view
+// Phones opening / are sent to the responsive UI (/m) unless they chose the desktop view
 // there; the choice stays in this browser.
 const preferDesktopKey = 'universam.preferDesktop';
 
-export const mobileBasePath = '/mobile';
+export const mobileBasePath = '/m';
 
 const smallTouchScreen = '(max-width: 768px) and (pointer: coarse)';
 

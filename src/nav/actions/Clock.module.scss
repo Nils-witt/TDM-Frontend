@@ -1,6 +1,12 @@
-// Fixed-width digits, so it does not jitter as it ticks; hidden on narrow screens.
+// Fixed width with tabular digits, so neither ticking, the day and month names
+// nor switching the format moves the items beside it. 20ch fits the digital
+// format in locales with longer abbreviations ("Mo. 9. Nov. 14:05:33").
+// Hidden on narrow screens.
 .clock {
   composes: item from '../../components/menu/menuBase.module.css';
+  box-sizing: content-box;
+  justify-content: center;
+  width: 20ch;
   font-variant-numeric: tabular-nums;
 }
 

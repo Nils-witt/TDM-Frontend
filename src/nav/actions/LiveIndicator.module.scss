@@ -2,11 +2,18 @@
   display: inline-flex;
   align-items: center;
   padding: 0 6px;
-  color: var(--error);
 
   svg {
     width: 16px;
     height: 16px;
     fill: currentColor;
   }
+}
+
+.live {
+  color: var(--success);
+}
+
+.offline {
+  color: var(--error);
 }

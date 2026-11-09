@@ -18,7 +18,7 @@ import { useMissionPrint } from './missionPrintContext';
 // printMission asks for the export template of an intermediate report of the
 // selected mission, in any status; createReport opens Create Report
 // for the selected mission, which must be done or closed; mobileView switches
-// to the phone UI and stops preferring the desktop one.
+// to the responsive UI (/m) and stops preferring the desktop one.
 export type NavAction =
   | 'about'
   | 'reload'

@@ -1,0 +1,107 @@
+// Phones: header, scrolling content, bottom tabs. From 768px: header across
+// the top, sidebar on the left. The viewport, not the document, scrolls main,
+// so the bars stay put.
+$wide: 768px;
+
+.frame {
+  display: grid;
+  grid-template-areas: 'header' 'main' 'nav';
+  grid-template-rows: auto 1fr auto;
+  height: 100dvh;
+
+  @media (min-width: $wide) {
+    grid-template-areas: 'header header' 'nav main';
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: auto 1fr;
+  }
+}
+
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: calc(0.5rem + env(safe-area-inset-top)) 1rem 0.5rem;
+  border-bottom: 1px solid var(--divider);
+  background: var(--surface);
+}
+
+.brand {
+  font-weight: 500;
+}
+
+.main {
+  grid-area: main;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.nav {
+  grid-area: nav;
+  display: flex;
+  border-top: 1px solid var(--divider);
+  background: var(--surface);
+  padding-bottom: env(safe-area-inset-bottom);
+
+  @media (min-width: $wide) {
+    flex-direction: column;
+    gap: 2px;
+    padding: 0.5rem;
+    border-top: 0;
+    border-right: 1px solid var(--divider);
+  }
+}
+
+// Only the sidebar pushes Desktop and Log out to its foot.
+.spacer {
+  display: none;
+
+  @media (min-width: $wide) {
+    display: block;
+    flex: 1;
+  }
+}
+
+.item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.75rem;
+  text-decoration: none;
+  cursor: pointer;
+
+  @media (min-width: $wide) {
+    flex: none;
+    flex-direction: row;
+    gap: 0.75rem;
+    min-height: 40px;
+    padding: 0 0.75rem;
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+
+    &:hover {
+      background: var(--hover);
+    }
+  }
+}
+
+.active {
+  color: var(--primary);
+
+  @media (min-width: $wide) {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+  }
+}
+
+.icon {
+  font-size: 24px;
+}
