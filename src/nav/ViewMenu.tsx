@@ -1,10 +1,12 @@
-import { type ChangeEvent, useRef } from 'react';
+import { type ChangeEvent, useRef, useState } from 'react';
 import Menu from '../components/menu/Menu';
 import MenuItem from '../components/menu/MenuItem';
 import MenuSeparator from '../components/menu/MenuSeparator';
 import styles from './ViewMenu.module.scss';
 import { builtinLayout, useLayoutView } from '../pages/dashboard/layoutContext';
 import { exportLayout, parseLayoutFile } from '../pages/dashboard/layoutFile';
+import ShareDialog from '../pages/dashboard/ShareDialog';
+import { scopeLabel } from '../pages/dashboard/sharing';
 
 function ViewMenu() {
   const {
@@ -22,7 +24,7 @@ function ViewMenu() {
     userDefault,
     setUserDefault,
     canWrite,
-    setScope,
+    setSharing,
   } = useLayoutView();
   const importInput = useRef<HTMLInputElement>(null);
   const multiMonitor = active.monitors.length > 1;
@@ -32,19 +34,8 @@ function ViewMenu() {
       window.alert(err instanceof Error ? err.message : String(err)),
     );
 
-  const shared = active.scope === 'global';
-
-  // Making a shared layout personal hides it from everyone else.
-  const toggleShared = () => {
-    if (
-      shared &&
-      !window.confirm(`Make “${active.name}” your own? Other users will no longer see or use it.`)
-    )
-      return;
-    setScope(active.id, shared ? 'user' : 'global').catch((err: unknown) =>
-      window.alert(err instanceof Error ? err.message : String(err)),
-    );
-  };
+  const [sharing, setSharingOpen] = useState(false);
+  const activeStored = layouts.find((l) => l.id === active.id);
 
   const removeActive = () => {
     if (!window.confirm(`Delete the layout “${active.name}”?`)) return;
@@ -79,7 +70,9 @@ function ViewMenu() {
                 {l.monitors.length > 1 && (
                   <span className={styles.badge}>{l.monitors.length} monitors</span>
                 )}
-                {l.scope === 'global' && <span className={styles.badge}>Shared</span>}
+                {(l.scope === 'global' || l.scope === 'group') && (
+                  <span className={styles.badge}>{scopeLabel(l.scope)}</span>
+                )}
                 {l.id === userDefault && <span className={styles.badge}>Default</span>}
                 {l.id === active.id && <span aria-label="active">✓</span>}
               </>
@@ -117,8 +110,8 @@ function ViewMenu() {
           New Layout…
         </MenuItem>
         {canWrite('global') && (
-          <MenuItem disabled={editing || active.scope === 'builtin'} onClick={toggleShared}>
-            {shared ? 'Make Personal…' : 'Share with Everyone'}
+          <MenuItem disabled={editing || !activeStored} onClick={() => setSharingOpen(true)}>
+            Share…
           </MenuItem>
         )}
         <MenuItem disabled={editing || !canEdit(active)} onClick={removeActive}>
@@ -139,6 +132,16 @@ function ViewMenu() {
         hidden
         onChange={(e) => void importFile(e)}
       />
+      {sharing && activeStored && (
+        <ShareDialog
+          layout={activeStored}
+          onSave={async (s) => {
+            await setSharing(activeStored.id, s);
+            setSharingOpen(false);
+          }}
+          onCancel={() => setSharingOpen(false)}
+        />
+      )}
     </>
   );
 }

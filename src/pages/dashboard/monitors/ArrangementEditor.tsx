@@ -1,6 +1,7 @@
 import { type CSSProperties, type FormEvent, useEffect, useId, useState } from 'react';
 import type { Channel, ChannelEvent, Monitor } from '@/api/layouts';
 import { menuBadgeClass } from '@/components/menu/menuClasses';
+import { scopeLabel } from '../sharing';
 import {
   FieldRow,
   FormActions,
@@ -125,9 +126,7 @@ function ArrangementEditor() {
             required
             onChange={(e) => updateArrangement({ name: e.target.value })}
           />
-          <span className={menuBadgeClass}>
-            {target.scope === 'global' ? 'Shared' : 'My layout'}
-          </span>
+          <span className={menuBadgeClass}>{scopeLabel(target.scope)}</span>
           <button
             type="button"
             className="btn"

@@ -4,6 +4,7 @@ import {
   deleteLayout,
   type Layout,
   type LayoutScope,
+  type Sharing,
   updateLayout,
   useLayouts,
   usePreferences,
@@ -375,9 +376,9 @@ function LayoutProvider({ children }: { children: ReactNode }) {
     [reload],
   );
 
-  const setScope = useCallback(
-    async (id: string, scope: LayoutScope) => {
-      await updateLayout(id, { scope });
+  const setSharing = useCallback(
+    async (id: string, sharing: Sharing) => {
+      await updateLayout(id, sharing);
       await reload();
     },
     [reload],
@@ -404,7 +405,7 @@ function LayoutProvider({ children }: { children: ReactNode }) {
       startEdit,
       startImport,
       remove,
-      setScope,
+      setSharing,
       startArrangementEdit,
     }),
     [
@@ -425,7 +426,7 @@ function LayoutProvider({ children }: { children: ReactNode }) {
       startEdit,
       startImport,
       remove,
-      setScope,
+      setSharing,
       startArrangementEdit,
     ],
   );

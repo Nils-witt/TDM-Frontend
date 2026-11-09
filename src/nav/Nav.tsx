@@ -56,6 +56,7 @@ function Nav() {
                 <NavMenuItem label="Logbook Types" widget="LogbookTypes" />
                 <NavMenuItem label="File Types" widget="FileTypes" />
                 <NavMenuItem label="Map Styles" widget="MapStyles" />
+                <NavMenuItem label="Layouts" widget="Layouts" />
                 <MenuSeparator />
                 <NavMenuItem label="Users" widget="Users" />
                 <NavMenuItem label="Groups" widget="Groups" />

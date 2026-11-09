@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { request } from './client';
+import { useCollection } from './collection';
 import type { EntityMeta } from './entity';
 import { listFetcher } from './list';
 import { useResource, useResourceCache } from './resource';
@@ -8,9 +9,9 @@ import type { LayoutItem } from '@/pages/dashboard/layout';
 const layoutsPath = '/api/v1/layouts';
 const preferencesPath = '/api/v1/me/preferences';
 
-// Global layouts are seen by everyone and written by admins; user layouts
-// exist only for their owner.
-export type LayoutScope = 'user' | 'global';
+// Global layouts are seen by everyone, group layouts by the members of their
+// groups; both are written by admins. User layouts exist only for their owner.
+export type LayoutScope = 'user' | 'group' | 'global';
 
 // Each monitor is shown in its own browser window; x, y, width and height place
 // it in the physical arrangement, in abstract grid units.
@@ -41,16 +42,27 @@ export type Layout = EntityMeta & {
   id: string;
   name: string;
   scope: LayoutScope;
-  owner: string | null; // username; null for global layouts
+  owner: string | null; // username; null unless scope is user
+  // Group names (as in whoami's groups) a group layout is shared with;
+  // empty for the other scopes.
+  groups: string[];
   monitors: Monitor[]; // at least one
   channels: Channel[];
 };
 
-export type NewLayout = Pick<Layout, 'name' | 'scope' | 'monitors' | 'channels'>;
+export type NewLayout = Pick<Layout, 'name' | 'scope' | 'monitors' | 'channels'> &
+  Partial<Pick<Layout, 'groups'>>;
 
-// Changing the scope needs the admin group: a layout made global loses its
-// owner, one made a user layout becomes the admin's own.
-export type LayoutUpdate = Partial<Pick<Layout, 'name' | 'scope' | 'monitors' | 'channels'>>;
+// Who sees a layout. Changing it needs the admin group; a scope other than
+// group drops the groups.
+export type Sharing = Pick<Layout, 'scope' | 'groups'>;
+
+// Changing the scope or groups needs the admin group: a layout made global or
+// a group layout loses its owner, one made a user layout becomes the admin's
+// own.
+export type LayoutUpdate = Partial<
+  Pick<Layout, 'name' | 'scope' | 'groups' | 'monitors' | 'channels'>
+>;
 
 export type Preferences = {
   // null: the built-in layout.
@@ -85,6 +97,9 @@ export function useLayouts(): {
   const layouts = useMemo(() => (data ? [...data].sort(byScopeAndName) : []), [data]);
   return { layouts, loaded: data !== undefined || error !== null, error, reload };
 }
+
+// Every user's layouts, for the admin widget (403 for others). Newest first.
+export const useAllLayouts = () => useCollection(`${layoutsPath}?all=true`, fetchLayouts);
 
 // The signed-in user's preferences, the same in every browser.
 export function usePreferences() {

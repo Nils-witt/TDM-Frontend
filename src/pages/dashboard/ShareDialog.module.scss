@@ -1,0 +1,13 @@
+// The directory's groups, scrolled when there are many.
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  padding-left: 1.5rem;
+}
+
+.add {
+  padding-left: 1.5rem;
+}

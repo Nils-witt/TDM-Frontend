@@ -20,6 +20,7 @@ const GroupsWidget = lazy(() => import('./Groups/Groups.tsx'));
 const AuditLogWidget = lazy(() => import('./AuditLog/AuditLog.tsx'));
 const MapWidget = lazy(() => import('./Map/Map.tsx'));
 const MapStylesWidget = lazy(() => import('./MapStyles/MapStyles.tsx'));
+const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 
 const Example: Widget = {
   id: 'Example',
@@ -300,6 +301,17 @@ const MapStyles: Widget = {
   Component: MapStylesWidget,
 };
 
+// Every user's dashboard layouts: rename, share with everyone or make
+// personal, export, delete.
+const Layouts: Widget = {
+  ...adminWidget,
+  id: 'Layouts',
+  name: 'Layouts',
+  description: 'Manages every user’s dashboard layouts and which are shared with everyone.',
+  defaultWidth: 80,
+  Component: LayoutsWidget,
+};
+
 // The options are the filter it starts with; the other admin widgets set them.
 const AuditLog: Widget = {
   ...adminWidget,
@@ -335,6 +347,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     LogbookTypes,
     FileTypes,
     MapStyles,
+    Layouts,
     Users,
     Groups,
     AuditLog,

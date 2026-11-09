@@ -1,8 +1,10 @@
+import type { LayoutScope } from '@/api/layouts';
 import { type FormEvent, useEffect, useState } from 'react';
 import { FormActions, FormError, WidgetForm } from '@/components/form';
 import { defaultItem } from './layout';
 import { menuBadgeClass } from '@/components/menu/menuClasses';
 import { useLayoutActions, useLayoutDraft, useLayoutView } from './layoutContext';
+import { scopeLabel } from './sharing';
 import { widgets } from './widgets/registry';
 import WidgetPicker from './WidgetPicker';
 import styles from './LayoutEditBar.module.scss';
@@ -58,7 +60,13 @@ function LayoutEditBar() {
   };
 
   // Admins may share a layout with everyone, or make a shared one their own.
-  const scopes = (['user', 'global'] as const).filter(canWrite);
+  // Groups are chosen with View → Share…, so group is offered only to keep
+  // a group layout's groups.
+  const scopes = (
+    draft.target?.scope === 'group'
+      ? (['user', 'group', 'global'] as const)
+      : (['user', 'global'] as const)
+  ).filter(canWrite);
 
   return (
     <>
@@ -77,18 +85,20 @@ function LayoutEditBar() {
             onChange={(e) => updateDraft({ name: e.target.value })}
           />
           {scopes.length < 2 ? (
-            <span className={menuBadgeClass}>
-              {draft.scope === 'global' ? 'Shared' : 'My layout'}
-            </span>
+            <span className={menuBadgeClass}>{scopeLabel(draft.scope)}</span>
           ) : (
             <select
               aria-label="Visible to"
               value={draft.scope}
-              onChange={(e) => updateDraft({ scope: e.target.value as 'user' | 'global' })}
+              onChange={(e) => updateDraft({ scope: e.target.value as LayoutScope })}
             >
               {scopes.map((s) => (
                 <option key={s} value={s}>
-                  {s === 'global' ? 'Shared (everyone)' : 'My layout'}
+                  {s === 'global'
+                    ? 'Shared (everyone)'
+                    : s === 'group'
+                      ? `Groups: ${draft.target?.groups.join(', ')}`
+                      : 'My layout'}
                 </option>
               ))}
             </select>

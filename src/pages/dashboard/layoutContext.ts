@@ -1,5 +1,5 @@
 import { createContext, use } from 'react';
-import type { Channel, Layout, LayoutScope, Monitor } from '@/api/layouts';
+import type { Channel, Layout, LayoutScope, Monitor, Sharing } from '@/api/layouts';
 import { dashboardLayout, type LayoutItem } from './layout';
 import type { LayoutFile } from './layoutFile';
 
@@ -88,9 +88,10 @@ export type LayoutView = {
   startEdit: (asNew: boolean) => void;
   startImport: (file: LayoutFile) => void;
   remove: (id: string) => Promise<void>;
-  // Admins only: global makes a layout usable by everyone, user makes it the
-  // admin's own. Rejects with the API's message.
-  setScope: (id: string, scope: LayoutScope) => Promise<void>;
+  // Admins only: global makes a layout usable by everyone, group by the
+  // members of its groups, user makes it the admin's own. Rejects with the
+  // API's message.
+  setSharing: (id: string, sharing: Sharing) => Promise<void>;
   startArrangementEdit: () => void;
 };
 
