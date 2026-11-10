@@ -54,6 +54,19 @@ export default defineConfig({
   // Fixed, since http://localhost:5173/callback is registered in Authentik
   // and listed in the API's CORS_ALLOWED_ORIGINS.
   server: { port: 5173, strictPort: true },
+  build: {
+    rollupOptions: {
+      output: {
+        // The MapLibre and pdf.js workers are imported as `.mjs` assets, and
+        // module workers must be served as JavaScript, which many servers'
+        // MIME tables (nginx's included) don't do for `.mjs`.
+        assetFileNames: ({ names }) =>
+          names.some((name) => name.endsWith('.mjs'))
+            ? 'assets/[name]-[hash].js'
+            : 'assets/[name]-[hash][extname]',
+      },
+    },
+  },
   // OCR loads these only when first used. Found then, Vite re-bundles its
   // deps under a new hash, and the open page's import of the old one fails
   // with 504 "Outdated Optimize Dep".
