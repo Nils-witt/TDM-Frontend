@@ -3,18 +3,20 @@ import type { AuthMode } from '@/auth/session';
 import { currentAccessToken, onAccessTokenRenewed, websocketUrl } from './client';
 import { setSocketLive } from './connectivity';
 import { changedPaths, eventsPath, everything, LiveContext, type ServerEvent } from './events';
+import { useReplica } from './replica';
 import { useResourceCache } from './resource';
 
 const minRetryDelay = 1000;
 const maxRetryDelay = 30_000;
 
 // Keeps a WebSocket to the API open while signed in and reloads the shown
-// resources whose entity types changed. With a token, it authenticates with
+// resources and replica scopes (replica.ts) whose entity types changed. With a token, it authenticates with
 // its first message and again after each renewal, as a browser cannot send
 // the Authorization header on a WebSocket; behind the client certificate
 // proxy the upgrade request is authenticated itself.
 function EventsProvider({ mode, children }: { mode: AuthMode; children: ReactNode }) {
   const cache = useResourceCache();
+  const replica = useReplica();
   const [live, setLive] = useState(true);
 
   useEffect(() => {
@@ -48,12 +50,17 @@ function EventsProvider({ mode, children }: { mode: AuthMode; children: ReactNod
           delay = minRetryDelay;
           // Whatever changed while disconnected was not announced, and what
           // failed to load before the first connection is the offline copy.
-          if (readyBefore || closedBefore) cache.reloadShown(everything);
+          if (readyBefore || closedBefore) {
+            cache.reloadShown(everything);
+            replica.syncShown('all');
+          }
           readyBefore = true;
         } else if (ev.type === 'changed') {
           cache.reloadShown(changedPaths(ev.types));
+          replica.syncShown(ev.types);
         } else if (ev.type === 'resync') {
           cache.reloadShown(everything);
+          replica.syncShown('all');
         }
       };
       // Also after a rejected or expired token (4401): the session renews it
@@ -78,7 +85,7 @@ function EventsProvider({ mode, children }: { mode: AuthMode; children: ReactNod
       clearTimeout(retry);
       ws?.close();
     };
-  }, [cache, mode]);
+  }, [cache, replica, mode]);
 
   const state = useMemo(() => ({ live }), [live]);
   return <LiveContext value={state}>{children}</LiveContext>;

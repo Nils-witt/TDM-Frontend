@@ -1,5 +1,5 @@
 import { offline, offlineMessage, reportNetworkError, reportRequestOk } from './connectivity';
-import { getBlob, putBlob } from './offlineStore';
+import { getContent, putContent } from './offlineStore';
 
 const trimSlashes = (url: string) => url.replace(/\/+$/, '');
 
@@ -178,7 +178,7 @@ export async function requestBlob(
 // cached copy is returned, if there is one.
 export async function requestCachedBlob(path: string, signal?: AbortSignal): Promise<Blob> {
   if (offline()) {
-    const cached = await getBlob(path);
+    const cached = await getContent(path);
     if (cached) return cached;
   }
   let blob: Blob;
@@ -186,11 +186,11 @@ export async function requestCachedBlob(path: string, signal?: AbortSignal): Pro
     blob = await requestBlob(path, signal);
   } catch (err) {
     if (err instanceof ApiError || signal?.aborted) throw err;
-    const cached = await getBlob(path);
+    const cached = await getContent(path);
     if (cached) return cached;
     throw err;
   }
-  void putBlob(path, blob);
+  void putContent(path, blob);
   return blob;
 }
 

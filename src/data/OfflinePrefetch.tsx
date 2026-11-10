@@ -1,17 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { requestCachedBlob } from '@/api/client';
 import { offline, onConnectivityChange } from '@/api/connectivity';
-import {
-  fetchLogEntries,
-  fetchLogFiles,
-  fileContentPath,
-  type LogFile,
-  logEntriesPath,
-  logFilesPath,
-} from '@/api/logbook';
-import { hasBlob } from '@/api/offlineStore';
-import { type Fetcher, type ResourceCache, useResourceCache } from '@/api/resource';
-import { fetchTasks, tasksPath } from '@/api/tasks';
+import { fileContentPath, type LogFile } from '@/api/logbook';
+import { hasDigest } from '@/api/offlineStore';
+import { type Replica, scopeKey, useReplica } from '@/api/replica';
 import { useMissions } from './missionsContext';
 
 // Keeps the logbook, files, tasks and attachment contents of every mission
@@ -19,50 +11,46 @@ import { useMissions } from './missionsContext';
 // without having been opened. Subscribing makes them count as shown: the
 // event stream keeps them current like what is on screen.
 
-const missionPaths = (id: string): [string, Fetcher][] => [
-  [logEntriesPath(id), fetchLogEntries as Fetcher],
-  [logFilesPath(id), fetchLogFiles as Fetcher],
-  [tasksPath(id), fetchTasks as Fetcher],
+const missionScopes = (id: string) => [
+  scopeKey('log_entries', id),
+  scopeKey('log_files', id),
+  scopeKey('tasks', id),
 ];
 
-// Subscribes to path; resolves with the unsubscribe once it has data or an
+// Subscribes to a scope; resolves with the unsubscribe once it has rows or an
 // error, so missions are loaded one after the other.
-function subscribeLoaded(
-  cache: ResourceCache,
-  path: string,
-  fetch: Fetcher,
-  onChange: () => void,
-): Promise<() => void> {
+function subscribeLoaded(replica: Replica, key: string, onChange: () => void): Promise<() => void> {
   return new Promise((resolve) => {
     let settled = false;
     const check = () => {
       onChange();
-      const s = cache.state(path);
-      if (!settled && (s.data !== undefined || s.error !== null)) {
+      if (!settled && !replica.snapshot(key).loading) {
         settled = true;
         resolve(unsubscribe);
       }
     };
-    const unsubscribe = cache.subscribe(path, check, fetch);
+    const unsubscribe = replica.subscribe(key, check);
     // Already loaded for a widget showing it: no change may follow.
     check();
   });
 }
 
 // One request at a time, while online, so the prefetch does not crowd out
-// what the user is looking at.
+// what the user is looking at. Contents are stored by digest: a file whose
+// content is already stored, as another file's say, is not downloaded.
 function createBlobQueue() {
-  const queued = new Set<string>();
+  // Content path → digest.
+  const queued = new Map<string, string>();
   let running = false;
 
   const run = async () => {
     if (running) return;
     running = true;
     try {
-      for (const path of queued) {
+      for (const [path, digest] of queued) {
         if (offline()) return;
         queued.delete(path);
-        if (await hasBlob(path)) continue;
+        if (await hasDigest(digest)) continue;
         await requestCachedBlob(path).catch(() => undefined);
       }
     } finally {
@@ -71,8 +59,8 @@ function createBlobQueue() {
   };
 
   return {
-    add(paths: string[]) {
-      paths.forEach((p) => queued.add(p));
+    add(files: readonly LogFile[]) {
+      files.forEach((f) => queued.set(fileContentPath(f.id), f.digest));
       void run();
     },
     run,
@@ -80,7 +68,7 @@ function createBlobQueue() {
 }
 
 function OfflinePrefetch() {
-  const cache = useResourceCache();
+  const replica = useReplica();
   const { items: missions } = useMissions();
   // Mission ID → unsubscribe, while prefetched.
   const subscribed = useRef(new Map<string, () => void>());
@@ -109,15 +97,15 @@ function OfflinePrefetch() {
           parts.forEach((u) => u());
         };
         subs.set(id, unsubscribeAll);
-        for (const [path, fetch] of missionPaths(id)) {
+        for (const key of missionScopes(id)) {
           const onChange =
-            path === logFilesPath(id)
+            key === scopeKey('log_files', id)
               ? () => {
-                  const files = cache.state(path).data as LogFile[] | undefined;
-                  if (files) queue.current.add(files.map((f) => fileContentPath(f.id)));
+                  const files = replica.snapshot(key).items as unknown as LogFile[];
+                  queue.current.add(files);
                 }
               : () => undefined;
-          const unsubscribe = await subscribeLoaded(cache, path, fetch, onChange);
+          const unsubscribe = await subscribeLoaded(replica, key, onChange);
           // Closed or gone meanwhile.
           if (removed) {
             unsubscribe();
@@ -130,7 +118,7 @@ function OfflinePrefetch() {
     return () => {
       stopped = true;
     };
-  }, [cache, missions]);
+  }, [replica, missions]);
 
   useEffect(() => {
     const subs = subscribed.current;

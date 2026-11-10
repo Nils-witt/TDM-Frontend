@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
-import { useCollection } from '@/api/collection';
-import { fetchMissions, missionsPath } from '@/api/missions';
+import type { Mission } from '@/api/missions';
+import { scopeKey, useTable } from '@/api/replica';
 import { MissionsContext } from './missionsContext';
 
+const missionsKey = scopeKey('missions');
+
 function MissionsProvider({ children }: { children: ReactNode }) {
-  const missions = useCollection(missionsPath, fetchMissions);
+  const missions = useTable<Mission>(missionsKey);
   return <MissionsContext value={missions}>{children}</MissionsContext>;
 }
 

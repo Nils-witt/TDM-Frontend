@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { type LogEntry, revokeLogEntry } from '@/api/logbook';
+import { useReplica } from '@/api/replica';
 import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import { filesByEntry, matchesType, partiesMatcher } from '../shared/logbookEntries';
@@ -20,17 +21,21 @@ export function useLogbookWidget(defaults: DefaultFilters) {
   const [revoking, setRevoking] = useState<LogEntry | null>(null);
   const revoke = useCallback((entry: LogEntry) => setRevoking(entry), []);
   const cancelRevoke = useCallback(() => setRevoking(null), []);
+  const replica = useReplica();
   const reloadEntries = logEntries.reload;
   const reloadFiles = logFiles.reload;
   const confirmRevoke = useCallback(
     async (reason: string) => {
       if (revoking === null) return;
       await revokeLogEntry(revoking.id, reason);
+      // Revoked rows are not listed: gone at once, before the sync confirms it.
+      replica.remove('log_entries', revoking.id);
+      for (const f of files(revoking.id)) replica.remove('log_files', f.id);
       setRevoking(null);
       setError(null);
       await Promise.all([reloadEntries(), reloadFiles()]);
     },
-    [revoking, reloadEntries, reloadFiles],
+    [revoking, files, replica, reloadEntries, reloadFiles],
   );
 
   const shown = useMemo(() => {
