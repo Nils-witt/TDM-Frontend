@@ -52,6 +52,7 @@ function Nav() {
                 <NavMenuItem label="Reports" widget="Reports" />
                 <MenuSeparator />
                 <NavMenuItem label="Missions" widget="MissionsList" />
+                <NavMenuItem label="Mission Archive" widget="MissionArchive" />
                 <NavMenuItem label="Mission Details" widget="MissionDetails" />
                 <NavMenuItem label="Active Missions" widget="ActiveMissions" />
                 <NavMenuItem label="Map" widget="Map" />

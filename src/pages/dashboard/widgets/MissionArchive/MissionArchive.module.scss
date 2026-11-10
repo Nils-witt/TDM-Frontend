@@ -1,0 +1,70 @@
+// The table uses the admin widgets' styles in shared/CatalogManager.module.scss.
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.more > summary {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+// Two columns of fields once the widget is wide enough.
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: 0.375rem 1rem;
+  margin-top: 0.375rem;
+}
+
+.results {
+  tbody tr {
+    cursor: pointer;
+  }
+
+  th {
+    padding: 0;
+  }
+}
+
+.selected,
+.results tbody tr.selected:hover {
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+.sort {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text);
+  }
+}
+
+.arrow {
+  font-size: 0.625rem;
+}
+
+// Looks like the cell's text.
+.select {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}

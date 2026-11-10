@@ -6,6 +6,7 @@ import type { Widget } from './widget';
 
 const ExampleWidget = lazy(() => import('./Example/Example.tsx'));
 const MissionsListWidget = lazy(() => import('./MissionsList/MissionsList.tsx'));
+const MissionArchiveWidget = lazy(() => import('./MissionArchive/MissionArchive.tsx'));
 const MissionDetailsWidget = lazy(() => import('./MissionDetails/MissionDetails.tsx'));
 const ActiveMissionsWidget = lazy(() => import('./ActiveMissions/ActiveMissions.tsx'));
 const LogbookWidget = lazy(() => import('./Logbook/Logbook.tsx'));
@@ -73,6 +74,36 @@ const MissionsList: Widget = {
     })),
   ],
   Component: MissionsListWidget,
+};
+
+// Searches every mission, closed ones included; status is the status filter
+// it starts with. Clicking a result selects it.
+const MissionArchive: Widget = {
+  id: 'MissionArchive',
+  name: 'Mission archive',
+  category: 'missions',
+  description: 'Searches all missions by their fields and lists the matches in a table.',
+  emits: ['selection'],
+  consumes: ['selection'],
+  minWidth: 30,
+  maxWidth: 200,
+  minHeight: 15,
+  maxHeight: 800,
+  defaultWidth: 60,
+  defaultHeight: 40,
+  options: [
+    {
+      key: 'status',
+      label: 'Start with status',
+      type: 'select',
+      default: '',
+      choices: [
+        { value: '', label: 'Any' },
+        ...missionStatuses.map((s) => ({ value: s.value, label: s.label })),
+      ],
+    },
+  ],
+  Component: MissionArchiveWidget,
 };
 
 const MissionDetails: Widget = {
@@ -418,6 +449,7 @@ const AuditLog: Widget = {
 export const widgets: Record<string, Widget> = Object.fromEntries(
   [
     MissionsList,
+    MissionArchive,
     MissionDetails,
     MapView,
     ActiveMissions,
