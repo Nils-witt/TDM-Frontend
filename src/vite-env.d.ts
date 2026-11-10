@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/react" />
 
 interface ImportMetaEnv {
   // Origin of universalGoApi, e.g. http://localhost:8080; empty for the SPA's own origin.

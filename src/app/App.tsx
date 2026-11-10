@@ -9,6 +9,7 @@ import Login from '@/pages/Login';
 import ResponsiveShell from '@/responsive/ResponsiveShell';
 import { SessionContext } from './session';
 import Shell from './Shell';
+import UpdatePrompt from './update/UpdatePrompt';
 
 type State =
   | { status: 'loading' }
@@ -16,6 +17,15 @@ type State =
   | { status: 'signedOut'; error: string | null }
   | { status: 'signedIn'; principal: Principal; mode: AuthMode };
 function App() {
+  return (
+    <>
+      <Session />
+      <UpdatePrompt />
+    </>
+  );
+}
+
+function Session() {
   const [state, setState] = useState<State>({ status: 'loading' });
 
   const load = useCallback(() => {
