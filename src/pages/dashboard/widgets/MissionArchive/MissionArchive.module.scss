@@ -68,3 +68,24 @@
   text-align: left;
   cursor: pointer;
 }
+
+.note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+// The previous page stays visible, dimmed, while the next one loads.
+.busy {
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}

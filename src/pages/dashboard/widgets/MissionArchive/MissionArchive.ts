@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react';
 import type { MissionType, MissionTypeGroup } from '@/api/catalogs';
-import type { Mission } from '@/api/missions';
+import { useOffline } from '@/api/connectivity';
+import {
+  type Mission,
+  type MissionSearchPage,
+  type MissionSortKey,
+  missionSearchPath,
+} from '@/api/missions';
+import { useResource } from '@/api/resource';
 import { useCatalogs } from '@/data/catalogContext';
 import { useMissions } from '@/data/missionsContext';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
@@ -43,7 +50,7 @@ export const emptyFilter: ArchiveFilter = {
 export const isEmptyFilter = (f: ArchiveFilter) =>
   (Object.keys(f) as (keyof ArchiveFilter)[]).every((k) => f[k].trim() === '');
 
-export type SortKey = 'created' | 'event' | 'type' | 'location' | 'city' | 'status';
+export type SortKey = MissionSortKey;
 export type Sort = { key: SortKey; descending: boolean };
 
 type TypeCatalogs = {
@@ -145,30 +152,86 @@ function comparator(sort: Sort, c: TypeCatalogs): (a: Mission, b: Mission) => nu
   };
 }
 
-// Searches the missions (every status, so the closed ones are loaded while it
-// is shown) in the browser, so results follow live changes without another
-// request.
+export const pageSize = 50;
+
+// The API's search parameters; the dates become local day boundaries.
+export function searchPath(f: ArchiveFilter, sort: Sort, page: number): string {
+  return missionSearchPath({
+    q: f.text,
+    event: f.event,
+    status: f.status,
+    type_group: f.typeGroup,
+    type: f.type,
+    street: f.street,
+    city: f.city,
+    district: f.district,
+    object: f.objectName,
+    callee: f.callee,
+    tag: f.tag,
+    created_from: f.createdFrom && new Date(dayStart(f.createdFrom)).toISOString(),
+    created_to: f.createdTo && new Date(dayStart(f.createdTo, 1)).toISOString(),
+    sort: sort.key,
+    order: sort.descending ? 'desc' : 'asc',
+    page,
+    page_size: pageSize,
+  });
+}
+
+// Online, the API searches, sorts and pages every mission, those closed long
+// ago included (the synced missions hold only recently closed ones). Its pages
+// reload on mission events, as the path lies under /api/v1/missions. Offline,
+// the missions stored in the browser are searched, sorted and paged instead.
 export function useMissionArchive(initialStatus: string) {
-  const missions = useMissions({ closed: true });
+  const offline = useOffline();
   const { missionTypes, missionTypeGroups } = useCatalogs();
-  const [filter, setFilter] = useState<ArchiveFilter>({ ...emptyFilter, status: initialStatus });
+  const [filter, setFilterState] = useState<ArchiveFilter>({
+    ...emptyFilter,
+    status: initialStatus,
+  });
   const [sort, setSort] = useState<Sort>({ key: 'created', descending: true });
+  const [page, setPage] = useState(1);
   const { selectedId, update } = useDashboard();
+
+  const remote = useResource<MissionSearchPage>(offline ? null : searchPath(filter, sort, page));
+  const local = useMissions({ closed: offline });
+
+  // The last page stays shown while the next one loads, so the table does
+  // not collapse on every page turn.
+  const [shown, setShown] = useState<MissionSearchPage | undefined>(undefined);
+  if (remote.data !== undefined && remote.data !== shown) setShown(remote.data);
 
   const catalogs = useMemo(
     () => ({ types: missionTypes.byId, groups: missionTypeGroups.byId }),
     [missionTypes.byId, missionTypeGroups.byId],
   );
-  const results = useMemo(
-    () => missions.items.filter(matcher(filter, catalogs)).sort(comparator(sort, catalogs)),
-    [missions.items, filter, sort, catalogs],
+  const localMatches = useMemo(
+    () =>
+      offline ? local.items.filter(matcher(filter, catalogs)).sort(comparator(sort, catalogs)) : [],
+    [offline, local.items, filter, sort, catalogs],
   );
 
+  const total = offline ? localMatches.length : (shown?.total ?? 0);
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  // Matches may vanish (a mission was deleted) and leave the page past the end.
+  const loaded = offline || remote.data !== undefined;
+  if (loaded && page > pages) setPage(pages);
+
+  const results = offline
+    ? localMatches.slice((page - 1) * pageSize, page * pageSize)
+    : (shown?.missions ?? []);
+
+  // A new filter or order starts on the first page.
+  const setFilter = (f: ArchiveFilter) => {
+    setFilterState(f);
+    setPage(1);
+  };
   // A second click on the sorted column reverses it; dates start newest first.
-  const sortBy = (key: SortKey) =>
+  const sortBy = (key: SortKey) => {
     setSort((s) =>
       s.key === key ? { key, descending: !s.descending } : { key, descending: key === 'created' },
     );
+    setPage(1);
+  };
 
   return {
     filter,
@@ -176,9 +239,16 @@ export function useMissionArchive(initialStatus: string) {
     sort,
     sortBy,
     results,
-    total: missions.items.length,
-    loading: missions.loading,
-    error: missions.error,
+    total,
+    page,
+    pages,
+    setPage,
+    offline,
+    // Nothing to show yet; a later page turn keeps the last page meanwhile.
+    loading: offline ? local.loading : shown === undefined && remote.error === null,
+    // Loading another page.
+    busy: !offline && remote.data === undefined && remote.error === null,
+    error: offline ? local.error : remote.error,
     catalogs,
     selectedId,
     select: (id: string) => update({ selectedId: id }),

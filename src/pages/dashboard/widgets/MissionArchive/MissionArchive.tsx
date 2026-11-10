@@ -34,22 +34,33 @@ function MissionArchiveWidget({ options }: WidgetProps) {
         filter={archive.filter}
         onApply={archive.setFilter}
       />
+      {archive.offline && (
+        <p className={styles.note}>Offline: searching only the missions stored on this device.</p>
+      )}
       <SectionHeading>
-        {archive.loading ? 'Missions' : `${archive.results.length} of ${archive.total} missions`}
+        {archive.loading
+          ? 'Missions'
+          : `${archive.total} ${archive.total === 1 ? 'mission' : 'missions'}`}
       </SectionHeading>
       {archive.loading ? (
         <Spinner compact />
       ) : archive.results.length === 0 ? (
         <EmptyState className="">No missions match.</EmptyState>
       ) : (
-        <ResultTable
-          missions={archive.results}
-          catalogs={archive.catalogs}
-          sort={archive.sort}
-          sortBy={archive.sortBy}
-          selectedId={archive.selectedId}
-          select={archive.select}
-        />
+        <>
+          <ResultTable
+            missions={archive.results}
+            catalogs={archive.catalogs}
+            sort={archive.sort}
+            sortBy={archive.sortBy}
+            selectedId={archive.selectedId}
+            select={archive.select}
+            busy={archive.busy}
+          />
+          {archive.pages > 1 && (
+            <Pager page={archive.page} pages={archive.pages} setPage={archive.setPage} />
+          )}
+        </>
       )}
     </div>
   );
@@ -206,6 +217,7 @@ function ResultTable({
   sortBy,
   selectedId,
   select,
+  busy,
 }: {
   missions: readonly Mission[];
   catalogs: Parameters<typeof typeName>[1];
@@ -213,9 +225,10 @@ function ResultTable({
   sortBy: (key: SortKey) => void;
   selectedId: string | null;
   select: (id: string) => void;
+  busy: boolean;
 }) {
   return (
-    <div className={table.tableWrap}>
+    <div className={`${table.tableWrap} ${busy ? styles.busy : ''}`} aria-busy={busy}>
       <table className={`${table.table} ${styles.results}`}>
         <thead>
           <tr>
@@ -266,6 +279,53 @@ function ResultTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+function Pager({
+  page,
+  pages,
+  setPage,
+}: {
+  page: number;
+  pages: number;
+  setPage: (page: number) => void;
+}) {
+  return (
+    <nav className={styles.pager} aria-label="Result pages">
+      <button
+        type="button"
+        className="btn"
+        disabled={page <= 1}
+        onClick={() => setPage(1)}
+        aria-label="First page"
+      >
+        «
+      </button>
+      <button type="button" className="btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+        ‹ Previous
+      </button>
+      <span className="muted" aria-live="polite">
+        Page {page} of {pages}
+      </span>
+      <button
+        type="button"
+        className="btn"
+        disabled={page >= pages}
+        onClick={() => setPage(page + 1)}
+      >
+        Next ›
+      </button>
+      <button
+        type="button"
+        className="btn"
+        disabled={page >= pages}
+        onClick={() => setPage(pages)}
+        aria-label="Last page"
+      >
+        »
+      </button>
+    </nav>
   );
 }
 

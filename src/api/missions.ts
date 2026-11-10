@@ -43,6 +43,55 @@ export const missionsPath = '/api/v1/missions';
 
 export const fetchMissions = listFetcher<Mission>('missions');
 
+// The query parameters of GET /api/v1/missions/search. Text ones match
+// case-insensitively as substrings; created_from (inclusive) and created_to
+// (exclusive) are RFC 3339 timestamps. Unlike the mission list, it finds
+// missions closed any time ago. Pages are numbered from 1.
+export type MissionSearch = Partial<
+  Record<
+    | 'q'
+    | 'event'
+    | 'status'
+    | 'type_group'
+    | 'type'
+    | 'street'
+    | 'city'
+    | 'district'
+    | 'object'
+    | 'callee'
+    | 'tag'
+    | 'created_from'
+    | 'created_to',
+    string
+  >
+> & {
+  sort?: MissionSortKey;
+  order?: 'asc' | 'desc';
+  page?: number;
+  page_size?: number;
+};
+
+// Text keys compare case-insensitively; equal keys are ordered newest first.
+export type MissionSortKey = 'created' | 'event' | 'type' | 'location' | 'city' | 'status';
+
+// total counts the matches on all pages.
+export type MissionSearchPage = {
+  missions: Mission[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+// Empty parameters are left out, so equal searches share one cached path.
+export function missionSearchPath(search: MissionSearch): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(search).sort(([a], [b]) => a.localeCompare(b))) {
+    const v = String(value ?? '').trim();
+    if (v) params.set(key, v);
+  }
+  return `${missionsPath}/search?${params}`;
+}
+
 // The object name if set, else the street with its house number.
 export function shortLocation(m: Mission): string {
   return (
