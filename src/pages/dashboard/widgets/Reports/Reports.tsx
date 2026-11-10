@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useOffline } from '@/api/connectivity';
 import { fetchUsers, memberName, type User, usersPath } from '@/api/directory';
 import type { Mission } from '@/api/missions';
 import { type Report, reportPdfPath, type Signature, useReports } from '@/api/reports';
@@ -45,6 +46,7 @@ const userById = (users: Users, id: string) => {
 // in a window, as they need the token.
 function ReportsWidget() {
   const { principal } = useSession();
+  const offline = useOffline();
   const missions = useMissions();
   const { data: userList } = useResource<User[]>(usersPath, fetchUsers);
   const users = useMemo<Users>(() => {
@@ -116,7 +118,12 @@ function ReportsWidget() {
           <option value="signed">Signed</option>
           <option value="unsigned">Unsigned</option>
         </select>
-        <button type="button" className="btn primary" onClick={() => setCreating(true)}>
+        <button
+          type="button"
+          className="btn primary"
+          disabled={offline}
+          onClick={() => setCreating(true)}
+        >
           Create report
         </button>
       </div>
@@ -129,8 +136,8 @@ function ReportsWidget() {
           reports={reports.items}
           missions={missions.byId}
           users={users}
-          canSign={(r) => canSign(r, principal)}
-          canShare={(r) => canShare(r, principal)}
+          canSign={(r) => !offline && canSign(r, principal)}
+          canShare={(r) => !offline && canShare(r, principal)}
           onSign={setSigning}
           onShare={setSharing}
           onOpen={openPdf}

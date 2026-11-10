@@ -1,4 +1,5 @@
 import { type ChangeEvent, useRef, useState } from 'react';
+import { useOffline } from '@/api/connectivity';
 import Menu from '../components/menu/Menu';
 import MenuItem from '../components/menu/MenuItem';
 import MenuSeparator from '../components/menu/MenuSeparator';
@@ -27,6 +28,9 @@ function ViewMenu() {
     setSharing,
   } = useLayoutView();
   const importInput = useRef<HTMLInputElement>(null);
+  // Layouts are stored by the API, so offline they cannot change.
+  const offline = useOffline();
+  const locked = editing || offline;
   const multiMonitor = active.monitors.length > 1;
 
   const makeDefault = () =>
@@ -91,37 +95,34 @@ function ViewMenu() {
           </>
         )}
         <MenuSeparator />
-        <MenuItem
-          disabled={editing || active.id === userDefault}
-          onClick={() => void makeDefault()}
-        >
+        <MenuItem disabled={locked || active.id === userDefault} onClick={() => void makeDefault()}>
           Use as My Default
         </MenuItem>
         <MenuItem
-          disabled={editing || !canEdit(active) || !monitor}
+          disabled={locked || !canEdit(active) || !monitor}
           onClick={() => startEdit(false)}
         >
           {multiMonitor ? 'Edit Monitor Layout' : 'Edit Layout'}
         </MenuItem>
-        <MenuItem disabled={editing || !canEdit(active)} onClick={startArrangementEdit}>
+        <MenuItem disabled={locked || !canEdit(active)} onClick={startArrangementEdit}>
           Edit Monitors…
         </MenuItem>
-        <MenuItem disabled={editing} onClick={() => startEdit(true)}>
+        <MenuItem disabled={locked} onClick={() => startEdit(true)}>
           New Layout…
         </MenuItem>
         {canWrite('global') && (
-          <MenuItem disabled={editing || !activeStored} onClick={() => setSharingOpen(true)}>
+          <MenuItem disabled={locked || !activeStored} onClick={() => setSharingOpen(true)}>
             Share…
           </MenuItem>
         )}
-        <MenuItem disabled={editing || !canEdit(active)} onClick={removeActive}>
+        <MenuItem disabled={locked || !canEdit(active)} onClick={removeActive}>
           Delete Layout…
         </MenuItem>
         <MenuSeparator />
         <MenuItem disabled={editing} onClick={() => exportLayout(active)}>
           Export Layout…
         </MenuItem>
-        <MenuItem disabled={editing} onClick={() => importInput.current?.click()}>
+        <MenuItem disabled={locked} onClick={() => importInput.current?.click()}>
           Import Layout…
         </MenuItem>
       </Menu>

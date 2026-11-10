@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import type { AuthMode } from '@/auth/session';
 import { currentAccessToken, onAccessTokenRenewed, websocketUrl } from './client';
+import { setSocketLive } from './connectivity';
 import { changedPaths, eventsPath, everything, LiveContext, type ServerEvent } from './events';
 import { useResourceCache } from './resource';
 
@@ -21,6 +22,7 @@ function EventsProvider({ mode, children }: { mode: AuthMode; children: ReactNod
     let retry: ReturnType<typeof setTimeout> | undefined;
     let delay = minRetryDelay;
     let readyBefore = false;
+    let closedBefore = false;
     let stopped = false;
 
     const sendToken = () => {
@@ -42,9 +44,11 @@ function EventsProvider({ mode, children }: { mode: AuthMode; children: ReactNod
         }
         if (ev.type === 'ready') {
           setLive(true);
+          setSocketLive(true);
           delay = minRetryDelay;
-          // Whatever changed while disconnected was not announced.
-          if (readyBefore) cache.reloadShown(everything);
+          // Whatever changed while disconnected was not announced, and what
+          // failed to load before the first connection is the offline copy.
+          if (readyBefore || closedBefore) cache.reloadShown(everything);
           readyBefore = true;
         } else if (ev.type === 'changed') {
           cache.reloadShown(changedPaths(ev.types));
@@ -55,9 +59,10 @@ function EventsProvider({ mode, children }: { mode: AuthMode; children: ReactNod
       // Also after a rejected or expired token (4401): the session renews it
       // or a 401 of the next request shows the login page.
       socket.onclose = () => {
-        if (ws !== socket) return;
+        if (ws !== socket || stopped) return;
+        closedBefore = true;
         setLive(false);
-        if (stopped) return;
+        setSocketLive(false);
         retry = setTimeout(connect, delay);
         delay = Math.min(delay * 2, maxRetryDelay);
       };
@@ -67,6 +72,8 @@ function EventsProvider({ mode, children }: { mode: AuthMode; children: ReactNod
     const unsubscribe = onAccessTokenRenewed(sendToken);
     return () => {
       stopped = true;
+      // Not offline once signed out: the login page has no stream.
+      setSocketLive(true);
       unsubscribe();
       clearTimeout(retry);
       ws?.close();

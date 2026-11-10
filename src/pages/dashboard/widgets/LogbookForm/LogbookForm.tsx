@@ -47,7 +47,10 @@ function LogbookFormWidget({ options }: WidgetProps) {
         <p className="muted">
           {showMission && mission.occurred_event}
           {showMission && readOnly && ' · '}
-          {readOnly && 'Closed, the logbook is read-only'}
+          {readOnly &&
+            (mission.status === 'closed'
+              ? 'Closed, the logbook is read-only'
+              : 'Offline, the logbook is read-only')}
         </p>
       )
     );

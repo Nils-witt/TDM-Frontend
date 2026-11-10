@@ -1,4 +1,5 @@
 import { type FormEvent, useId, useState } from 'react';
+import { useOffline } from '@/api/connectivity';
 import {
   deleteLayout,
   type Layout,
@@ -190,6 +191,7 @@ function LayoutRow({ entry, mine, rename, onShare, onDelete, onHistory }: Layout
   const [name, setName] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const formId = useId();
+  const offline = useOffline();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -245,10 +247,15 @@ function LayoutRow({ entry, mine, rename, onShare, onDelete, onHistory }: Layout
           </form>
         ) : (
           <span className="row">
-            <button type="button" className="btn" onClick={() => setName(entry.name)}>
+            <button
+              type="button"
+              className="btn"
+              disabled={offline}
+              onClick={() => setName(entry.name)}
+            >
               Rename
             </button>
-            <button type="button" className="btn" onClick={onShare}>
+            <button type="button" className="btn" disabled={offline} onClick={onShare}>
               Share…
             </button>
             <button type="button" className="btn" onClick={() => exportLayout(entry)}>
@@ -262,6 +269,7 @@ function LayoutRow({ entry, mine, rename, onShare, onDelete, onHistory }: Layout
               className="icon-btn"
               aria-label={`Delete ${entry.name}`}
               title="Delete"
+              disabled={offline}
               onClick={onDelete}
             >
               <DeleteIcon />

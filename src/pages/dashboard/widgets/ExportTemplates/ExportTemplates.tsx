@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useOffline } from '@/api/connectivity';
 import { type ExportTemplate, exportTemplatesApi, useExportTemplates } from '@/api/exportTemplates';
 import { useErrorState } from '@/api/resource';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -37,6 +38,7 @@ const starter = `<style>
 function ExportTemplatesWidget() {
   const templates = useExportTemplates();
   const { openWidget } = useWidgetWindows();
+  const offline = useOffline();
   const [error, setError] = useErrorState(templates.error);
   const [editing, setEditing] = useState<ExportTemplate | 'new' | null>(null);
   const [deleting, setDeleting] = useState<ExportTemplate | null>(null);
@@ -103,7 +105,12 @@ function ExportTemplatesWidget() {
                   </td>
                   <td className={table.actions}>
                     <span className="row">
-                      <button type="button" className="btn" onClick={() => setEditing(t)}>
+                      <button
+                        type="button"
+                        className="btn"
+                        disabled={offline}
+                        onClick={() => setEditing(t)}
+                      >
                         Edit
                       </button>
                       <button
@@ -120,6 +127,7 @@ function ExportTemplatesWidget() {
                         className="icon-btn"
                         aria-label={`Delete the export template ${t.name}`}
                         title="Delete"
+                        disabled={offline}
                         onClick={() => setDeleting(t)}
                       >
                         <DeleteIcon />
@@ -133,7 +141,12 @@ function ExportTemplatesWidget() {
         </div>
       )}
       <div className="row">
-        <button type="button" className="btn primary" onClick={() => setEditing('new')}>
+        <button
+          type="button"
+          className="btn primary"
+          disabled={offline}
+          onClick={() => setEditing('new')}
+        >
           Add template
         </button>
       </div>

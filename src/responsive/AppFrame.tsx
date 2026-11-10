@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router';
 import { useSession } from '@/app/session';
+import OfflineBanner from '@/components/OfflineBanner';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
 import LiveIndicator from '@/nav/actions/LiveIndicator';
 import { responsivePaths } from './paths';
@@ -52,6 +53,7 @@ function AppFrame() {
         ))}
       </nav>
       <main className={styles.main}>
+        <OfflineBanner />
         <Outlet />
       </main>
     </div>

@@ -6,6 +6,7 @@ import {
   type MissionStatus,
   patchMission,
 } from '@/api/missions';
+import { useOffline } from '@/api/connectivity';
 import { useMissions } from '@/data/missionsContext';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
@@ -66,7 +67,10 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   // as the mission type's group, drop it too.
   const [resetKey, setResetKey] = useState(0);
   const creating = mission === null;
-  const readOnly = mission?.status === 'closed';
+  const offline = useOffline();
+  const closed = mission?.status === 'closed';
+  // Offline nothing can be saved, a new mission neither.
+  const readOnly = closed || offline;
   const base = mission ?? blank;
 
   const value = (k: TextKey) => edits[k] ?? base[k];
@@ -166,6 +170,7 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
 
   return {
     creating,
+    closed,
     readOnly,
     value,
     status: value('status') as MissionStatus,

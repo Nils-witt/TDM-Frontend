@@ -2,7 +2,7 @@ import { type ReactNode, useState } from 'react';
 import { createResourceCache, ResourceCacheContext } from './resource';
 
 function ResourceProvider({ children }: { children: ReactNode }) {
-  const [cache] = useState(createResourceCache);
+  const [cache] = useState(() => createResourceCache({ persist: true }));
   return <ResourceCacheContext value={cache}>{children}</ResourceCacheContext>;
 }
 

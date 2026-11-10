@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router';
+import { useOffline } from '@/api/connectivity';
 import { mobileBasePath, preferDesktop } from '@/app/mobileRoute';
 import { useSession } from '@/app/session';
 import { useSelectedMission } from '@/data/selectedMissionContext';
@@ -40,6 +41,8 @@ export function useNavActions() {
   const canSave = useCanSaveMission();
   const { openWidget } = useWidgetWindows();
   const navigate = useNavigate();
+  // Closing and reports write to the API.
+  const offline = useOffline();
 
   const run = (action: NavAction) => {
     switch (action) {
@@ -83,11 +86,11 @@ export function useNavActions() {
       case 'clearMission':
         return selectedId === null;
       case 'closeMission':
-        return mission === null || mission.status === 'closed';
+        return offline || mission === null || mission.status === 'closed';
       case 'printMission':
-        return mission === null;
+        return offline || mission === null;
       case 'createReport':
-        return mission === null || !isFinished(mission);
+        return offline || mission === null || !isFinished(mission);
       default:
         return false;
     }

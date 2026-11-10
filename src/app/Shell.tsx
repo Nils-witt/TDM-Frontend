@@ -1,6 +1,7 @@
 import EventsProvider from '@/api/EventsProvider';
 import ResourceProvider from '@/api/ResourceProvider';
 import { useSession } from '@/app/session';
+import OfflineBanner from '@/components/OfflineBanner';
 import WidgetWindows from '@/components/widgetWindow/WidgetWindows';
 import DataProvider from '@/data/DataProvider';
 import SelectedMissionProvider from '@/data/SelectedMissionProvider';
@@ -21,6 +22,7 @@ function Shell() {
                 <WidgetWindows>
                   <Nav />
                   <Dashboard />
+                  <OfflineBanner floating />
                 </WidgetWindows>
               </SelectedMissionProvider>
             </DashboardProvider>

@@ -1,0 +1,26 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 6px 16px;
+  font-size: 0.875rem;
+  background: var(--alert-warning-bg);
+  color: var(--alert-warning-fg);
+}
+
+.floating {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  z-index: 20;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}

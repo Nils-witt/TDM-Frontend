@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { requestBlob } from '@/api/client';
+import { requestCachedBlob } from '@/api/client';
 
 export type BlobContent =
   | { state: 'loading' }
@@ -19,7 +19,7 @@ export function useBlobContent(path: string, mediaType: string, textBytes = 0): 
     (async () => {
       // The blob gets the file's own media type: without it a PDF or image
       // would not render from the object URL.
-      const blob = new Blob([await requestBlob(path, ctrl.signal)], { type: mediaType });
+      const blob = new Blob([await requestCachedBlob(path, ctrl.signal)], { type: mediaType });
       const shown = textBytes > 0 ? await blob.slice(0, textBytes).text() : null;
       if (ctrl.signal.aborted) return;
       url = URL.createObjectURL(blob);

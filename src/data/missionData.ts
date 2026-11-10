@@ -9,6 +9,7 @@ import {
   logFilesPath,
 } from '@/api/logbook';
 import type { Mission } from '@/api/missions';
+import { useOffline } from '@/api/connectivity';
 import { fetchTasks, type Task, tasksPath } from '@/api/tasks';
 import { useMissions } from './missionsContext';
 
@@ -16,6 +17,7 @@ import { useMissions } from './missionsContext';
 export type MissionData = {
   mission: Mission | null;
   // Closed is final: the mission, its log and its tasks can no longer change.
+  // Offline nothing can be changed.
   readOnly: boolean;
   logEntries: Collection<LogEntry>;
   logFiles: Collection<LogFile>;
@@ -34,7 +36,8 @@ export function useMissionData(missionId: string | null): MissionData {
   const logFiles = useCollection(id && logFilesPath(id), fetchLogFiles);
   const tasks = useCollection(id && tasksPath(id), fetchTasks);
 
-  const readOnly = mission?.status === 'closed';
+  const offline = useOffline();
+  const readOnly = mission?.status === 'closed' || offline;
 
   return useMemo(
     () => ({ mission, readOnly, logEntries, logFiles, tasks }),

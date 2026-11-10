@@ -1,4 +1,5 @@
 import { type ChangeEvent, useId, useRef, useState } from 'react';
+import { useOffline } from '@/api/connectivity';
 import { missionTypeGroupsApi, missionTypesApi } from '@/api/catalogs';
 import Alert from '@/components/Alert';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -51,6 +52,7 @@ function CsvActions() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const delimiterId = useId();
+  const offline = useOffline();
 
   const exportCsv = () => {
     const blob = new Blob(['﻿', toCsv(groups.items, types.items, delimiter)], {
@@ -127,7 +129,7 @@ function CsvActions() {
           <button
             type="button"
             className="btn"
-            disabled={busy}
+            disabled={busy || offline}
             onClick={() => fileInput.current?.click()}
           >
             {busy ? 'Importing…' : 'Import CSV'}

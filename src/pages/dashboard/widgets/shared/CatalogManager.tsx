@@ -1,4 +1,5 @@
 import { type FormEvent, useId, useState } from 'react';
+import { useOffline } from '@/api/connectivity';
 import type { AuditEntityType } from '@/api/audit';
 import type { CatalogApi, CatalogEntry, CatalogInput } from '@/api/catalogs';
 import type { Collection } from '@/api/collection';
@@ -171,6 +172,7 @@ function CreateEntry({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const id = useId();
+  const offline = useOffline();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -186,6 +188,9 @@ function CreateEntry({
       setBusy(false);
     }
   };
+
+  // Offline nothing can be created.
+  if (offline) return null;
 
   return (
     <WidgetForm onSubmit={(e) => void submit(e)}>
@@ -241,6 +246,7 @@ function EntryRow({ entry, parents, parentName, save, onDelete, onHistory }: Ent
   const [edit, setEdit] = useState<{ name: string; parent: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const formId = useId();
+  const offline = useOffline();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -316,6 +322,7 @@ function EntryRow({ entry, parents, parentName, save, onDelete, onHistory }: Ent
             <button
               type="button"
               className="btn"
+              disabled={offline}
               onClick={() => setEdit({ name: entry.name, parent: parentId(entry) })}
             >
               Edit
@@ -328,6 +335,7 @@ function EntryRow({ entry, parents, parentName, save, onDelete, onHistory }: Ent
               className="icon-btn"
               aria-label={`Delete ${entry.name}`}
               title="Delete"
+              disabled={offline}
               onClick={onDelete}
             >
               <DeleteIcon />

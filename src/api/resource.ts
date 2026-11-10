@@ -1,8 +1,10 @@
 import { createContext, use, useCallback, useState, useSyncExternalStore } from 'react';
-import { request } from './client';
+import { ApiError, request } from './client';
+import { getResource, putResource } from './offlineStore';
 
-// A failed reload keeps the data loaded before.
-export type ResourceState<T> = { data: T | undefined; error: string | null };
+// A failed reload keeps the data loaded before. savedAt is when data was
+// loaded; older than this page load when it came from the offline cache.
+export type ResourceState<T> = { data: T | undefined; error: string | null; savedAt?: number };
 
 // Loads the data of a path; request(path) by default. One that pages through a
 // list, say. It must be stable (module level): it is a hook dependency.
@@ -37,8 +39,19 @@ export type ResourceCache = {
 
 const initial: ResourceState<never> = { data: undefined, error: null };
 
-export function createResourceCache(): ResourceCache {
+// persist keeps every loaded path in the offline store (api/offlineStore.ts)
+// and shows the stored copy until the first load answers, or instead of it
+// while the API cannot be reached.
+export function createResourceCache({ persist = false } = {}): ResourceCache {
   const entries = new Map<string, Entry>();
+
+  const restore = (path: string, e: Entry) => {
+    void getResource(path).then((saved) => {
+      if (saved && e.state.data === undefined) {
+        set(e, { data: saved.data, error: null, savedAt: saved.savedAt });
+      }
+    });
+  };
 
   const entry = (path: string, fetch?: Fetcher): Entry => {
     let e = entries.get(path);
@@ -51,6 +64,7 @@ export function createResourceCache(): ResourceCache {
         queued: null,
       };
       entries.set(path, e);
+      if (persist) restore(path, e);
     }
     if (fetch) e.fetch = fetch;
     return e;
@@ -65,8 +79,16 @@ export function createResourceCache(): ResourceCache {
     const p = e
       .fetch(path)
       .then(
-        (data) => set(e, { data, error: null }),
-        (err: Error) => set(e, { ...e.state, error: err.message }),
+        (data) => {
+          set(e, { data, error: null, savedAt: Date.now() });
+          if (persist) void putResource(path, data);
+        },
+        (err: Error) => {
+          // Without an answer, data already shown stays shown without an
+          // error: the offline banner says why it is not current.
+          if (!(err instanceof ApiError) && e.state.data !== undefined) return;
+          set(e, { ...e.state, error: err.message });
+        },
       )
       .then(() => {
         e.inflight = null;
@@ -99,7 +121,8 @@ export function createResourceCache(): ResourceCache {
 
   const put = (path: string, data: unknown) => {
     const e = entry(path);
-    set(e, { data, error: null });
+    set(e, { data, error: null, savedAt: Date.now() });
+    if (persist) void putResource(path, data);
     // A load running now may have been answered before the write.
     if (e.inflight) void load(path);
   };

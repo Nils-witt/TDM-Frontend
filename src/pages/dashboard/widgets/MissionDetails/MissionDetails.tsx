@@ -31,6 +31,7 @@ export function MissionForm({
 }) {
   const {
     creating,
+    closed,
     readOnly,
     value,
     status,
@@ -88,7 +89,7 @@ export function MissionForm({
   return (
     <>
       <WidgetForm ref={setForm} onSubmit={(e) => void save(e)}>
-        {readOnly && (
+        {closed && (
           <Alert severity="warning">Closed: this mission and its logbook are read-only.</Alert>
         )}
         <Section legend="Created">

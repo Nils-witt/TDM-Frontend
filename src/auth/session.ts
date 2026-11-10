@@ -1,13 +1,17 @@
 import { type User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import { type AuthConfig, getAuthConfig, type Principal, whoAmI } from '@/api/auth';
 import { accessTokenRenewed, ApiError, setAccessTokenSource, setApiTarget } from '@/api/client';
+import { isNetworkError } from '@/api/connectivity';
+import { clearOffline, loadSession, saveSession } from '@/api/offlineStore';
 
 // oidc: logged in through Authentik, with a bearer token. proxy: the reverse
 // proxy authenticated a TLS client certificate; there is no token.
 export type AuthMode = 'oidc' | 'proxy';
 
+// offline: the API could not be reached, so this is the user last signed in,
+// from the offline store, without checking a token.
 export type SessionStart =
-  | { status: 'signedIn'; principal: Principal; mode: AuthMode }
+  | { status: 'signedIn'; principal: Principal; mode: AuthMode; offline?: boolean }
   | { status: 'signedOut'; error: string | null };
 
 // Must be a redirect URI of the Authentik provider.
@@ -158,7 +162,9 @@ async function start(): Promise<SessionStart> {
   if (user?.expired && user.refresh_token) {
     try {
       user = await m.signinSilent();
-    } catch {
+    } catch (err) {
+      // Keep the tokens for when the provider can be reached again.
+      if (isNetworkError(err)) throw err;
       user = null;
     }
   }
@@ -173,13 +179,41 @@ async function start(): Promise<SessionStart> {
 // callback can only be redeemed once.
 let started: Promise<SessionStart> | null = null;
 
-// Rejects when the API cannot be reached or answers other than 401.
+// Without an answer from the API, the user last signed in may still read
+// what was cached for them.
+async function startOffline(err: unknown): Promise<SessionStart> {
+  if (!isNetworkError(err)) throw err;
+  const saved = await loadSession();
+  if (!saved) throw err;
+  if (saved.mode === 'proxy') {
+    // So the next attempt probes the certificate again, also in a new tab.
+    setApiTarget('mtls');
+    rememberCertificate(true);
+  } else if (!manager && saved.config) {
+    // The tab's tokens, if any, are sent once the API answers again.
+    config = saved.config;
+    manager = createManager(saved.config);
+    user = await manager.getUser();
+  }
+  return { status: 'signedIn', principal: saved.principal, mode: saved.mode, offline: true };
+}
+
+// Rejects when the API cannot be reached (and nobody signed in before) or
+// answers other than 401.
 export function startSession(): Promise<SessionStart> {
-  started ??= start().finally(() => {
-    started = null;
-  });
+  started ??= start()
+    .catch(startOffline)
+    .finally(() => {
+      started = null;
+    });
   return started;
 }
+
+// Stores who signed in, for an offline start.
+export const rememberSession = (principal: Principal, mode: AuthMode) =>
+  saveSession(principal, mode, config ?? undefined);
+
+export { clearOffline };
 
 export async function login() {
   const m = await ensureManager();

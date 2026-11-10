@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { addressFields, formatAddress, type ReverseAddress, reverseGeocode } from '@/api/address';
+import { offline } from '@/api/connectivity';
 import { type Coordinates, createMission, type Mission, patchMission } from '@/api/missions';
 import type { Point } from '@/components/menu/useContextMenu';
 import { useMissions } from '@/data/missionsContext';
@@ -18,7 +19,8 @@ export const formatPlace = (p: Coordinates, address: ReverseAddress | null | und
 // looked up in the address directory as the menu opens, and a nearby geo
 // object's name and address, or else a nearby address, is written along with
 // the coordinates. The dashboard and
-// the responsive UI render it each in their own components.
+// the responsive UI render it each in their own components. Offline, where
+// both actions would fail, it does not open.
 export function useMapActions(selected: Mission | null, onCreated: (m: Mission) => void) {
   const missions = useMissions();
   const [menu, setMenu] = useState<{ at: Point; position: Coordinates } | null>(null);
@@ -35,6 +37,7 @@ export function useMapActions(selected: Mission | null, onCreated: (m: Mission) 
   useEffect(() => () => lookup.current?.ctl.abort(), []);
 
   const open = (at: Point, p: Coordinates) => {
+    if (offline()) return;
     const position = { lat: round(p.lat), lon: round(p.lon) };
     lookup.current?.ctl.abort();
     const ctl = new AbortController();

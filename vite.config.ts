@@ -7,9 +7,10 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   plugins: [
     react(),
-    // Caches the app's own files only. API data, map styles and tiles are
-    // other origins and go to the network; config.json is the one same-origin
-    // request handled at runtime. No service worker in `vite dev`.
+    // Precaches the app's own files. At runtime: config.json, and map styles,
+    // sprites, glyphs and tiles (overlays included) for offline viewing. API
+    // data goes to the network; the app keeps its own copy in IndexedDB
+    // (src/api/offlineStore.ts). No service worker in `vite dev`.
     VitePWA({
       // A new version waits until the user accepts the UpdatePrompt, so an
       // open form is not reloaded away.
@@ -43,6 +44,30 @@ export default defineConfig({
             urlPattern: ({ sameOrigin, url }) => sameOrigin && url.pathname === '/config.json',
             handler: 'NetworkFirst',
             options: { cacheName: 'config' },
+          },
+          {
+            // Map styles come from any https host an admin configured, so
+            // everything of other origins counts, except the API (its data
+            // is cached by the app, per user) and the identity provider.
+            // Overlay tiles are the API's, behind the token; the cache is
+            // deleted on logout and on a 401 (offlineStore.ts mapTilesCache).
+            urlPattern: ({ sameOrigin, url }) =>
+              url.pathname.startsWith('/api/v1/overlays/') ||
+              (!sameOrigin &&
+                !url.pathname.startsWith('/api/') &&
+                !url.pathname.startsWith('/auth/') &&
+                !url.pathname.startsWith('/application/') &&
+                !url.pathname.startsWith('/if/')),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'map-tiles',
+              cacheableResponse: { statuses: [200] },
+              expiration: {
+                maxAgeSeconds: 24 * 60 * 60,
+                maxEntries: 3000,
+                purgeOnQuotaError: true,
+              },
+            },
           },
         ],
       },

@@ -1,4 +1,5 @@
 import { type FormEvent, useId, useState } from 'react';
+import { useOffline } from '@/api/connectivity';
 import { type MapStyle, type MapStyleInput, mapStylesApi, useMapStyles } from '@/api/maps';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
@@ -129,6 +130,7 @@ function CreateStyle({ create }: { create: (input: MapStyleInput) => Promise<voi
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const id = useId();
+  const offline = useOffline();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -146,6 +148,9 @@ function CreateStyle({ create }: { create: (input: MapStyleInput) => Promise<voi
       setBusy(false);
     }
   };
+
+  // Offline nothing can be created.
+  if (offline) return null;
 
   return (
     <WidgetForm onSubmit={(e) => void submit(e)}>
@@ -207,6 +212,7 @@ function StyleRow({ entry, radioName, makeDefault, save, onDelete, onHistory }: 
   const [edit, setEdit] = useState<{ name: string; url: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const formId = useId();
+  const offline = useOffline();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -232,6 +238,7 @@ function StyleRow({ entry, radioName, makeDefault, save, onDelete, onHistory }: 
           name={radioName}
           aria-label={`Make ${entry.name} the default`}
           checked={entry.is_default}
+          disabled={offline}
           onChange={makeDefault}
         />
       </td>
@@ -282,6 +289,7 @@ function StyleRow({ entry, radioName, makeDefault, save, onDelete, onHistory }: 
             <button
               type="button"
               className="btn"
+              disabled={offline}
               onClick={() => setEdit({ name: entry.name, url: entry.url })}
             >
               Edit
@@ -294,6 +302,7 @@ function StyleRow({ entry, radioName, makeDefault, save, onDelete, onHistory }: 
               className="icon-btn"
               aria-label={`Delete ${entry.name}`}
               title="Delete"
+              disabled={offline}
               onClick={onDelete}
             >
               <DeleteIcon />

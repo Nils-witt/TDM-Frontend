@@ -38,6 +38,7 @@ export function MissionFormMUI({
 }) {
   const {
     creating,
+    closed,
     readOnly,
     value,
     status,
@@ -88,7 +89,7 @@ export function MissionFormMUI({
   return (
     <>
       <FormMUI ref={setForm} onSubmit={(e) => void save(e)}>
-        {readOnly && (
+        {closed && (
           <Alert severity="warning">Closed: this mission and its logbook are read-only.</Alert>
         )}
         <FormSectionMUI legend="Created">

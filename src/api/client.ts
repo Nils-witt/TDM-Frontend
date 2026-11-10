@@ -1,3 +1,6 @@
+import { offline, offlineMessage, reportNetworkError, reportRequestOk } from './connectivity';
+import { getBlob, putBlob } from './offlineStore';
+
 const trimSlashes = (url: string) => url.replace(/\/+$/, '');
 
 // oidc: the API without client certificates, called with a bearer token.
@@ -113,18 +116,31 @@ async function send(
 ): Promise<Response> {
   // A FormData body sets its own multipart content type, with the boundary.
   const json = init?.body !== undefined && !(init.body instanceof FormData);
+  const method = (init?.method ?? 'GET').toUpperCase();
+  // The UI disables changes while offline; this catches any it missed.
+  if (method !== 'GET' && method !== 'HEAD' && offline()) {
+    throw new ApiError(0, offlineMessage);
+  }
   const token = anonymous ? null : accessToken();
-  const res = await fetch(apiUrl(path, requestTarget), {
-    ...init,
-    // Lets the browser present a TLS client certificate to the API's origin.
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json, application/problem+json',
-      ...(json && { 'Content-Type': 'application/json' }),
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...init?.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(apiUrl(path, requestTarget), {
+      ...init,
+      // Lets the browser present a TLS client certificate to the API's origin.
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json, application/problem+json',
+        ...(json && { 'Content-Type': 'application/json' }),
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...init?.headers,
+      },
+    });
+  } catch (err) {
+    // fetch rejects without an answer: the API or the network is down.
+    if (!(err instanceof DOMException && err.name === 'AbortError')) reportNetworkError();
+    throw err;
+  }
+  reportRequestOk();
   if (res.status === 401 && !anonymous) {
     window.dispatchEvent(new Event(unauthorizedEvent));
   }
@@ -155,6 +171,27 @@ export async function requestBlob(
 ): Promise<Blob> {
   const res = await send(path, { ...init, signal, headers: { Accept: '*/*' } }, {});
   return res.blob();
+}
+
+// requestBlob for GETs of content that does not change (file contents,
+// report PDFs), kept for offline reading. Without an answer from the API the
+// cached copy is returned, if there is one.
+export async function requestCachedBlob(path: string, signal?: AbortSignal): Promise<Blob> {
+  if (offline()) {
+    const cached = await getBlob(path);
+    if (cached) return cached;
+  }
+  let blob: Blob;
+  try {
+    blob = await requestBlob(path, signal);
+  } catch (err) {
+    if (err instanceof ApiError || signal?.aborted) throw err;
+    const cached = await getBlob(path);
+    if (cached) return cached;
+    throw err;
+  }
+  void putBlob(path, blob);
+  return blob;
 }
 
 // The API answers errors as RFC 9457 problem details.
