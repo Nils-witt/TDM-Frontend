@@ -19,8 +19,8 @@ export default defineConfig({
       // Icons (and their <link>s) generated from public/favicon.svg at build.
       pwaAssets: { image: 'public/favicon.svg' },
       manifest: {
-        name: 'Universam',
-        short_name: 'Universam',
+        name: 'TMD',
+        short_name: 'TMD',
         start_url: '/m',
         scope: '/',
         display: 'standalone',

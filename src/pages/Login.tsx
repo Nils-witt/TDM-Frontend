@@ -33,11 +33,11 @@ function Login({ error, onCertificate }: Props) {
   return (
     <main className={`container ${styles.narrow}`}>
       <div className="card">
-        <h1 className="small">Universam</h1>
+        <h1 className="small">TMD</h1>
         {shown && <Alert severity="error">{shown}</Alert>}
         <div className={styles.actions}>
           <button type="button" className="btn primary" disabled={busy} onClick={startOidc}>
-            Log In with Authentik
+            Log In with SSO
           </button>
           <button type="button" className="btn" disabled={busy} onClick={startCertificate}>
             Log In with Client Certificate
