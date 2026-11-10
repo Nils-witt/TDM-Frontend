@@ -26,9 +26,23 @@ export function sectionsByStatus(missions: readonly Mission[]): MissionSection[]
   return sections;
 }
 
-export function useMissionsListWidget() {
-  const { items: missions, error, loading } = useMissions();
-  const sections = useMemo(() => sectionsByStatus(missions), [missions]);
+// `hidden` holds the statuses whose missions, and sections, are left out.
+export function useMissionsListWidget(hidden: readonly string[]) {
+  const { items: all, error, loading } = useMissions();
+  // Keyed by content, as callers pass a new array each render.
+  const hiddenKey = hidden.join('\n');
+  const hiddenSet = useMemo(
+    () => new Set(hiddenKey === '' ? [] : hiddenKey.split('\n')),
+    [hiddenKey],
+  );
+  const missions = useMemo(
+    () => (hiddenSet.size === 0 ? all : all.filter((m) => !hiddenSet.has(m.status))),
+    [all, hiddenSet],
+  );
+  const sections = useMemo(
+    () => sectionsByStatus(missions).filter((s) => !hiddenSet.has(s.status)),
+    [missions, hiddenSet],
+  );
   const { selectedId, update } = useDashboard();
   const select = (id: string) => update({ selectedId: id });
   return { missions, sections, error, loading, selectedId, select };

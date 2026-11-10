@@ -65,6 +65,12 @@ const MissionsList: Widget = {
       type: 'boolean' as const,
       default: false,
     })),
+    ...missionStatuses.map((s) => ({
+      key: `hide-${s.value}`,
+      label: `Hide "${s.label}"`,
+      type: 'boolean' as const,
+      default: false,
+    })),
   ],
   Component: MissionsListWidget,
 };

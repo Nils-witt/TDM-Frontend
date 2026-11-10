@@ -1,4 +1,4 @@
-import { type Mission, shortLocation } from '@/api/missions';
+import { type Mission, missionStatuses, shortLocation } from '@/api/missions';
 import Alert from '@/components/Alert';
 import { StatusChip } from '../shared/MissionStatus';
 import { useMissionTypeName } from '@/data/missionTypeName';
@@ -62,7 +62,10 @@ function MissionList({
 }
 
 function MissionsListWidget({ options }: WidgetProps) {
-  const { missions, sections, error, loading, selectedId, select } = useMissionsListWidget();
+  const hidden = missionStatuses
+    .filter((s) => options[`hide-${s.value}`] === true)
+    .map((s) => s.value);
+  const { missions, sections, error, loading, selectedId, select } = useMissionsListWidget(hidden);
 
   if (error) return <Alert severity="error">{error}</Alert>;
   if (loading) return null;
