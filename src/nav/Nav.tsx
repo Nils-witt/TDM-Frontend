@@ -73,6 +73,7 @@ function Nav() {
                   <MenuSeparator />
                   <NavMenuItem label="Users" widget="Users" />
                   <NavMenuItem label="Groups" widget="Groups" />
+                  <NavMenuItem label="Permissions" widget="Permissions" />
                   <NavMenuItem label="Audit Log" widget="AuditLog" />
                 </TopLevelMenu>
               )}

@@ -18,6 +18,7 @@ const LogbookTypesWidget = lazy(() => import('./LogbookTypes/LogbookTypes.tsx'))
 const FileTypesWidget = lazy(() => import('./FileTypes/FileTypes.tsx'));
 const UsersWidget = lazy(() => import('./Users/Users.tsx'));
 const GroupsWidget = lazy(() => import('./Groups/Groups.tsx'));
+const PermissionsWidget = lazy(() => import('./Permissions/Permissions.tsx'));
 const AuditLogWidget = lazy(() => import('./AuditLog/AuditLog.tsx'));
 const MapWidget = lazy(() => import('./Map/Map.tsx'));
 const MapStylesWidget = lazy(() => import('./MapStyles/MapStyles.tsx'));
@@ -394,6 +395,17 @@ const Groups: Widget = {
   Component: GroupsWidget,
 };
 
+// groupId is the group shown first; Groups sets it.
+const Permissions: Widget = {
+  ...adminWidget,
+  id: 'Permissions',
+  name: 'Permissions',
+  description: 'The permissions granted to each group.',
+  defaultWidth: 60,
+  options: [{ key: 'groupId', label: 'Group ID', type: 'text', default: '' }],
+  Component: PermissionsWidget,
+};
+
 const MapStyles: Widget = {
   ...adminWidget,
   id: 'MapStyles',
@@ -470,6 +482,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     Layouts,
     Users,
     Groups,
+    Permissions,
     AuditLog,
     Example,
   ].map((w) => [w.id, w]),

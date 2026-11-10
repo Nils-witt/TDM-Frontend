@@ -17,6 +17,7 @@ const typePaths: Record<string, string[]> = {
   users: ['/api/v1/users', '/api/v1/groups'],
   groups: ['/api/v1/groups', '/api/v1/users'],
   user_groups: ['/api/v1/groups', '/api/v1/users'],
+  group_permissions: ['/api/v1/groups'],
   mission_type_groups: ['/api/v1/mission-type-groups'],
   mission_types: ['/api/v1/mission-types'],
   logbook_types: ['/api/v1/logbook-types'],

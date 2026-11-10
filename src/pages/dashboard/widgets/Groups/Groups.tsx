@@ -62,8 +62,15 @@ function GroupsWidget({ options }: WidgetProps) {
         )}
         {members.data && members.data.group.id === selectedId && (
           <>
-            <p className="muted">
+            <p className="row muted">
               <code>{members.data.group.dn}</code>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => openWidget('Permissions', { groupId: selectedId })}
+              >
+                Permissions
+              </button>
             </p>
             {members.data.members.length === 0 ? (
               <EmptyState className="">No members.</EmptyState>
