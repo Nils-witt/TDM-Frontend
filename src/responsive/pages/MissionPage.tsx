@@ -4,7 +4,7 @@ import Alert from '@/components/Alert';
 import Spinner from '@/components/Spinner';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
 import { useMissionData } from '@/data/missionData';
-import { useMissions } from '@/data/missionsContext';
+import { useMission } from '@/data/missionsContext';
 import { SelectedMissionContext } from '@/data/selectedMissionContext';
 import EmbeddedWidget from '../EmbeddedWidget';
 import { responsivePaths } from '../paths';
@@ -22,8 +22,8 @@ const MissionFormMUI = lazy(() =>
 // The widgets read the selected mission, which here is the one in the URL.
 function MissionPage() {
   const { id = '' } = useParams();
-  const missions = useMissions();
-  const mission = missions.byId.get(id);
+  const lookup = useMission(id);
+  const { mission } = lookup;
   const data = useMissionData(id);
 
   const back = (
@@ -33,8 +33,8 @@ function MissionPage() {
     </Link>
   );
 
-  if (missions.error) return <Alert severity="error">{missions.error}</Alert>;
-  if (missions.loading) return <Spinner />;
+  if (lookup.error) return <Alert severity="error">{lookup.error}</Alert>;
+  if (lookup.loading) return <Spinner />;
   if (!mission) {
     return (
       <div className={styles.page}>
@@ -64,7 +64,7 @@ function MissionPage() {
       <div className={styles.columns}>
         <div className={styles.details}>
           <Suspense fallback={<Spinner />}>
-            <MissionFormMUI key={mission.id} mission={mission} onSaved={() => missions.reload()} />
+            <MissionFormMUI key={mission.id} mission={mission} onSaved={() => lookup.reload()} />
           </Suspense>
         </div>
         <SelectedMissionContext value={data}>

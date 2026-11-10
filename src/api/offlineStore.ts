@@ -32,7 +32,8 @@ export type Row = { id: string } & Record<string, unknown>;
 // The index a table's rows are synced by, a mission's say; none for the
 // tables that are synced whole.
 export const tableIndex = {
-  missions: null,
+  // Per status, as the API filters by one: closed ones only when asked for.
+  missions: 'status',
   mission_type_groups: null,
   mission_types: null,
   logbook_types: null,
@@ -59,7 +60,7 @@ type Table<I extends Record<string, IDBValidKey> = Record<string, never>> = {
 };
 
 interface OfflineDB extends DBSchema {
-  missions: Table;
+  missions: Table<{ status: string }>;
   mission_type_groups: Table;
   mission_types: Table<{ group_id: string }>;
   logbook_types: Table;
@@ -92,14 +93,19 @@ let db: Promise<IDBPDatabase<OfflineDB> | null> | null = null;
 
 // Null where IndexedDB is blocked (some private windows): no offline data.
 function open(): Promise<IDBPDatabase<OfflineDB> | null> {
-  db ??= openDB<OfflineDB>('universam-offline', 2, {
-    upgrade(d, oldVersion) {
+  db ??= openDB<OfflineDB>('universam-offline', 3, {
+    upgrade(d, oldVersion, _newVersion, tx) {
+      // Version 2 synced missions whole. Its record would clear the store
+      // once expired, rows of the per-status scopes included.
+      if (oldVersion === 2) {
+        tx.objectStore('missions').createIndex('status', 'status');
+        void tx.objectStore('syncs').delete('missions');
+        return;
+      }
       // Version 1 kept the mission domain per path and blobs per path. It
       // was only a cache, so it starts over.
-      if (oldVersion < 2) {
-        for (const name of Array.from(d.objectStoreNames)) d.deleteObjectStore(name);
-      }
-      d.createObjectStore('missions', { keyPath: 'id' });
+      for (const name of Array.from(d.objectStoreNames)) d.deleteObjectStore(name);
+      d.createObjectStore('missions', { keyPath: 'id' }).createIndex('status', 'status');
       d.createObjectStore('mission_type_groups', { keyPath: 'id' });
       d.createObjectStore('mission_types', { keyPath: 'id' }).createIndex('group_id', 'group_id');
       d.createObjectStore('logbook_types', { keyPath: 'id' });

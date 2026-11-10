@@ -145,10 +145,11 @@ function comparator(sort: Sort, c: TypeCatalogs): (a: Mission, b: Mission) => nu
   };
 }
 
-// Searches the loaded missions (every status) in the browser, so results
-// follow live changes without another request.
+// Searches the missions (every status, so the closed ones are loaded while it
+// is shown) in the browser, so results follow live changes without another
+// request.
 export function useMissionArchive(initialStatus: string) {
-  const missions = useMissions();
+  const missions = useMissions({ closed: true });
   const { missionTypes, missionTypeGroups } = useCatalogs();
   const [filter, setFilter] = useState<ArchiveFilter>({ ...emptyFilter, status: initialStatus });
   const [sort, setSort] = useState<Sort>({ key: 'created', descending: true });

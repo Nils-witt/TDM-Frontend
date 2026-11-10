@@ -1,12 +1,10 @@
 import type { ReactNode } from 'react';
 import type { Mission } from '@/api/missions';
-import { scopeKey, useTable } from '@/api/replica';
-import { MissionsContext } from './missionsContext';
-
-const missionsKey = scopeKey('missions');
+import { useTables } from '@/api/replica';
+import { activeMissionKeys, MissionsContext } from './missionsContext';
 
 function MissionsProvider({ children }: { children: ReactNode }) {
-  const missions = useTable<Mission>(missionsKey);
+  const missions = useTables<Mission>(activeMissionKeys);
   return <MissionsContext value={missions}>{children}</MissionsContext>;
 }
 

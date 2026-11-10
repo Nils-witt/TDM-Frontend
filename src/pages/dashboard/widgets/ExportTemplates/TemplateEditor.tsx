@@ -25,7 +25,8 @@ export function TemplateEditor({ template, starter, onSave, onCancel }: Props) {
   const [source, setSource] = useState(template?.source ?? starter);
   const [busy, setBusy] = useState(false);
   const { selectedId } = useDashboard();
-  const missions = useMissions();
+  // A closed mission's final report is a common preview.
+  const missions = useMissions({ closed: true });
   const [missionId, setMissionId] = useState<string>(selectedId ?? '');
   const options = useMemo(
     () => missions.items.toSorted((a, b) => b.created_at.localeCompare(a.created_at)),

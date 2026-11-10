@@ -5,7 +5,7 @@ import type { LogEntry, LogFile } from '@/api/logbook';
 import type { Mission } from '@/api/missions';
 import { scopeKey, useTable } from '@/api/replica';
 import type { Task } from '@/api/tasks';
-import { useMissions } from './missionsContext';
+import { useMission } from './missionsContext';
 
 // What the API keeps per mission. Without a mission the collections are empty.
 export type MissionData = {
@@ -20,10 +20,10 @@ export type MissionData = {
 
 // For a widget showing a mission of its own, not the selected one. The data is
 // cached per mission, so every widget showing one mission shares the requests.
-// An ID that is not an active mission counts as none.
+// An ID that is not a mission counts as none. A closed mission loads the
+// closed ones (missionsContext.ts).
 export function useMissionData(missionId: string | null): MissionData {
-  const { byId } = useMissions();
-  const mission = (missionId !== null && byId.get(missionId)) || null;
+  const { mission } = useMission(missionId);
   const id = mission?.id ?? null;
 
   const logEntries = useTable<LogEntry>(id && scopeKey('log_entries', id));

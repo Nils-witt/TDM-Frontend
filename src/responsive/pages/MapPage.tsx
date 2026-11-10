@@ -7,7 +7,7 @@ import { useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { shortLocation } from '@/api/missions';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
-import { useMissions } from '@/data/missionsContext';
+import { useMission } from '@/data/missionsContext';
 import { useMissionTypeName } from '@/data/missionTypeName';
 import { MissionMap } from '@/pages/dashboard/widgets/Map/Map.tsx';
 import { formatPlace, useMapActions } from '@/pages/dashboard/widgets/Map/mapActions';
@@ -26,7 +26,7 @@ const defaults = resolveOptions(widgets.Map?.options, undefined);
 // A tap on a pin cannot show its tooltip, so it selects the mission and a card
 // names it, with a link to its page.
 function MissionCard({ id, onClose }: { id: string; onClose: () => void }) {
-  const mission = useMissions().byId.get(id);
+  const { mission } = useMission(id);
   const type = useMissionTypeName(mission?.mission_type ?? null);
   if (!mission) return null;
   const location = [shortLocation(mission), mission.address_city].filter(Boolean).join(', ');
@@ -54,7 +54,7 @@ function MissionCard({ id, onClose }: { id: string; onClose: () => void }) {
 function MapPage() {
   const [params, setParams] = useSearchParams();
   const selectedId = params.get('mission');
-  const selected = useMissions().byId.get(selectedId ?? '') ?? null;
+  const { mission: selected } = useMission(selectedId);
   // Chosen on the Settings page; the map shows no switcher of its own.
   const overlays = useOverlaySettings();
   const select = (id: string | null) => setParams(id ? { mission: id } : {}, { replace: true });

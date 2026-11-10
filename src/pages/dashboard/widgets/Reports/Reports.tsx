@@ -47,7 +47,8 @@ const userById = (users: Users, id: string) => {
 function ReportsWidget() {
   const { principal } = useSession();
   const offline = useOffline();
-  const missions = useMissions();
+  // Reports are of done and closed missions.
+  const missions = useMissions({ closed: true });
   const { data: userList } = useResource<User[]>(usersPath, fetchUsers);
   const users = useMemo<Users>(() => {
     const list = userList ?? [];

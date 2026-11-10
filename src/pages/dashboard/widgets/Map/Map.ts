@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { type Mission, type MissionStatus, shortLocation } from '@/api/missions';
 import { useCatalogs } from '@/data/catalogContext';
-import { useMissions } from '@/data/missionsContext';
+import { useMission, useMissions } from '@/data/missionsContext';
 import type { ResolvedOptions } from '../widgetOptions';
 
 export type MapMarker = {
@@ -15,9 +15,18 @@ export type MapMarker = {
 
 // Missions with coordinates whose status the options show, plus the selected
 // mission whatever its status. The selection is the caller's: the dashboard's
-// on the desktop, the URL's in the responsive UI.
+// on the desktop, the URL's in the responsive UI. Closed missions are loaded
+// only if shown.
 export function useMapMarkers(options: ResolvedOptions, selectedId: string | null) {
-  const { items, error } = useMissions();
+  const { items: shown, error } = useMissions({ closed: options['show-closed'] !== false });
+  const { mission: selectedMission } = useMission(selectedId);
+  const items = useMemo(
+    () =>
+      selectedMission && !shown.some((m) => m.id === selectedMission.id)
+        ? [...shown, selectedMission]
+        : shown,
+    [shown, selectedMission],
+  );
   const { missionTypes } = useCatalogs();
 
   const markers = useMemo<MapMarker[]>(() => {

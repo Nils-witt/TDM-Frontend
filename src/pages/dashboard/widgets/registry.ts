@@ -66,11 +66,12 @@ const MissionsList: Widget = {
       type: 'boolean' as const,
       default: false,
     })),
+    // Closed missions are hidden, and so not loaded, unless asked for.
     ...missionStatuses.map((s) => ({
       key: `hide-${s.value}`,
       label: `Hide "${s.label}"`,
       type: 'boolean' as const,
-      default: false,
+      default: s.value === 'closed',
     })),
   ],
   Component: MissionsListWidget,
@@ -322,11 +323,12 @@ const MapView: Widget = {
       max: 180,
     },
     { key: 'zoom', label: 'Start zoom', type: 'number', default: 5, min: 0, max: 22 },
+    // Closed missions are not shown, and so not loaded, unless asked for.
     ...missionStatuses.map((s) => ({
       key: `show-${s.value}`,
       label: `Show "${s.label}"`,
       type: 'boolean' as const,
-      default: true,
+      default: s.value !== 'closed',
     })),
   ],
   Component: MapWidget,

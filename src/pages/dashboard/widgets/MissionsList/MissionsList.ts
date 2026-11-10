@@ -27,8 +27,9 @@ export function sectionsByStatus(missions: readonly Mission[]): MissionSection[]
 }
 
 // `hidden` holds the statuses whose missions, and sections, are left out.
+// Closed missions are loaded only if shown.
 export function useMissionsListWidget(hidden: readonly string[]) {
-  const { items: all, error, loading } = useMissions();
+  const { items: all, error, loading } = useMissions({ closed: !hidden.includes('closed') });
   // Keyed by content, as callers pass a new array each render.
   const hiddenKey = hidden.join('\n');
   const hiddenSet = useMemo(

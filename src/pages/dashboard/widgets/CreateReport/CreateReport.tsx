@@ -14,7 +14,8 @@ import type { WidgetProps } from '../widgetOptions';
 // Once created, the PDF opens and this window closes.
 function CreateReportWidget({ options }: WidgetProps) {
   const missionId = String(options.missionId) || null;
-  const missions = useMissions();
+  // Reports are of done and closed missions.
+  const missions = useMissions({ closed: true });
   const { openWidget } = useWidgetWindows();
   const closeWindow = useCloseWidgetWindow();
   const state = useCreateReport({

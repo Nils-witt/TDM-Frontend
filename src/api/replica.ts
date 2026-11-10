@@ -1,4 +1,4 @@
-import { createContext, use, useCallback, useMemo, useSyncExternalStore } from 'react';
+import { createContext, use, useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 import {
   fileTypesPath,
   logbookTypesPath,
@@ -41,8 +41,8 @@ const listOf: Record<ReplicaTable, { path: string; key: string }> = {
   tasks: { path: '/api/v1/tasks', key: 'tasks' },
 };
 
-// A whole table, or for a scoped one (log_entries, log_files, tasks) the rows
-// of one mission. Hooks take the key, a string, so it can be a dependency.
+// A whole table, or for a scoped one the rows of one mission (log_entries,
+// log_files, tasks) or status (missions). Hooks take the key, a string, so it can be a dependency.
 export function scopeKey(table: ReplicaTable, value?: string): string {
   const index = tableIndex[table];
   if (index === null) return table;
@@ -230,25 +230,70 @@ export function useReplica(): Replica {
 }
 
 const none = snapshot([], { loading: false, error: null });
-const noSubscribe = () => () => undefined;
-const noSnapshot = () => none;
-const noSync = () => Promise.resolve();
 
-// The rows of a scope (scopeKey) as a collection, synced when first shown and
-// on reload. A null key is an empty collection that never loads. T must be
-// the row type of the scope's table.
-export function useTable<T extends { id: string }>(key: string | null): Collection<T> {
+const updatedAt = (r: Row) => (typeof r.updated_at === 'string' ? r.updated_at : '');
+
+// The rows of several scopes of one table. A row that moved between them (a
+// mission whose status changed) may be in both until each synced again: the
+// later version counts.
+function join(snaps: readonly Snapshot[]): Snapshot {
+  if (snaps.length === 0) return none;
+  if (snaps.length === 1) return snaps[0];
+  const byId = new Map<string, Row>();
+  for (const s of snaps) {
+    for (const r of s.items) {
+      const other = byId.get(r.id);
+      if (!other || updatedAt(r) > updatedAt(other)) byId.set(r.id, r);
+    }
+  }
+  const synced = snaps.map((s) => s.syncedAt);
+  return {
+    items: [...byId.values()].sort(newestFirst),
+    byId,
+    loading: snaps.some((s) => s.loading),
+    error: snaps.find((s) => s.error !== null)?.error ?? null,
+    syncedAt: synced.includes(undefined) ? undefined : Math.min(...(synced as number[])),
+  };
+}
+
+const separator = '\n';
+
+// The rows of scopes (scopeKey) of one table as one collection, each synced
+// when first shown and on reload. No keys is an empty collection that never
+// loads. T must be the row type of the table.
+export function useTables<T extends { id: string }>(keys: readonly string[]): Collection<T> {
   const replica = useReplica();
+  // A string, so callers need not keep the array stable.
+  const joined = keys.join(separator);
 
   const subscribe = useCallback(
-    (listener: () => void) => (key === null ? noSubscribe() : replica.subscribe(key, listener)),
-    [replica, key],
+    (listener: () => void) => {
+      const unsubscribes = splitKeys(joined).map((k) => replica.subscribe(k, listener));
+      return () => unsubscribes.forEach((u) => u());
+    },
+    [replica, joined],
   );
-  const snap = useSyncExternalStore(
-    subscribe,
-    key === null ? noSnapshot : () => replica.snapshot(key),
+  // useSyncExternalStore needs the same object while no scope changed.
+  const last = useRef<{ parts: Snapshot[]; snap: Snapshot } | null>(null);
+  const getSnapshot = useCallback(() => {
+    const parts = splitKeys(joined).map((k) => replica.snapshot(k));
+    const cached = last.current;
+    if (
+      cached &&
+      cached.parts.length === parts.length &&
+      cached.parts.every((p, i) => p === parts[i])
+    ) {
+      return cached.snap;
+    }
+    const snap = join(parts);
+    last.current = { parts, snap };
+    return snap;
+  }, [replica, joined]);
+  const snap = useSyncExternalStore(subscribe, getSnapshot);
+  const reload = useCallback(
+    () => Promise.all(splitKeys(joined).map((k) => replica.sync(k))).then(() => undefined),
+    [replica, joined],
   );
-  const reload = useCallback(() => (key === null ? noSync() : replica.sync(key)), [replica, key]);
 
   return useMemo(
     () => ({
@@ -260,4 +305,11 @@ export function useTable<T extends { id: string }>(key: string | null): Collecti
     }),
     [snap, reload],
   );
+}
+
+const splitKeys = (joined: string) => (joined === '' ? [] : joined.split(separator));
+
+// The rows of one scope; a null key is an empty collection that never loads.
+export function useTable<T extends { id: string }>(key: string | null): Collection<T> {
+  return useTables<T>(key === null ? [] : [key]);
 }

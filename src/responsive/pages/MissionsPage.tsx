@@ -11,9 +11,10 @@ import { responsivePaths } from '../paths';
 import styles from './MissionsPage.module.scss';
 
 // Active is everything not yet finished, the default when the URL names none.
+// Closed missions are loaded only for the filters showing them.
 const filters = [
-  { value: 'all', label: 'All', statuses: null },
   { value: 'active', label: 'Active', statuses: ['draft', 'open', 'in-progress'] },
+  { value: 'all', label: 'All', statuses: null },
   { value: 'done', label: 'Done', statuses: ['done'] },
   { value: 'closed', label: 'Closed', statuses: ['closed'] },
 ] as const satisfies readonly {
@@ -90,8 +91,11 @@ function MissionRow({ mission: m }: { mission: Mission }) {
 }
 
 function MissionsPage() {
-  const { items, loading, error } = useMissions();
   const [filter, query, update] = useFilter();
+  const shown: readonly string[] | null = filter.statuses;
+  const { items, loading, error } = useMissions({
+    closed: shown === null || shown.includes('closed'),
+  });
   const searchText = useSearchText();
   // Keeps typing responsive with many missions.
   const deferredQuery = useDeferredValue(query);

@@ -2,6 +2,7 @@ import { type ReactNode, useMemo, useState } from 'react';
 import { type Mission, patchMission } from '@/api/missions';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { SectionText } from '@/components/form';
+import { useReplica } from '@/api/replica';
 import { useMissions } from '@/data/missionsContext';
 import { MissionCloseContext } from './missionCloseContext';
 
@@ -10,10 +11,12 @@ import { MissionCloseContext } from './missionCloseContext';
 function MissionCloseProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<Mission | null>(null);
   const missions = useMissions();
+  const replica = useReplica();
   const value = useMemo(() => ({ confirm: (m: Mission) => setPending(m) }), []);
 
   const run = async (m: Mission) => {
-    await patchMission(m.id, { status: 'closed' });
+    // Moved to the closed missions at once, which load only where shown.
+    replica.put('missions', await patchMission(m.id, { status: 'closed' }));
     await missions.reload();
     setPending(null);
   };
