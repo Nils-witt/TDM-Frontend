@@ -179,6 +179,17 @@ export type ReverseAddress = {
 const maxAddressDistance = 50;
 const maxObjectDistance = 25;
 
+async function reverse(p: Coordinates, limit: number, signal?: AbortSignal) {
+  if (!available) return null;
+  try {
+    const q = new URLSearchParams({ lat: String(p.lat), lon: String(p.lon), limit: String(limit) });
+    return await request<ReverseResult>(`/api/v1/address/reverse?${q}`, { signal });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) available = false;
+    return null;
+  }
+}
+
 // The address at p, or null if none is near or the lookup fails: the
 // address only helps, the coordinates are kept either way. A nearby geo
 // object wins over the nearest house number, as it names the place.
@@ -186,23 +197,54 @@ export async function reverseGeocode(
   p: Coordinates,
   signal?: AbortSignal,
 ): Promise<ReverseAddress | null> {
-  if (!available) return null;
-  try {
-    const q = new URLSearchParams({ lat: String(p.lat), lon: String(p.lon) });
-    const found = await request<ReverseResult>(`/api/v1/address/reverse?${q}`, { signal });
-    const [object] = found.geo_objects;
-    if (object && object.distance_meters <= maxObjectDistance) {
-      return { ...object, object_name: object.name };
-    }
-    const [address] = found.addresses;
-    if (address && address.distance_meters <= maxAddressDistance) {
-      return { ...address, object_name: '' };
-    }
-    return null;
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 404) available = false;
-    return null;
+  const found = await reverse(p, 1, signal);
+  if (found === null) return null;
+  const [object] = found.geo_objects;
+  if (object && object.distance_meters <= maxObjectDistance) {
+    return { ...object, object_name: object.name };
   }
+  const [address] = found.addresses;
+  if (address && address.distance_meters <= maxAddressDistance) {
+    return { ...address, object_name: '' };
+  }
+  return null;
+}
+
+// A place near a coordinate, to be picked by the user: unlike
+// reverseGeocode, nothing is too far away, the distance is shown instead.
+export type NearbyPlace = {
+  kind: 'object' | 'address';
+  address: ReverseAddress;
+  group: string; // a geo object's; empty for an address
+  postcode: string;
+  distance: number; // meters
+};
+
+// The geo objects and the house numbers nearest to p, at most limit of
+// each, nearest first; null if the lookup fails or there is no directory.
+export async function nearbyPlaces(
+  p: Coordinates,
+  limit: number,
+  signal?: AbortSignal,
+): Promise<{ objects: NearbyPlace[]; addresses: NearbyPlace[] } | null> {
+  const found = await reverse(p, limit, signal);
+  if (found === null) return null;
+  return {
+    objects: found.geo_objects.slice(0, limit).map((o) => ({
+      kind: 'object',
+      address: { ...o, object_name: o.name },
+      group: o.group,
+      postcode: o.postcode,
+      distance: o.distance_meters,
+    })),
+    addresses: found.addresses.slice(0, limit).map((a) => ({
+      kind: 'address',
+      address: { ...a, object_name: '' },
+      group: '',
+      postcode: a.postcode,
+      distance: a.distance_meters,
+    })),
+  };
 }
 
 // What a mission takes from a found address. Without an object nearby, its

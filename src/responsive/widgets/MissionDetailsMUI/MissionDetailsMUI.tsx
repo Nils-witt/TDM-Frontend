@@ -15,6 +15,7 @@ import {
 import { useRegisterMissionSave } from '@/pages/dashboard/widgets/MissionDetails/missionSave';
 import AddressFieldMUI from '../shared/AddressFieldMUI';
 import { ConfirmDialogMUI } from '../shared/DialogsMUI';
+import NearbyPlacesButtonMUI from '../shared/NearbyPlacesButtonMUI';
 import {
   FieldRowMUI,
   FormActionsMUI,
@@ -141,6 +142,12 @@ export function MissionFormMUI({
                 slotProps={{ htmlInput: { inputMode: 'decimal' } }}
               />
             ))}
+            <NearbyPlacesButtonMUI
+              lat={coordValue('lat')}
+              lon={coordValue('lon')}
+              set={set}
+              disabled={readOnly}
+            />
           </FieldRowMUI>
         </FormSectionMUI>
         <FormSectionMUI legend="Callee" disabled={readOnly}>

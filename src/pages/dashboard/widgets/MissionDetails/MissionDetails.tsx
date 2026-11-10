@@ -15,6 +15,7 @@ import { formatTime } from '../shared/logbookEntries';
 import { StatusSelect } from '../shared/MissionStatus';
 import { MissionTypeInputs } from '../shared/MissionType';
 import { type AddressField, useAddressSuggest } from '../shared/AddressSuggest';
+import NearbyPlacesButton from '../shared/NearbyPlacesButton';
 import { SuggestInput } from '@/components/SuggestInput';
 import { type TextKey, useMissionDetailsWidget, useMissionForm } from './MissionDetails.ts';
 import { useRegisterMissionSave } from './missionSave';
@@ -144,6 +145,12 @@ export function MissionForm({
                 onChange={(e) => set(k, e.target.value)}
               />
             ))}
+            <NearbyPlacesButton
+              lat={coordValue('lat')}
+              lon={coordValue('lon')}
+              set={set}
+              disabled={readOnly}
+            />
           </FieldRow>
         </Section>
         <Section legend="Callee" disabled={readOnly}>
