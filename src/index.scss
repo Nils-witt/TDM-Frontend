@@ -8,3 +8,20 @@
 @use 'styles/chips';
 @use 'styles/lists';
 @use 'styles/logbook';
+
+
+/* counteract colored drop shadow on iOS 27 beta status bar */
+@media (display-mode: standalone) and (orientation: portrait) {
+  .is-ios #status-bar-tint {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--status-tint-h);
+    z-index: 2000;
+    pointer-events: none;
+    background-color: var(--event-color);
+    transition: background-color var(--color-shift-ms) ease-in-out;
+  }
+}
