@@ -9,18 +9,22 @@
 @use 'styles/lists';
 @use 'styles/logbook';
 
+#status-bar-tint {
+  display: none;
+}
+
 /* counteract colored drop shadow on iOS 27 beta status bar */
-@media (display-mode: standalone) and (orientation: portrait) {
+@media (display-mode: standalone) {
   .is-ios #status-bar-tint {
     display: block;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: var(--status-tint-h);
+    height: 16px;
     z-index: 2000;
     pointer-events: none;
-    background-color: var(--event-color);
-    transition: background-color var(--color-shift-ms) ease-in-out;
+    background-color: black;
+    transition: background-color 0.5ms ease-in-out;
   }
 }
