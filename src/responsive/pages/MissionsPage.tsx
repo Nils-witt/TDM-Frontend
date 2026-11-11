@@ -13,8 +13,8 @@ import styles from './MissionsPage.module.scss';
 // Active is everything not yet finished, the default when the URL names none.
 // Closed missions are loaded only for the filters showing them.
 const filters = [
-  { value: 'active', label: 'Active', statuses: ['draft', 'open', 'in-progress'] },
   { value: 'all', label: 'All', statuses: null },
+  { value: 'active', label: 'Active', statuses: ['draft', 'open', 'in-progress'] },
   { value: 'done', label: 'Done', statuses: ['done'] },
   { value: 'closed', label: 'Closed', statuses: ['closed'] },
 ] as const satisfies readonly {
