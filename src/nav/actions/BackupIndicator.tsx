@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  type BackupInstanceStatus,
   type BackupJob,
   type BackupLevel,
   type BackupState,
@@ -27,22 +28,30 @@ const levelClass: Record<BackupLevel, string> = {
   failed: styles.failed,
 };
 
-// Shown only when the API has a go-backup-tool instance configured
-// (BACKUP_STATUS_URL). While it cannot be reached, the last answer stays
-// listed below the error.
+// An instance's dot shows its summary in the colors of the run states.
+const levelState: Record<BackupLevel, BackupState> = {
+  good: 'ok',
+  degraded: 'incomplete',
+  failed: 'failed',
+};
+
+// Shown only when admins configured a go-backup-tool instance. While the API
+// cannot be reached, the last answer stays listed below the error.
 function BackupIndicator() {
   const { data, error, reload } = useBackupStatus();
   if (!data?.enabled) return null;
 
-  const summary = summarizeBackup(data.jobs, error !== null);
+  // A copy stored by an older version has no instances.
+  const instances = data.instances ?? [];
+  const summary = summarizeBackup(instances, error !== null);
   const title =
     error !== null
-      ? 'Backups: backup server unreachable'
+      ? 'Backups: status unavailable'
       : summary.level === 'good'
         ? 'Backups: all good'
         : summary.level === 'failed'
           ? 'Backups: all failed'
-          : data.jobs.length === 0
+          : summary.failing === 0
             ? 'Backups: no configured job found'
             : `Backups: ${summary.failing} of ${summary.total} failing`;
 
@@ -57,9 +66,11 @@ function BackupIndicator() {
         <div className={styles.heading}>{title}</div>
         {error !== null && <div className={styles.error}>{error}</div>}
       </div>
-      {data.jobs.map((job) => (
-        <Job key={job.name} job={job} />
-      ))}
+      <div className={styles.instances}>
+        {instances.map((instance, i) => (
+          <Instance key={instance.id} instance={instance} first={i === 0} />
+        ))}
+      </div>
       <MenuSeparator />
       <MenuItem
         keepOpen
@@ -73,6 +84,26 @@ function BackupIndicator() {
         Refresh
       </MenuItem>
     </Menu>
+  );
+}
+
+function Instance({ instance, first }: { instance: BackupInstanceStatus; first: boolean }) {
+  const { level } = summarizeBackup([instance], false);
+  return (
+    <section>
+      {!first && <MenuSeparator />}
+      <div className={styles.instanceHeading}>
+        <Dot state={levelState[level]} />
+        <span>{instance.name}</span>
+      </div>
+      {instance.error ? (
+        <div className={`${styles.error} ${styles.instanceNote}`}>{instance.error}</div>
+      ) : instance.jobs.length === 0 ? (
+        <div className={`${styles.muted} ${styles.instanceNote}`}>No configured job found</div>
+      ) : (
+        instance.jobs.map((job) => <Job key={job.name} job={job} />)
+      )}
+    </section>
   );
 }
 

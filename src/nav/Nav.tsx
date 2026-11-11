@@ -72,6 +72,7 @@ function Nav() {
                   <NavMenuItem label="Map Styles" widget="MapStyles" />
                   <NavMenuItem label="Export Templates" widget="ExportTemplates" />
                   <NavMenuItem label="Workflows" widget="Workflows" />
+                  <NavMenuItem label="Backup Servers" widget="BackupInstances" />
                   <NavMenuItem label="Layouts" widget="Layouts" />
                   <NavMenuItem label="Import / Export…" widget="ConfigTransfer" />
                   <MenuSeparator />

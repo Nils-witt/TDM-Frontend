@@ -20,6 +20,12 @@ import {
   exportTemplatesApi,
   exportTemplatesPath,
 } from '@/api/exportTemplates';
+import {
+  type BackupInstance,
+  backupInstancesApi,
+  backupInstancesPath,
+  backupStatusPath,
+} from '@/api/backup';
 import { requestAll } from '@/api/list';
 import {
   type MapSettings,
@@ -47,7 +53,9 @@ import {
 // differ between instances: an import matches by name (ignoring case),
 // creates what is missing and updates what differs. It never renames or
 // deletes. Workflows name logbook types instead of giving their IDs, and
-// permissions name their directory group.
+// permissions name their directory group. Backup servers leave out their
+// tokens, which the API never returns: an import updates the ones that exist
+// and skips the rest.
 
 export const bundleFormat = 'universam-config';
 export const bundleVersion = 1;
@@ -60,6 +68,7 @@ export const sections = [
   { key: 'map_settings', label: 'Map defaults' },
   { key: 'export_templates', label: 'Export templates' },
   { key: 'workflows', label: 'Workflows' },
+  { key: 'backup_instances', label: 'Backup servers' },
   { key: 'permissions', label: 'Group permissions' },
 ] as const;
 
@@ -69,6 +78,7 @@ export const sectionLabel = (key: SectionKey) => sections.find((s) => s.key === 
 
 export type BundleMissionTypeGroup = { name: string; types: string[] };
 export type BundleMapStyle = { name: string; url: string; is_default: boolean };
+export type BundleBackupInstance = { name: string; url: string; jobs: string[] };
 export type BundleTemplate = { name: string; source: string };
 export type BundleWorkflow = { name: string; enabled: boolean; graph: WorkflowGraph };
 export type BundlePermissions = { group: string; permissions: string[] };
@@ -85,6 +95,7 @@ export type ConfigBundle = {
   map_settings?: { default_overlays: string[] };
   export_templates?: BundleTemplate[];
   workflows?: BundleWorkflow[];
+  backup_instances?: BundleBackupInstance[];
   permissions?: BundlePermissions[];
 };
 
@@ -106,6 +117,7 @@ type Current = {
   templates: ExportTemplate[];
   workflows: Workflow[];
   workflowCatalog: WorkflowCatalog | null;
+  backupInstances: BackupInstance[];
   // Group name, folded → ID and the permissions it holds.
   groups: Map<string, { id: string; name: string; permissions: string[] }>;
 };
@@ -125,6 +137,7 @@ async function loadCurrent(wanted: ReadonlySet<SectionKey>): Promise<Current> {
     templates,
     workflows,
     workflowCatalog,
+    backupInstances,
     groups,
   ] = await Promise.all([
     needs(wanted, 'mission_types')
@@ -146,6 +159,9 @@ async function loadCurrent(wanted: ReadonlySet<SectionKey>): Promise<Current> {
     needs(wanted, 'workflows')
       ? request<WorkflowCatalog>(`${workflowsPath}/catalog`)
       : Promise.resolve(null),
+    needs(wanted, 'backup_instances')
+      ? requestAll<BackupInstance>(backupInstancesPath, 'backup_instances')
+      : none,
     needs(wanted, 'permissions') ? loadGroupPermissions() : Promise.resolve(new Map()),
   ]);
   return {
@@ -158,6 +174,7 @@ async function loadCurrent(wanted: ReadonlySet<SectionKey>): Promise<Current> {
     templates,
     workflows,
     workflowCatalog,
+    backupInstances,
     groups,
   };
 }
@@ -257,6 +274,11 @@ export async function exportBundle(wanted: ReadonlySet<SectionKey>): Promise<Con
       source,
     }));
   }
+  if (wanted.has('backup_instances')) {
+    bundle.backup_instances = c.backupInstances
+      .toSorted(byName)
+      .map(({ name, url, jobs }) => ({ name, url, jobs }));
+  }
   if (wanted.has('workflows')) {
     bundle.workflows = c.workflows.toSorted(byName).map((w) => ({
       name: w.name,
@@ -335,6 +357,7 @@ export function parseBundle(text: string): ConfigBundle {
       Array.isArray(x.graph.nodes) &&
       Array.isArray(x.graph.edges),
   );
+  list('backup_instances', (x) => named(x) && isString(x.url) && isStringList(x.jobs));
   list('permissions', (x) => isObject(x) && isString(x.group) && isStringList(x.permissions));
   if (
     data.map_settings !== undefined &&
@@ -507,6 +530,40 @@ export async function planImport(
     }
   }
 
+  if (wanted.has('backup_instances') && bundle.backup_instances) {
+    const byNameFolded = new Map(c.backupInstances.map((b) => [fold(b.name), b]));
+    const seen = new Set<string>();
+    for (const b of bundle.backup_instances) {
+      const name = b.name.trim();
+      if (seen.has(fold(name))) continue;
+      seen.add(fold(name));
+      const current = byNameFolded.get(fold(name));
+      if (!current) {
+        skipped.push({
+          section: 'backup_instances',
+          label: `“${name}”`,
+          reason: 'needs its API token: add it under Admin → Backup Servers',
+        });
+        continue;
+      }
+      const patch = {
+        ...(current.url !== b.url.trim() && { url: b.url.trim() }),
+        ...(current.jobs.join('\n') !== b.jobs.join('\n') && { jobs: b.jobs }),
+      };
+      if (Object.keys(patch).length === 0) same('backup_instances');
+      else {
+        steps.push({
+          section: 'backup_instances',
+          kind: 'update',
+          label: `“${current.name}”`,
+          run: async () => {
+            await backupInstancesApi.patch(current.id, patch);
+          },
+        });
+      }
+    }
+  }
+
   if (wanted.has('map_settings') && bundle.map_settings) {
     const want = [...new Set(bundle.map_settings.default_overlays)].toSorted();
     const have = (c.mapSettings?.default_overlays ?? []).toSorted();
@@ -672,5 +729,6 @@ export const sectionPaths: Record<SectionKey, string[]> = {
   map_settings: [mapSettingsPath],
   export_templates: [exportTemplatesPath],
   workflows: [workflowsPath],
+  backup_instances: [backupInstancesPath, backupStatusPath],
   permissions: [groupsPath],
 };

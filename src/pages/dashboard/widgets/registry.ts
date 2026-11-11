@@ -26,6 +26,7 @@ const MapAdminWidget = lazy(() => import('./MapAdmin/MapAdmin.tsx'));
 const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
 const WorkflowsWidget = lazy(() => import('./Workflows/Workflows.tsx'));
+const BackupInstancesWidget = lazy(() => import('./BackupInstances/BackupInstances.tsx'));
 const ConfigTransferWidget = lazy(() => import('./ConfigTransfer/ConfigTransfer.tsx'));
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
 const CreateReportWidget = lazy(() => import('./CreateReport/CreateReport.tsx'));
@@ -466,6 +467,16 @@ const ExportTemplates: Widget = {
 };
 
 // The admins' configuration as one JSON file, matched by name on import.
+// The go-backup-tool instances of the menu bar's backup status.
+const BackupInstances: Widget = {
+  ...adminWidget,
+  id: 'BackupInstances',
+  name: 'Backup servers',
+  description: 'Manages the backup servers whose jobs the menu bar shows.',
+  defaultWidth: 80,
+  Component: BackupInstancesWidget,
+};
+
 const ConfigTransfer: Widget = {
   ...adminWidget,
   id: 'ConfigTransfer',
@@ -519,6 +530,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     MapAdmin,
     ExportTemplates,
     Workflows,
+    BackupInstances,
     Layouts,
     ConfigTransfer,
     Users,
