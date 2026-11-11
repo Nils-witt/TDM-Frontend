@@ -6,6 +6,7 @@ import SymbolIcon from '@/components/symbols/SymbolIcon';
 import { useMissionData } from '@/data/missionData';
 import { useMission } from '@/data/missionsContext';
 import { SelectedMissionContext } from '@/data/selectedMissionContext';
+import { isFinished } from '@/pages/dashboard/widgets/Reports/reportHelpers';
 import EmbeddedWidget from '../EmbeddedWidget';
 import { responsivePaths } from '../paths';
 import styles from './MissionPage.module.scss';
@@ -54,6 +55,13 @@ function MissionPage() {
           <Link to={responsivePaths.missionOnMap(mission.id)} className={styles.back}>
             <SymbolIcon name="map" />
             Show on map
+          </Link>
+        )}
+        {/* Reports are made of done or closed missions only. */}
+        {isFinished(mission) && (
+          <Link to={responsivePaths.missionReports(mission.id)} className={styles.back}>
+            <SymbolIcon name="description" />
+            Reports
           </Link>
         )}
       </div>

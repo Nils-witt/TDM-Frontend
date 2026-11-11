@@ -5,7 +5,9 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import type { Theme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { type FormEvent, type ReactNode, useId, useState } from 'react';
 
 // Runs action; on rejection shows its error and stays open. The parent
@@ -31,25 +33,30 @@ function useDialogAction(onCancel: () => void) {
   return { busy, error, setError, run, cancel };
 }
 
-function DialogShell({
+// A dialog that is a form. A larger one (maxWidth sm) fills a phone's screen.
+export function DialogShell({
   title,
   onCancel,
   onSubmit,
+  maxWidth = 'xs',
   children,
 }: {
   title: string;
   onCancel: () => void;
   onSubmit: (e: FormEvent) => void;
+  maxWidth?: 'xs' | 'sm';
   children: ReactNode;
 }) {
   const id = useId();
+  const phone = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
   return (
     <Dialog
       open
       onClose={onCancel}
       aria-labelledby={id}
       fullWidth
-      maxWidth="xs"
+      fullScreen={maxWidth !== 'xs' && phone}
+      maxWidth={maxWidth}
       slotProps={{ paper: { component: 'form', onSubmit } }}
     >
       <DialogTitle id={id}>{title}</DialogTitle>

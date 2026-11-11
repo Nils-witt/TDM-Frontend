@@ -8,7 +8,9 @@ import styles from './AppFrame.module.scss';
 
 const sections = [
   { to: responsivePaths.missions, label: 'Missions', icon: 'list_alt' },
+  { to: responsivePaths.archive, label: 'Archive', icon: 'manage_search' },
   { to: responsivePaths.map, label: 'Map', icon: 'map' },
+  { to: responsivePaths.reports, label: 'Reports', icon: 'description' },
   { to: responsivePaths.settings, label: 'Settings', icon: 'settings' },
 ];
 

@@ -4,6 +4,7 @@ import Alert from '@/components/Alert';
 import { FieldRow, FormActions, Section, SectionHeading, WidgetForm } from '@/components/form';
 import Spinner from '@/components/Spinner';
 import { useCatalogs } from '@/data/catalogContext';
+import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import table from '../shared/CatalogManager.module.scss';
 import { formatTime } from '../shared/logbookEntries';
 import { StatusChip } from '../shared/MissionStatus';
@@ -16,6 +17,7 @@ import {
   locationText,
   type Sort,
   type SortKey,
+  sortColumns,
   typeName,
   useMissionArchive,
 } from './MissionArchive.ts';
@@ -23,7 +25,8 @@ import styles from './MissionArchive.module.scss';
 
 // The status option is the status filter it starts with.
 function MissionArchiveWidget({ options }: WidgetProps) {
-  const archive = useMissionArchive(String(options.status));
+  const archive = useMissionArchive({ initialStatus: String(options.status ?? '') });
+  const { selectedId, update } = useDashboard();
 
   if (archive.error) return <Alert severity="error">{archive.error}</Alert>;
   return (
@@ -53,8 +56,8 @@ function MissionArchiveWidget({ options }: WidgetProps) {
             catalogs={archive.catalogs}
             sort={archive.sort}
             sortBy={archive.sortBy}
-            selectedId={archive.selectedId}
-            select={archive.select}
+            selectedId={selectedId}
+            select={(id) => update({ selectedId: id })}
             busy={archive.busy}
           />
           {archive.pages > 1 && (
@@ -201,15 +204,6 @@ function FilterForm({
   );
 }
 
-const columns: { key: SortKey; label: string }[] = [
-  { key: 'created', label: 'Created' },
-  { key: 'event', label: 'Event' },
-  { key: 'type', label: 'Type' },
-  { key: 'location', label: 'Location' },
-  { key: 'city', label: 'City' },
-  { key: 'status', label: 'Status' },
-];
-
 function ResultTable({
   missions,
   catalogs,
@@ -232,7 +226,7 @@ function ResultTable({
       <table className={`${table.table} ${styles.results}`}>
         <thead>
           <tr>
-            {columns.map((c) => {
+            {sortColumns.map((c) => {
               const sorted = sort.key === c.key;
               return (
                 <th

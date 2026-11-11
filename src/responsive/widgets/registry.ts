@@ -10,6 +10,8 @@ const variants: Record<string, Widget['Component']> = {
   LogbookForm: lazy(() => import('./LogbookFormMUI/LogbookFormMUI.tsx')),
   AttachmentViewer: lazy(() => import('./AttachmentViewerMUI/AttachmentViewerMUI.tsx')),
   PdfViewer: lazy(() => import('./PdfViewerMUI/PdfViewerMUI.tsx')),
+  MissionArchive: lazy(() => import('./MissionArchiveMUI/MissionArchiveMUI.tsx')),
+  Reports: lazy(() => import('./ReportsMUI/ReportsMUI.tsx')),
 };
 
 const muiWidgets: Record<string, Widget> = Object.fromEntries(

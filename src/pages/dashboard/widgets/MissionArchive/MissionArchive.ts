@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { MissionType, MissionTypeGroup } from '@/api/catalogs';
 import { useOffline } from '@/api/connectivity';
 import {
@@ -10,7 +10,6 @@ import {
 import { useResource } from '@/api/resource';
 import { useCatalogs } from '@/data/catalogContext';
 import { useMissions } from '@/data/missionsContext';
-import { useDashboard } from '@/pages/dashboard/dashboardContext';
 
 // Text fields match case-insensitively as substrings; '' matches anything.
 // createdFrom and createdTo are dates (YYYY-MM-DD) in local time, both
@@ -52,6 +51,27 @@ export const isEmptyFilter = (f: ArchiveFilter) =>
 
 export type SortKey = MissionSortKey;
 export type Sort = { key: SortKey; descending: boolean };
+
+export const sortColumns: { key: SortKey; label: string }[] = [
+  { key: 'created', label: 'Created' },
+  { key: 'event', label: 'Event' },
+  { key: 'type', label: 'Type' },
+  { key: 'location', label: 'Location' },
+  { key: 'city', label: 'City' },
+  { key: 'status', label: 'Status' },
+];
+
+export const defaultSort: Sort = { key: 'created', descending: true };
+
+// What the archive shows; a caller may keep it elsewhere (the responsive UI
+// keeps it in the URL, so Back restores a search).
+export type ArchiveQuery = { filter: ArchiveFilter; sort: Sort; page: number };
+// correction marks a change the user did not make (the page past the end), which
+// a URL keeps out of the history.
+export type ArchiveQueryState = readonly [
+  ArchiveQuery,
+  (q: ArchiveQuery, correction?: boolean) => void,
+];
 
 type TypeCatalogs = {
   types: ReadonlyMap<string, MissionType>;
@@ -181,16 +201,23 @@ export function searchPath(f: ArchiveFilter, sort: Sort, page: number): string {
 // ago included (the synced missions hold only recently closed ones). Its pages
 // reload on mission events, as the path lies under /api/v1/missions. Offline,
 // the missions stored in the browser are searched, sorted and paged instead.
-export function useMissionArchive(initialStatus: string) {
+export function useMissionArchive({
+  initialStatus = '',
+  state,
+}: {
+  initialStatus?: string;
+  state?: ArchiveQueryState;
+}) {
   const offline = useOffline();
   const { missionTypes, missionTypeGroups } = useCatalogs();
-  const [filter, setFilterState] = useState<ArchiveFilter>({
-    ...emptyFilter,
-    status: initialStatus,
-  });
-  const [sort, setSort] = useState<Sort>({ key: 'created', descending: true });
-  const [page, setPage] = useState(1);
-  const { selectedId, update } = useDashboard();
+  const [ownQuery, setOwnQuery] = useState<ArchiveQuery>(() => ({
+    filter: { ...emptyFilter, status: initialStatus },
+    sort: defaultSort,
+    page: 1,
+  }));
+  const [query, setQuery] = state ?? [ownQuery, setOwnQuery];
+  const { filter, sort, page } = query;
+  const setPage = (p: number) => setQuery({ ...query, page: p });
 
   const remote = useResource<MissionSearchPage>(offline ? null : searchPath(filter, sort, page));
   const local = useMissions({ closed: offline });
@@ -214,24 +241,29 @@ export function useMissionArchive(initialStatus: string) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   // Matches may vanish (a mission was deleted) and leave the page past the end.
   const loaded = offline || remote.data !== undefined;
-  if (loaded && page > pages) setPage(pages);
+  // In an effect, as the query may live in the URL, which is not to be
+  // navigated during render.
+  const pastEnd = loaded && page > pages;
+  useEffect(() => {
+    if (pastEnd) setQuery({ ...query, page: pages }, true);
+  }, [pastEnd, pages, query, setQuery]);
 
   const results = offline
     ? localMatches.slice((page - 1) * pageSize, page * pageSize)
     : (shown?.missions ?? []);
 
   // A new filter or order starts on the first page.
-  const setFilter = (f: ArchiveFilter) => {
-    setFilterState(f);
-    setPage(1);
-  };
+  const setFilter = (f: ArchiveFilter) => setQuery({ ...query, filter: f, page: 1 });
   // A second click on the sorted column reverses it; dates start newest first.
-  const sortBy = (key: SortKey) => {
-    setSort((s) =>
-      s.key === key ? { key, descending: !s.descending } : { key, descending: key === 'created' },
-    );
-    setPage(1);
-  };
+  const sortBy = (key: SortKey) =>
+    setQuery({
+      ...query,
+      sort:
+        sort.key === key
+          ? { key, descending: !sort.descending }
+          : { key, descending: key === 'created' },
+      page: 1,
+    });
 
   return {
     filter,
@@ -250,7 +282,5 @@ export function useMissionArchive(initialStatus: string) {
     busy: !offline && remote.data === undefined && remote.error === null,
     error: offline ? local.error : remote.error,
     catalogs,
-    selectedId,
-    select: (id: string) => update({ selectedId: id }),
   };
 }

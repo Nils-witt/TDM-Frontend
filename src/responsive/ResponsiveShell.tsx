@@ -6,8 +6,10 @@ import { useSession } from '@/app/session';
 import DataProvider from '@/data/DataProvider';
 import Spinner from '@/components/Spinner';
 import AppFrame from './AppFrame';
+import ArchivePage from './pages/ArchivePage';
 import MissionPage from './pages/MissionPage';
 import MissionsPage from './pages/MissionsPage';
+import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import WidgetSheets from './WidgetSheets';
 
@@ -34,6 +36,8 @@ function ResponsiveShell() {
                     <Route index element={<Navigate to="missions" replace />} />
                     <Route path="missions" element={<MissionsPage />} />
                     <Route path="missions/:id" element={<MissionPage />} />
+                    <Route path="archive" element={<ArchivePage />} />
+                    <Route path="reports" element={<ReportsPage />} />
                     <Route
                       path="map"
                       element={

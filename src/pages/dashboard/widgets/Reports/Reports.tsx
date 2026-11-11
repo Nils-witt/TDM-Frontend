@@ -1,92 +1,50 @@
-import { useMemo, useState } from 'react';
-import { useOffline } from '@/api/connectivity';
-import { fetchUsers, memberName, type User, usersPath } from '@/api/directory';
 import type { Mission } from '@/api/missions';
-import { type Report, reportPdfPath, type Signature, useReports } from '@/api/reports';
-import { useErrorState, useResource } from '@/api/resource';
-import { useSession } from '@/app/session';
+import type { Report, Signature } from '@/api/reports';
 import { FormError, SectionText, compactControls, sectionStack } from '@/components/form';
 import Spinner from '@/components/Spinner';
-import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
-import { useMissions } from '@/data/missionsContext';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import { formatTime } from '../shared/logbookEntries';
 import { EmptyState } from '../shared/WidgetStates';
 import table from '../shared/CatalogManager.module.scss';
 import CreateReportDialog from './CreateReportDialog';
+import { type SignedFilter, useReportsWidget } from './Reports.ts';
 import ShareReportDialog from './ShareReportDialog';
 import SignReportDialog from './SignReportDialog';
-import { canShare, canSign, isFinished } from './reportHelpers';
+import { missionName, shareNames, userById, userByName, type Users } from './reportHelpers';
 import styles from './Reports.module.scss';
-
-type SignedFilter = 'all' | 'signed' | 'unsigned';
-
-type Users = {
-  byId: ReadonlyMap<string, User>;
-  byUsername: ReadonlyMap<string, User>;
-};
-
-// A deleted mission is no longer listed: shown by its ID.
-const missionName = (missions: ReadonlyMap<string, Mission>, id: string) =>
-  missions.get(id)?.occurred_event ?? id;
-
-// Reports record users by username (created_by) and signers by user ID.
-const userByName = (users: Users, username: string) => {
-  const u = users.byUsername.get(username);
-  return u ? memberName(u) : username;
-};
-const userById = (users: Users, id: string) => {
-  const u = users.byId.get(id);
-  return u ? memberName(u) : id;
-};
 
 // The reports the caller may see: admins all, anyone else the ones they
 // created, sign, or that are shared with them or their groups. The report's
 // creator or an admin uploads the signed PDF, once, and shares it. PDFs open
 // in a window, as they need the token.
 function ReportsWidget() {
-  const { principal } = useSession();
-  const offline = useOffline();
-  // Reports are of done and closed missions.
-  const missions = useMissions({ closed: true });
-  const { data: userList } = useResource<User[]>(usersPath, fetchUsers);
-  const users = useMemo<Users>(() => {
-    const list = userList ?? [];
-    return {
-      byId: new Map(list.map((u) => [u.id, u])),
-      byUsername: new Map(list.flatMap((u) => (u.username ? [[u.username, u] as const] : []))),
-    };
-  }, [userList]);
   const { selectedId } = useDashboard();
-  const { openWidget } = useWidgetWindows();
-  const [missionFilter, setMissionFilter] = useState('');
-  const [signedFilter, setSignedFilter] = useState<SignedFilter>('all');
-  const reports = useReports({
-    missionId: missionFilter || undefined,
-    signed: signedFilter === 'all' ? undefined : signedFilter === 'signed',
-  });
-  const [error, setError] = useErrorState(reports.error);
-  const [creating, setCreating] = useState(false);
-  const [signing, setSigning] = useState<Report | null>(null);
-  const [sharing, setSharing] = useState<Report | null>(null);
-
-  const finished = missions.items
-    .filter(isFinished)
-    .toSorted((a, b) => a.occurred_event.localeCompare(b.occurred_event));
-
-  const openPdf = (r: Report, signed = false) =>
-    openWidget('PdfViewer', {
-      path: reportPdfPath(r.id, signed),
-      name: `${missionName(missions.byId, r.mission)}${signed ? ' (signed)' : ''}.pdf`,
-    });
-
-  const done = () => {
-    setCreating(false);
-    setSigning(null);
-    setSharing(null);
-    setError(null);
-    void reports.reload();
-  };
+  const {
+    offline,
+    missions,
+    userList,
+    users,
+    missionFilter,
+    setMissionFilter,
+    signedFilter,
+    setSignedFilter,
+    reports,
+    error,
+    setError,
+    finished,
+    createMissionId,
+    creating,
+    setCreating,
+    signing,
+    setSigning,
+    sharing,
+    setSharing,
+    canSign,
+    canShare,
+    openPdf,
+    created,
+    done,
+  } = useReportsWidget(selectedId);
 
   return (
     <div className={sectionStack}>
@@ -137,8 +95,8 @@ function ReportsWidget() {
           reports={reports.items}
           missions={missions.byId}
           users={users}
-          canSign={(r) => !offline && canSign(r, principal)}
-          canShare={(r) => !offline && canShare(r, principal)}
+          canSign={canSign}
+          canShare={canShare}
           onSign={setSigning}
           onShare={setSharing}
           onOpen={openPdf}
@@ -148,11 +106,8 @@ function ReportsWidget() {
       {creating && (
         <CreateReportDialog
           missions={missions.items}
-          missionId={selectedId}
-          onCreated={(r) => {
-            done();
-            openPdf(r);
-          }}
+          missionId={createMissionId}
+          onCreated={created}
           onClose={() => setCreating(false)}
         />
       )}
@@ -160,7 +115,7 @@ function ReportsWidget() {
         <SignReportDialog
           report={signing}
           event={missionName(missions.byId, signing.mission)}
-          users={userList ?? []}
+          users={userList}
           onSigned={done}
           onClose={() => setSigning(null)}
         />
@@ -169,7 +124,7 @@ function ReportsWidget() {
         <ShareReportDialog
           report={sharing}
           event={missionName(missions.byId, sharing.mission)}
-          users={userList ?? []}
+          users={userList}
           onShared={done}
           onClose={() => setSharing(null)}
         />
@@ -259,10 +214,7 @@ function ReportTable({
 }
 
 function Shares({ report, users }: { report: Report; users: Users }) {
-  const names = [
-    ...report.shared_users.map((id) => userById(users, id)),
-    ...report.shared_groups.map((g) => `${g} (group)`),
-  ];
+  const names = shareNames(report, users);
   if (names.length === 0) return null;
   return <div className={styles.shared}>Shared with {names.join(', ')}</div>;
 }

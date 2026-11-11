@@ -88,6 +88,7 @@ export function FormActionsMUI({
   canSubmit,
   busy = false,
   onDiscard,
+  discardLabel = 'Discard',
   dirty = true,
   hidden = false,
   aside,
@@ -96,6 +97,7 @@ export function FormActionsMUI({
   canSubmit: boolean;
   busy?: boolean;
   onDiscard?: () => void;
+  discardLabel?: string;
   dirty?: boolean;
   hidden?: boolean;
   aside?: ReactNode;
@@ -108,7 +110,7 @@ export function FormActionsMUI({
       </Button>
       {onDiscard && (
         <Button type="button" onClick={onDiscard} disabled={!dirty || busy}>
-          Discard
+          {discardLabel}
         </Button>
       )}
       {aside && <Box sx={{ ml: 'auto', minWidth: 0 }}>{aside}</Box>}

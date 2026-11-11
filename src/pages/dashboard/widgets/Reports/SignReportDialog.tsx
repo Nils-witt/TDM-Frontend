@@ -1,20 +1,11 @@
-import { useId, useMemo, useState } from 'react';
+import { useId } from 'react';
 import { memberName, type User } from '@/api/directory';
-import { type Report, type SignatureInput, reportsApi } from '@/api/reports';
+import type { Report } from '@/api/reports';
 import { FieldRow, FormActions, FormError, Section, SectionText } from '@/components/form';
 import { DeleteIcon } from '@/components/icons';
 import { ReportDialog } from './ReportDialog';
-import { localInputValue } from './reportHelpers';
+import { type SignerRow, useSignReport } from './useSignReport';
 import styles from './Reports.module.scss';
-
-// A user, or an external signer by name; the time is local.
-type SignerRow = {
-  key: number;
-  kind: 'user' | 'external';
-  userId: string;
-  name: string;
-  at: string;
-};
 
 type Props = {
   report: Report;
@@ -28,54 +19,24 @@ type Props = {
 // A report is signed once: this cannot be changed afterwards.
 function SignReportDialog({ report, event, users, onSigned, onClose }: Props) {
   const id = useId();
-  // The API accepts enabled users only.
-  const live = useMemo(
-    () =>
-      users
-        .filter((u) => !u.disabled)
-        .toSorted((a, b) => memberName(a).localeCompare(memberName(b))),
-    [users],
-  );
-  const [file, setFile] = useState<File | null>(null);
-  const [note, setNote] = useState('');
-  const [nextKey, setNextKey] = useState(1);
-  const [rows, setRows] = useState<SignerRow[]>(() => [
-    { key: 0, kind: 'user', userId: '', name: '', at: localInputValue(new Date()) },
-  ]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const min = localInputValue(new Date(report.created_at));
-  // Signing times are not in the future: up to when the dialog opened.
-  const [max] = useState(() => localInputValue(new Date()));
-  const complete = (r: SignerRow) =>
-    r.at !== '' && (r.kind === 'user' ? r.userId !== '' : r.name.trim() !== '');
-  const canSubmit = file !== null && rows.length > 0 && rows.every(complete);
-
-  const update = (key: number, patch: Partial<SignerRow>) =>
-    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
-  const add = () => {
-    setRows((rs) => [
-      ...rs,
-      { key: nextKey, kind: 'user', userId: '', name: '', at: localInputValue(new Date()) },
-    ]);
-    setNextKey((k) => k + 1);
-  };
-
-  const submit = async () => {
-    if (!canSubmit || file === null) return;
-    const signatures: SignatureInput[] = rows.map((r) => ({
-      ...(r.kind === 'user' ? { user_id: r.userId } : { name: r.name.trim() }),
-      signed_at: new Date(r.at).toISOString(),
-    }));
-    setBusy(true);
-    try {
-      onSigned(await reportsApi.sign(report.id, file, signatures, note));
-    } catch (err) {
-      setError((err as Error).message);
-      setBusy(false);
-    }
-  };
+  const {
+    live,
+    setFile,
+    note,
+    setNote,
+    rows,
+    update,
+    add,
+    remove,
+    canAdd,
+    min,
+    max,
+    canSubmit,
+    busy,
+    error,
+    setError,
+    submit,
+  } = useSignReport({ report, users, onSigned });
 
   return (
     <ReportDialog
@@ -146,14 +107,14 @@ function SignReportDialog({ report, event, users, onSigned, onClose }: Props) {
               className="icon-btn"
               aria-label={`Remove signer ${i + 1}`}
               disabled={rows.length === 1}
-              onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}
+              onClick={() => remove(r.key)}
             >
               <DeleteIcon />
             </button>
           </div>
         ))}
         <div className="row">
-          <button type="button" className="btn" onClick={add} disabled={rows.length >= 32}>
+          <button type="button" className="btn" onClick={add} disabled={!canAdd}>
             Add signer
           </button>
         </div>

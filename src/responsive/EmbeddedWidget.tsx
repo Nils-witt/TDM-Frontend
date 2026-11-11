@@ -11,17 +11,20 @@ function EmbeddedWidget({
   widgetId,
   options,
   title,
+  showHeading = true,
 }: {
   widgetId: string;
   options?: WidgetOptionValues;
   title?: string;
+  // Off where the page's own heading names the widget.
+  showHeading?: boolean;
 }) {
   const widget = responsiveWidget(widgetId);
   if (!widget) return <Alert severity="warning">Unknown widget “{widgetId}”</Alert>;
   const heading = title ?? widget.name;
   return (
     <section aria-label={heading}>
-      <h2 className={styles.heading}>{heading}</h2>
+      {showHeading && <h2 className={styles.heading}>{heading}</h2>}
       <div className={styles.card}>
         <WidgetBody placement="frame">
           <WidgetContent widget={widget} options={options} />
