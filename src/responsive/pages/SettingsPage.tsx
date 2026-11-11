@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { useOverlays } from '@/api/maps';
+import { useDefaultOverlayStates, useOverlays } from '@/api/maps';
 import { preferDesktop } from '@/app/mobileRoute';
 import { displayName, isAdmin, useSession } from '@/app/session';
 import Alert from '@/components/Alert';
@@ -13,6 +13,7 @@ import styles from './SettingsPage.module.scss';
 function OverlaySettings() {
   const { overlays, error } = useOverlays();
   const state = useOverlaySettings();
+  const defaults = useDefaultOverlayStates();
   if (error) return <Alert severity="warning">Overlays: {error}</Alert>;
   if (!overlays?.enabled || overlays.overlays.length === 0) return null;
   return (
@@ -22,7 +23,7 @@ function OverlaySettings() {
       </h2>
       <ul className={styles.list}>
         {overlays.overlays.map((o) => {
-          const s = state[o.id] ?? defaultOverlayState;
+          const s = state[o.id] ?? defaults[o.id] ?? defaultOverlayState;
           const name = o.name || o.id;
           return (
             <li key={o.id} className={styles.overlay}>

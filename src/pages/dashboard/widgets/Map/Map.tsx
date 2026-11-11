@@ -7,7 +7,7 @@ import {
   setWorkerUrl,
 } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { apiUrl, authHeaders } from '@/api/client';
 import type { Coordinates } from '@/api/missions';
 import {
@@ -16,6 +16,7 @@ import {
   overlayTilePath,
   resolveMapStyle,
   useMapStyles,
+  useDefaultOverlayStates,
   useOverlays,
 } from '@/api/maps';
 import Alert from '@/components/Alert';
@@ -122,9 +123,10 @@ export type OverlayControl = {
   onChange: (id: string, state: OverlayState) => void;
 };
 
-// Without overlayControl every overlay starts off and the map shows a switcher;
-// with it the caller keeps the state and offers the switch elsewhere (the
-// responsive UI's Settings). show-<status> off leaves those missions out,
+// The overlays admins switched on by default (Map Admin) start on, until the
+// map's own state switches them. Without overlayControl the map keeps that
+// state and shows a switcher; with it the caller keeps the state and offers
+// the switch elsewhere (the responsive UI's Settings). show-<status> off leaves those missions out,
 // except the selected one.
 export function MissionMap({
   options,
@@ -152,7 +154,12 @@ export function MissionMap({
   const map = useRef<MapLibreMap | null>(null);
   const { overlays, error: overlaysError } = useOverlays();
   const [ownOverlayState, setOwnOverlayState] = useState<Record<string, OverlayState>>({});
-  const overlayState = overlayControl?.state ?? ownOverlayState;
+  const defaultOverlays = useDefaultOverlayStates();
+  const ownOrControlled = overlayControl?.state ?? ownOverlayState;
+  const overlayState = useMemo(
+    () => ({ ...defaultOverlays, ...ownOrControlled }),
+    [defaultOverlays, ownOrControlled],
+  );
   const setOverlay =
     overlayControl?.onChange ??
     ((id: string, st: OverlayState) => setOwnOverlayState((prev) => ({ ...prev, [id]: st })));

@@ -27,6 +27,7 @@ const typePaths: Record<string, string[]> = {
   log_files: ['/api/v1/log-files'],
   tasks: ['/api/v1/tasks'],
   map_styles: ['/api/v1/map-styles'],
+  map_settings: ['/api/v1/map-settings'],
   dashboard_layouts: ['/api/v1/layouts'],
   user_preferences: ['/api/v1/me/preferences'],
   export_templates: ['/api/v1/export-templates'],

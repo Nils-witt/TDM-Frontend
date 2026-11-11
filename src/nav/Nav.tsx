@@ -67,6 +67,7 @@ function Nav() {
                   <NavMenuItem label="Mission Types" widget="MissionTypes" />
                   <NavMenuItem label="Logbook Types" widget="LogbookTypes" />
                   <NavMenuItem label="File Types" widget="FileTypes" />
+                  <NavMenuItem label="Map Defaults" widget="MapAdmin" />
                   <NavMenuItem label="Map Styles" widget="MapStyles" />
                   <NavMenuItem label="Export Templates" widget="ExportTemplates" />
                   <NavMenuItem label="Layouts" widget="Layouts" />

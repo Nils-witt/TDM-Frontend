@@ -22,6 +22,7 @@ const PermissionsWidget = lazy(() => import('./Permissions/Permissions.tsx'));
 const AuditLogWidget = lazy(() => import('./AuditLog/AuditLog.tsx'));
 const MapWidget = lazy(() => import('./Map/Map.tsx'));
 const MapStylesWidget = lazy(() => import('./MapStyles/MapStyles.tsx'));
+const MapAdminWidget = lazy(() => import('./MapAdmin/MapAdmin.tsx'));
 const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
@@ -415,6 +416,16 @@ const MapStyles: Widget = {
   Component: MapStylesWidget,
 };
 
+// What every map starts with: the default style and the overlays switched on.
+const MapAdmin: Widget = {
+  ...adminWidget,
+  id: 'MapAdmin',
+  name: 'Map admin',
+  description: 'Sets the default map style and which overlays every map starts with.',
+  defaultWidth: 60,
+  Component: MapAdminWidget,
+};
+
 // Every user's dashboard layouts: rename, share with everyone or make
 // personal, export, delete.
 const Layouts: Widget = {
@@ -478,6 +489,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     LogbookTypes,
     FileTypes,
     MapStyles,
+    MapAdmin,
     ExportTemplates,
     Layouts,
     Users,

@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import type { OverlayState } from '@/pages/dashboard/widgets/Map/overlayState';
 import { useCollection } from './collection';
 import { request } from './client';
 import type { EntityMeta } from './entity';
@@ -76,3 +78,38 @@ export const overlayTilePath = (id: string) =>
 
 export const fetchOverlayBounds = (id: string) =>
   request<OverlayBounds>(`${overlaysPath}/${encodeURIComponent(id)}/bounds`);
+
+// The defaults every map starts with, set by admins: the overlays switched on
+// until a map (or /m's Settings) switches them itself. The metadata is absent
+// before the first change. The default basemap is the map style marked
+// is_default.
+export type MapSettings = { default_overlays: string[] } & Partial<EntityMeta>;
+
+export const mapSettingsPath = '/api/v1/map-settings';
+
+export function useMapSettings() {
+  const { data, error, reload } = useResource<MapSettings>(mapSettingsPath);
+  return { settings: data, error, reload };
+}
+
+// Writing them needs the admin group.
+export const mapSettingsApi = {
+  replace: (input: { default_overlays: string[] }) =>
+    request<MapSettings>(mapSettingsPath, { method: 'PUT', body: JSON.stringify(input) }),
+};
+
+const noDefaults: Readonly<Record<string, OverlayState>> = {};
+
+// The overlay states a map starts with, beneath its own. Without the settings
+// (not loaded yet, an API without them) no overlay is on.
+export function useDefaultOverlayStates(): Readonly<Record<string, OverlayState>> {
+  const { settings } = useMapSettings();
+  const ids = settings?.default_overlays;
+  return useMemo(
+    () =>
+      ids && ids.length > 0
+        ? Object.fromEntries(ids.map((id) => [id, { on: true, opacity: 1 }]))
+        : noDefaults,
+    [ids],
+  );
+}
