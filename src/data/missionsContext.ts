@@ -1,7 +1,8 @@
 import { createContext, use, useMemo, useState } from 'react';
 import type { Collection } from '@/api/collection';
-import { type Mission, missionStatuses } from '@/api/missions';
+import { type Mission, missionPath, missionStatuses } from '@/api/missions';
 import { scopeKey, useTable } from '@/api/replica';
+import { useResource } from '@/api/resource';
 
 // Missions are synced per status (the API filters by one). Closed ones are
 // final and pile up, so they are loaded only where asked for.
@@ -46,24 +47,43 @@ export type MissionLookup = {
   loading: boolean;
   error: string | null;
   reload: () => Promise<void>;
+  // Closed long ago: fetched on its own and, like its log and tasks, kept in
+  // memory only.
+  transient: boolean;
 };
+
+const keepOut = { persist: false };
 
 // One mission of any status. The closed ones are loaded only for an ID that
 // is not among the others. A mission that was just closed is kept until the
-// closed ones have loaded, so it does not vanish meanwhile.
+// closed ones have loaded, so it does not vanish meanwhile. The mission list
+// leaves out missions closed more than a day ago (the archive finds them):
+// one is fetched by its ID and not stored.
 export function useMission(id: string | null): MissionLookup {
   const active = useMissions();
   const found = id === null ? undefined : active.byId.get(id);
   const lookClosed = id !== null && found === undefined && !active.loading;
   const closed = useTable<Mission>(lookClosed ? closedMissionsKey : null);
-  const current = found ?? (id === null ? undefined : closed.byId.get(id));
+  const stored = found ?? (id === null ? undefined : closed.byId.get(id));
+  const lookApi = lookClosed && stored === undefined && !closed.loading;
+  const fetched = useResource<Mission>(lookApi ? missionPath(id) : null, undefined, keepOut);
+  const fromApi = lookApi && fetched.data?.id === id ? fetched.data : undefined;
+  const current = stored ?? fromApi;
 
   const [last, setLast] = useState<Mission | null>(null);
   if (current && current !== last) setLast(current);
   const mission = current ?? (closed.loading && last !== null && last.id === id ? last : null);
 
-  const loading = mission === null && id !== null && (active.loading || closed.loading);
-  const error = mission === null ? (active.error ?? (lookClosed ? closed.error : null)) : null;
-  const reload = lookClosed ? closed.reload : active.reload;
-  return useMemo(() => ({ mission, loading, error, reload }), [mission, loading, error, reload]);
+  const fetching = lookApi && fetched.data === undefined && fetched.error === null;
+  const loading = mission === null && id !== null && (active.loading || closed.loading || fetching);
+  const error =
+    mission === null
+      ? (active.error ?? (lookClosed ? closed.error : null) ?? (lookApi ? fetched.error : null))
+      : null;
+  const reload = lookApi ? fetched.reload : lookClosed ? closed.reload : active.reload;
+  const transient = mission !== null && mission === fromApi;
+  return useMemo(
+    () => ({ mission, loading, error, reload, transient }),
+    [mission, loading, error, reload, transient],
+  );
 }

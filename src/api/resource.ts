@@ -12,9 +12,15 @@ export type Fetcher<T = unknown> = (path: string) => Promise<T>;
 
 const defaultFetcher: Fetcher = (path) => request<unknown>(path);
 
+// persist: false keeps a path out of the offline store, for data that must
+// not be kept (missions closed long ago, say).
+export type ResourceOptions = { persist?: boolean };
+
 type Entry = {
   state: ResourceState<unknown>;
   listeners: Set<() => void>;
+  // Fixed when the path is first used.
+  persist: boolean;
   // The last one a caller passed; all callers of one path pass the same.
   fetch: Fetcher;
   // queued is the load to run after inflight, because something changed while
@@ -26,10 +32,15 @@ type Entry = {
 // Every component showing one path gets the same data from a single request,
 // and a burst of reloads during a load is coalesced into one reload after it.
 export type ResourceCache = {
-  subscribe: (path: string, listener: () => void, fetch?: Fetcher) => () => void;
+  subscribe: (
+    path: string,
+    listener: () => void,
+    fetch?: Fetcher,
+    options?: ResourceOptions,
+  ) => () => void;
   state: (path: string) => ResourceState<unknown>;
   // Resolves once data requested after the call has arrived (or failed).
-  load: (path: string, fetch?: Fetcher) => Promise<void>;
+  load: (path: string, fetch?: Fetcher, options?: ResourceOptions) => Promise<void>;
   // For data a write returned.
   put: (path: string, data: unknown) => void;
   // Reloads the shown paths match accepts. Paths nobody shows load anyway
@@ -53,18 +64,19 @@ export function createResourceCache({ persist = false } = {}): ResourceCache {
     });
   };
 
-  const entry = (path: string, fetch?: Fetcher): Entry => {
+  const entry = (path: string, fetch?: Fetcher, options?: ResourceOptions): Entry => {
     let e = entries.get(path);
     if (!e) {
       e = {
         state: initial,
         listeners: new Set(),
+        persist: persist && options?.persist !== false,
         fetch: defaultFetcher,
         inflight: null,
         queued: null,
       };
       entries.set(path, e);
-      if (persist) restore(path, e);
+      if (e.persist) restore(path, e);
     }
     if (fetch) e.fetch = fetch;
     return e;
@@ -81,7 +93,7 @@ export function createResourceCache({ persist = false } = {}): ResourceCache {
       .then(
         (data) => {
           set(e, { data, error: null, savedAt: Date.now() });
-          if (persist) void putResource(path, data);
+          if (e.persist) void putResource(path, data);
         },
         (err: Error) => {
           // Without an answer, data already shown stays shown without an
@@ -97,8 +109,8 @@ export function createResourceCache({ persist = false } = {}): ResourceCache {
     return p;
   };
 
-  const load = (path: string, fetch?: Fetcher): Promise<void> => {
-    const e = entry(path, fetch);
+  const load = (path: string, fetch?: Fetcher, options?: ResourceOptions): Promise<void> => {
+    const e = entry(path, fetch, options);
     if (!e.inflight) return start(path, e);
     // The running load may have been answered before what asked for the
     // reload: load again after it, once however many requests come in.
@@ -109,8 +121,13 @@ export function createResourceCache({ persist = false } = {}): ResourceCache {
     return e.queued;
   };
 
-  const subscribe = (path: string, listener: () => void, fetch?: Fetcher) => {
-    const e = entry(path, fetch);
+  const subscribe = (
+    path: string,
+    listener: () => void,
+    fetch?: Fetcher,
+    options?: ResourceOptions,
+  ) => {
+    const e = entry(path, fetch, options);
     e.listeners.add(listener);
     // Nobody showed the path until now, so what is cached may be outdated.
     if (e.listeners.size === 1 && !e.inflight) void start(path, e);
@@ -122,7 +139,7 @@ export function createResourceCache({ persist = false } = {}): ResourceCache {
   const put = (path: string, data: unknown) => {
     const e = entry(path);
     set(e, { data, error: null, savedAt: Date.now() });
-    if (persist) void putResource(path, data);
+    if (e.persist) void putResource(path, data);
     // A load running now may have been answered before the write.
     if (e.inflight) void load(path);
   };
@@ -153,21 +170,23 @@ const noLoad = () => Promise.resolve();
 export function useResource<T>(
   path: string | null,
   fetch?: Fetcher<T>,
+  options?: ResourceOptions,
 ): ResourceState<T> & { reload: () => Promise<void> } {
   const cache = useResourceCache();
+  const persist = options?.persist;
 
   const subscribe = useCallback(
     (listener: () => void) =>
-      path === null ? noSubscribe() : cache.subscribe(path, listener, fetch),
-    [cache, path, fetch],
+      path === null ? noSubscribe() : cache.subscribe(path, listener, fetch, { persist }),
+    [cache, path, fetch, persist],
   );
   const state = useSyncExternalStore(
     subscribe,
     path === null ? noState : () => cache.state(path),
   ) as ResourceState<T>;
   const reload = useCallback(
-    () => (path === null ? noLoad() : cache.load(path, fetch)),
-    [cache, path, fetch],
+    () => (path === null ? noLoad() : cache.load(path, fetch, { persist })),
+    [cache, path, fetch, persist],
   );
 
   return { ...state, reload };

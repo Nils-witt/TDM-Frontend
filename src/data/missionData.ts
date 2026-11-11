@@ -21,14 +21,16 @@ export type MissionData = {
 // For a widget showing a mission of its own, not the selected one. The data is
 // cached per mission, so every widget showing one mission shares the requests.
 // An ID that is not a mission counts as none. A closed mission loads the
-// closed ones (missionsContext.ts).
+// closed ones (missionsContext.ts); the data of one closed long ago is kept
+// in memory only.
 export function useMissionData(missionId: string | null): MissionData {
-  const { mission } = useMission(missionId);
+  const { mission, transient } = useMission(missionId);
   const id = mission?.id ?? null;
+  const opts = { transient };
 
-  const logEntries = useTable<LogEntry>(id && scopeKey('log_entries', id));
-  const logFiles = useTable<LogFile>(id && scopeKey('log_files', id));
-  const tasks = useTable<Task>(id && scopeKey('tasks', id));
+  const logEntries = useTable<LogEntry>(id && scopeKey('log_entries', id, opts));
+  const logFiles = useTable<LogFile>(id && scopeKey('log_files', id, opts));
+  const tasks = useTable<Task>(id && scopeKey('tasks', id, opts));
 
   const offline = useOffline();
   const readOnly = mission?.status === 'closed' || offline;

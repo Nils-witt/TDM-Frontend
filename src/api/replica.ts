@@ -8,9 +8,11 @@ import {
 import { ApiError } from './client';
 import type { Collection } from './collection';
 import { requestAll } from './list';
+import { fileContentPath } from './logbook';
 import { missionsPath } from './missions';
 import {
   deleteRow,
+  keepContentOut,
   putRow,
   readScope,
   type ReplicaTable,
@@ -43,20 +45,35 @@ const listOf: Record<ReplicaTable, { path: string; key: string }> = {
 
 // A whole table, or for a scoped one the rows of one mission (log_entries,
 // log_files, tasks) or status (missions). Hooks take the key, a string, so it can be a dependency.
-export function scopeKey(table: ReplicaTable, value?: string): string {
+// A transient scope is synced the same but kept in memory only, never read
+// from or written to the store: for missions closed long ago, which the
+// replica does not keep.
+export function scopeKey(
+  table: ReplicaTable,
+  value?: string,
+  { transient = false }: { transient?: boolean } = {},
+): string {
   const index = tableIndex[table];
-  if (index === null) return table;
-  if (value === undefined) throw new Error(`${table} is synced per ${index}`);
-  return `${table}?${new URLSearchParams({ [index]: value })}`;
+  const params = new URLSearchParams();
+  if (index !== null) {
+    if (value === undefined) throw new Error(`${table} is synced per ${index}`);
+    params.set(index, value);
+  }
+  if (transient) params.set(transientParam, '1');
+  const query = params.toString();
+  return query ? `${table}?${query}` : table;
 }
 
-function parseKey(key: string): Scope {
+const transientParam = 'transient';
+
+function parseKey(key: string): { scope: Scope; transient: boolean } {
   const [table, query] = key.split('?', 2) as [ReplicaTable, string | undefined];
   if (!(table in tableIndex)) throw new Error(`Unknown table ${table}`);
+  const params = new URLSearchParams(query);
   const index = tableIndex[table];
-  const value = index === null ? null : new URLSearchParams(query).get(index);
+  const value = index === null ? null : params.get(index);
   if (index !== null && value === null) throw new Error(`${key} lacks its ${index}`);
-  return { table, index, value };
+  return { scope: { table, index, value }, transient: params.has(transientParam) };
 }
 
 const pathOf = (s: Scope) =>
@@ -87,6 +104,7 @@ const snapshot = (items: Row[], rest: Omit<Snapshot, 'items' | 'byId'>): Snapsho
 
 type Entry = {
   scope: Scope;
+  transient: boolean;
   snap: Snapshot;
   listeners: Set<() => void>;
   // The stored rows, read once; a sync answered before replaces them.
@@ -121,7 +139,7 @@ export function createReplica(): Replica {
     let e = entries.get(key);
     if (e) return e;
     const created: Entry = {
-      scope: parseKey(key),
+      ...parseKey(key),
       snap: snapshot([], { loading: true, error: null }),
       listeners: new Set(),
       restored: Promise.resolve(),
@@ -129,12 +147,14 @@ export function createReplica(): Replica {
       inflight: null,
       queued: null,
     };
-    created.restored = readScope(key, created.scope).then((stored) => {
-      if (!stored || created.synced) return;
-      const { rows, syncedAt } = stored;
-      if (syncedAt === undefined && rows.length === 0) return;
-      set(created, snapshot(rows.sort(newestFirst), { loading: false, error: null, syncedAt }));
-    });
+    if (!created.transient) {
+      created.restored = readScope(key, created.scope).then((stored) => {
+        if (!stored || created.synced) return;
+        const { rows, syncedAt } = stored;
+        if (syncedAt === undefined && rows.length === 0) return;
+        set(created, snapshot(rows.sort(newestFirst), { loading: false, error: null, syncedAt }));
+      });
+    }
     entries.set(key, created);
     return created;
   };
@@ -145,7 +165,10 @@ export function createReplica(): Replica {
         async (rows) => {
           // Stored first, so what reads the store (file contents by digest)
           // finds what is shown.
-          await writeScope(key, e.scope, rows);
+          if (!e.transient) await writeScope(key, e.scope, rows);
+          else if (e.scope.table === 'log_files') {
+            for (const r of rows) keepContentOut(fileContentPath(r.id));
+          }
           e.synced = true;
           set(e, snapshot(rows, { loading: false, error: null, syncedAt: Date.now() }));
         },

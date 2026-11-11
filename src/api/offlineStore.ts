@@ -260,12 +260,22 @@ async function contentKey(
   return ['contents', path];
 }
 
-export const getContent = (path: string) =>
-  attempt(async (d) => {
-    const [store, key] = await contentKey(d, path);
-    const r = await d.get(store, key);
-    return r && fresh(r.savedAt) ? r.blob : undefined;
-  });
+// Content paths never stored: the attachments of missions closed long ago,
+// whose rows are kept in memory only (replica.ts, transient scopes).
+const keptOut = new Set<string>();
+
+export const keepContentOut = (path: string) => {
+  keptOut.add(path);
+};
+
+export const getContent = async (path: string) =>
+  keptOut.has(path)
+    ? undefined
+    : attempt(async (d) => {
+        const [store, key] = await contentKey(d, path);
+        const r = await d.get(store, key);
+        return r && fresh(r.savedAt) ? r.blob : undefined;
+      });
 
 export const hasDigest = async (digest: string) =>
   (await attempt(async (d) => {
@@ -275,7 +285,7 @@ export const hasDigest = async (digest: string) =>
 
 export const putContent = (path: string, blob: Blob) =>
   attempt(async (d) => {
-    if (blob.size > maxBlobBytes) return;
+    if (blob.size > maxBlobBytes || keptOut.has(path)) return;
     const [store, key] = await contentKey(d, path);
     await d.put(store, { blob, size: blob.size, savedAt: Date.now() }, key);
     await evictBlobs(d);
