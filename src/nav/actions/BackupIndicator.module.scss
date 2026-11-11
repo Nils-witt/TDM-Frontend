@@ -1,0 +1,98 @@
+// An icon, with less padding than a text item.
+.indicator {
+  padding: 0 6px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+
+  &.good {
+    color: var(--success);
+  }
+  &.degraded {
+    color: var(--warning);
+  }
+  &.failed {
+    color: var(--error);
+  }
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  max-height: 70vh;
+  padding: 4px 10px 6px;
+  overflow-y: auto;
+}
+
+.heading {
+  font-weight: 600;
+}
+
+.job {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.jobHeader,
+.target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.jobName {
+  font-weight: 500;
+}
+
+.target {
+  padding-left: 14px;
+}
+
+.targetName {
+  flex-grow: 1;
+}
+
+.muted {
+  opacity: 0.6;
+}
+
+.error,
+.targetError {
+  color: var(--error);
+  font-size: 0.9em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.targetError {
+  flex-basis: 100%;
+  padding-left: 14px;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-disabled);
+
+  &.ok {
+    background: var(--success);
+  }
+  &.incomplete {
+    background: var(--warning);
+  }
+  &.failed {
+    background: var(--error);
+  }
+  &.running {
+    background: var(--dropdown-highlight);
+  }
+}
