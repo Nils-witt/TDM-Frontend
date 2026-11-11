@@ -73,6 +73,7 @@ function Nav() {
                   <NavMenuItem label="Export Templates" widget="ExportTemplates" />
                   <NavMenuItem label="Workflows" widget="Workflows" />
                   <NavMenuItem label="Layouts" widget="Layouts" />
+                  <NavMenuItem label="Import / Export…" widget="ConfigTransfer" />
                   <MenuSeparator />
                   <NavMenuItem label="Users" widget="Users" />
                   <NavMenuItem label="Groups" widget="Groups" />

@@ -26,6 +26,7 @@ const MapAdminWidget = lazy(() => import('./MapAdmin/MapAdmin.tsx'));
 const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
 const WorkflowsWidget = lazy(() => import('./Workflows/Workflows.tsx'));
+const ConfigTransferWidget = lazy(() => import('./ConfigTransfer/ConfigTransfer.tsx'));
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
 const CreateReportWidget = lazy(() => import('./CreateReport/CreateReport.tsx'));
 const PdfViewerWidget = lazy(() => import('./PdfViewer/PdfViewer.tsx'));
@@ -464,6 +465,18 @@ const ExportTemplates: Widget = {
   Component: ExportTemplatesWidget,
 };
 
+// The admins' configuration as one JSON file, matched by name on import.
+const ConfigTransfer: Widget = {
+  ...adminWidget,
+  id: 'ConfigTransfer',
+  name: 'Import / export configuration',
+  description:
+    'Exports the catalogs, map styles and defaults, export templates, workflows and group permissions as JSON, and imports such a file.',
+  defaultWidth: 60,
+  defaultHeight: 60,
+  Component: ConfigTransferWidget,
+};
+
 // The options are the filter it starts with; the other admin widgets set them.
 const AuditLog: Widget = {
   ...adminWidget,
@@ -507,6 +520,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     ExportTemplates,
     Workflows,
     Layouts,
+    ConfigTransfer,
     Users,
     Groups,
     Permissions,
