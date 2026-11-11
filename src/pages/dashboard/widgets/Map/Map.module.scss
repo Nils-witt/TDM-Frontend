@@ -118,30 +118,6 @@
   max-height: calc(100% - 1rem);
 }
 
-.overlaysToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid var(--divider);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--hover);
-  }
-
-  svg {
-    width: 1.25rem;
-    height: 1.25rem;
-    fill: currentcolor;
-  }
-}
-
 .overlayList {
   display: flex;
   flex-direction: column;

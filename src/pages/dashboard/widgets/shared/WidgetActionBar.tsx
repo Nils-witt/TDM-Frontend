@@ -25,14 +25,27 @@ type ActionProps = {
   pressed?: boolean;
   disabled?: boolean;
   title?: string;
-  onClick: () => void;
+  // A submit button with form (the form's id) submits that form from the bar,
+  // which is outside it.
+  type?: 'button' | 'submit';
+  form?: string;
+  onClick?: () => void;
   children: ReactNode;
 };
 
-export function WidgetAction({ pressed, disabled, title, onClick, children }: ActionProps) {
+export function WidgetAction({
+  pressed,
+  disabled,
+  title,
+  type = 'button',
+  form,
+  onClick,
+  children,
+}: ActionProps) {
   return (
     <button
-      type="button"
+      type={type}
+      form={form}
       className={menuItemClass('', pressed)}
       aria-pressed={pressed}
       disabled={disabled}
@@ -41,6 +54,45 @@ export function WidgetAction({ pressed, disabled, title, onClick, children }: Ac
     >
       {children}
     </button>
+  );
+}
+
+// FormActions in the action bar, for the form whose id is form; the submit
+// action is still the form's submit button, so its required-field checks and
+// Enter apply. hidden leaves the actions out, e.g. while read-only.
+export function FormActionBar({
+  label,
+  form,
+  submitLabel,
+  canSubmit = true,
+  busy = false,
+  onDiscard,
+  discardLabel = 'Discard',
+  dirty = true,
+  hidden = false,
+}: {
+  label: string;
+  form: string;
+  submitLabel: ReactNode;
+  canSubmit?: boolean;
+  busy?: boolean;
+  onDiscard?: () => void;
+  discardLabel?: ReactNode;
+  dirty?: boolean;
+  hidden?: boolean;
+}) {
+  if (hidden) return null;
+  return (
+    <WidgetActionBar label={label}>
+      <WidgetAction type="submit" form={form} disabled={!canSubmit || busy}>
+        {submitLabel}
+      </WidgetAction>
+      {onDiscard && (
+        <WidgetAction disabled={!dirty || busy} onClick={onDiscard}>
+          {discardLabel}
+        </WidgetAction>
+      )}
+    </WidgetActionBar>
   );
 }
 

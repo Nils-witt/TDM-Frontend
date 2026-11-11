@@ -8,10 +8,12 @@ import { submitOnModEnter } from '@/components/submitShortcut';
 
 // As WidgetForm: Cmd+Enter (Ctrl+Enter off macOS) submits.
 export function FormMUI({
+  id,
   ref,
   onSubmit,
   children,
 }: {
+  id?: string;
   ref?: Ref<HTMLFormElement>;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
@@ -19,6 +21,7 @@ export function FormMUI({
   return (
     <Box
       component="form"
+      id={id}
       ref={ref}
       onSubmit={onSubmit}
       onKeyDown={(e: KeyboardEvent<HTMLFormElement>) => {

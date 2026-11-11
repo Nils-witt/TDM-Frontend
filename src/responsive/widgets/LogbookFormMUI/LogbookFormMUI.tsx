@@ -1,18 +1,13 @@
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
+import { useId } from 'react';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import { noType, useLogbookFormWidget } from '@/pages/dashboard/widgets/LogbookForm/LogbookForm.ts';
 import { partyCommands } from '@/pages/dashboard/widgets/shared/logbookCommands';
 import type { WidgetProps } from '@/pages/dashboard/widgets/widgetOptions';
+import { FormActionBarMUI } from '../shared/ActionsMUI';
 import CommandFieldMUI from '../shared/CommandFieldMUI';
-import {
-  FieldRowMUI,
-  FormActionsMUI,
-  FormErrorMUI,
-  FormMUI,
-  FormSectionMUI,
-  MutedMUI,
-} from '../shared/FormMUI';
+import { FieldRowMUI, FormErrorMUI, FormMUI, FormSectionMUI, MutedMUI } from '../shared/FormMUI';
 import FileAttachmentsMUI from './FileAttachmentsMUI';
 
 // The LogbookForm widget in MUI, with useLogbookFormWidget's behavior: "/"
@@ -42,6 +37,7 @@ function LogbookFormMUI({ options }: WidgetProps) {
     canAdd,
     add,
   } = useLogbookFormWidget();
+  const formId = useId();
 
   const notice =
     mission === null ? (
@@ -60,7 +56,9 @@ function LogbookFormMUI({ options }: WidgetProps) {
     );
 
   return (
-    <FormMUI onSubmit={(e) => void add(e)}>
+    <FormMUI id={formId} onSubmit={(e) => void add(e)}>
+      <FormActionBarMUI label="Logbook entry" form={formId} submitLabel="Add" canSubmit={canAdd} />
+      {notice}
       <FormSectionMUI legend="Entry" disabled={disabled}>
         <TextField
           select
@@ -116,7 +114,6 @@ function LogbookFormMUI({ options }: WidgetProps) {
       <FormSectionMUI legend="Files" disabled={disabled}>
         <FileAttachmentsMUI files={files} disabled={disabled} />
       </FormSectionMUI>
-      <FormActionsMUI submitLabel="Add" canSubmit={canAdd} aside={notice} />
       <FormErrorMUI error={error} onClose={() => setError(null)} />
     </FormMUI>
   );

@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Alert from '@/components/Alert';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
   FieldRow,
-  FormActions,
   FormError,
   Section,
   SectionText,
@@ -16,6 +15,7 @@ import { StatusSelect } from '../shared/MissionStatus';
 import { MissionTypeInputs } from '../shared/MissionType';
 import { type AddressField, useAddressSuggest } from '../shared/AddressSuggest';
 import NearbyPlacesButton from '../shared/NearbyPlacesButton';
+import { FormActionBar } from '../shared/WidgetActionBar';
 import { SuggestInput } from '@/components/SuggestInput';
 import { type TextKey, useMissionDetailsWidget, useMissionForm } from './MissionDetails.ts';
 import { useRegisterMissionSave } from './missionSave';
@@ -55,6 +55,7 @@ export function MissionForm({
   } = useMissionForm(mission, onSaved);
   // The menu bar's Save Mission (⌘S) submits it.
   const [form, setForm] = useState<HTMLFormElement | null>(null);
+  const formId = useId();
   useRegisterMissionSave(form, !readOnly && canSubmit && !busy);
   const suggest = useAddressSuggest(
     (k) => value(`address_${k}`),
@@ -88,7 +89,7 @@ export function MissionForm({
   // The dialog holds a form of its own, so it is not nested in this one.
   return (
     <>
-      <WidgetForm ref={setForm} onSubmit={(e) => void save(e)}>
+      <WidgetForm id={formId} ref={setForm} onSubmit={(e) => void save(e)}>
         {closed && (
           <Alert severity="warning">Closed: this mission and its logbook are read-only.</Alert>
         )}
@@ -177,7 +178,9 @@ export function MissionForm({
             />
           </FieldRow>
         </Section>
-        <FormActions
+        <FormActionBar
+          label="Mission"
+          form={formId}
           submitLabel={creating ? 'Create' : 'Save'}
           canSubmit={canSubmit}
           busy={busy}

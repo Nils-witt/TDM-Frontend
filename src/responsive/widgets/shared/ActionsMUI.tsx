@@ -22,23 +22,31 @@ export function ActionsMUI({ label, children }: { label: string; children: React
   return slot ? createPortal(bar, slot) : bar;
 }
 
+// A submit button with form (the form's id) submits that form from the bar,
+// which is outside it.
 export function ActionMUI({
   pressed,
   disabled,
   title,
+  type = 'button',
+  form,
   onClick,
   children,
 }: {
   pressed?: boolean;
   disabled?: boolean;
   title?: string;
-  onClick: () => void;
+  type?: 'button' | 'submit';
+  form?: string;
+  onClick?: () => void;
   children: ReactNode;
 }) {
   return (
     <Button
       size="small"
-      variant={pressed ? 'contained' : 'outlined'}
+      type={type}
+      form={form}
+      variant={pressed || type === 'submit' ? 'contained' : 'outlined'}
       aria-pressed={pressed}
       disabled={disabled}
       title={title}
@@ -46,5 +54,43 @@ export function ActionMUI({
     >
       {children}
     </Button>
+  );
+}
+
+// As FormActionBar: FormActionsMUI in the action bar (inline where there is
+// none) for the form whose id is form; hidden leaves the actions out.
+export function FormActionBarMUI({
+  label,
+  form,
+  submitLabel,
+  canSubmit = true,
+  busy = false,
+  onDiscard,
+  discardLabel = 'Discard',
+  dirty = true,
+  hidden = false,
+}: {
+  label: string;
+  form: string;
+  submitLabel: string;
+  canSubmit?: boolean;
+  busy?: boolean;
+  onDiscard?: () => void;
+  discardLabel?: string;
+  dirty?: boolean;
+  hidden?: boolean;
+}) {
+  if (hidden) return null;
+  return (
+    <ActionsMUI label={label}>
+      <ActionMUI type="submit" form={form} disabled={!canSubmit || busy}>
+        {submitLabel}
+      </ActionMUI>
+      {onDiscard && (
+        <ActionMUI disabled={!dirty || busy} onClick={onDiscard}>
+          {discardLabel}
+        </ActionMUI>
+      )}
+    </ActionsMUI>
   );
 }

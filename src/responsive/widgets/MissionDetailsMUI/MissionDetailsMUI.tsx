@@ -1,7 +1,7 @@
 import Alert from '@mui/material/Alert';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { Mission } from '@/api/missions';
 import {
   type AddressField,
@@ -14,15 +14,10 @@ import {
 } from '@/pages/dashboard/widgets/MissionDetails/MissionDetails.ts';
 import { useRegisterMissionSave } from '@/pages/dashboard/widgets/MissionDetails/missionSave';
 import AddressFieldMUI from '../shared/AddressFieldMUI';
+import { FormActionBarMUI } from '../shared/ActionsMUI';
 import { ConfirmDialogMUI } from '../shared/DialogsMUI';
 import NearbyPlacesButtonMUI from '../shared/NearbyPlacesButtonMUI';
-import {
-  FieldRowMUI,
-  FormActionsMUI,
-  FormErrorMUI,
-  FormMUI,
-  FormSectionMUI,
-} from '../shared/FormMUI';
+import { FieldRowMUI, FormErrorMUI, FormMUI, FormSectionMUI } from '../shared/FormMUI';
 import { MissionTypeInputsMUI, StatusSelectMUI } from '../shared/MissionInputsMUI';
 
 // The Mission Details form in MUI, with useMissionForm's rules: without a
@@ -61,6 +56,7 @@ export function MissionFormMUI({
   } = useMissionForm(mission, onSaved);
   // ⌘S submits it, as on the desktop.
   const [form, setForm] = useState<HTMLFormElement | null>(null);
+  const formId = useId();
   useRegisterMissionSave(form, !readOnly && canSubmit && !busy);
   const suggest = useAddressSuggest(
     (k) => value(`address_${k}`),
@@ -167,7 +163,9 @@ export function MissionFormMUI({
             onChange={(e) => set('occurred_event', e.target.value)}
           />
         </FormSectionMUI>
-        <FormActionsMUI
+        <FormActionBarMUI
+          label="Mission"
+          form={formId}
           submitLabel={creating ? 'Create' : 'Save'}
           canSubmit={canSubmit}
           busy={busy}

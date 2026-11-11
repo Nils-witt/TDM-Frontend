@@ -6,6 +6,7 @@ import styles from './WidgetForm.module.scss';
 // Cmd+Enter (Ctrl+Enter off macOS) submits unless submitOnModEnter is false or
 // onKeyDown prevented the default.
 export function WidgetForm({
+  id,
   onSubmit,
   onKeyDown,
   ref,
@@ -15,6 +16,7 @@ export function WidgetForm({
   'data-tour': tourId,
   children,
 }: {
+  id?: string;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   onKeyDown?: (e: KeyboardEvent<HTMLFormElement>) => void;
   ref?: Ref<HTMLFormElement>;
@@ -30,6 +32,7 @@ export function WidgetForm({
   };
   return (
     <form
+      id={id}
       ref={ref}
       className={className ? `${styles.form} ${className}` : styles.form}
       onSubmit={onSubmit}

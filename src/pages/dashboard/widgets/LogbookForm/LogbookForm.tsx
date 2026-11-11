@@ -1,8 +1,9 @@
 import { useId } from 'react';
-import { FieldRow, FormActions, FormError, Section, WidgetForm } from '@/components/form';
+import { FieldRow, FormError, Section, WidgetForm } from '@/components/form';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import CommandField from '../shared/CommandField';
 import { partyCommands } from '../shared/logbookCommands';
+import { FormActionBar } from '../shared/WidgetActionBar';
 import { NoMission } from '../shared/WidgetStates';
 import type { WidgetProps } from '../widgetOptions';
 import FileAttachments from './FileAttachments';
@@ -56,7 +57,9 @@ function LogbookFormWidget({ options }: WidgetProps) {
     );
 
   return (
-    <WidgetForm onSubmit={(e) => void add(e)}>
+    <WidgetForm id={id} onSubmit={(e) => void add(e)}>
+      <FormActionBar label="Logbook entry" form={id} submitLabel="Add" canSubmit={canAdd} />
+      {notice}
       <Section legend="Entry" disabled={disabled}>
         <FieldRow id={`${id}-type`} label="Type">
           <select
@@ -116,7 +119,6 @@ function LogbookFormWidget({ options }: WidgetProps) {
       <Section legend="Files" disabled={disabled}>
         <FileAttachments files={files} disabled={disabled} />
       </Section>
-      <FormActions submitLabel="Add" canSubmit={canAdd} aside={notice} />
       <FormError error={error} onClose={() => setError(null)} />
     </WidgetForm>
   );
