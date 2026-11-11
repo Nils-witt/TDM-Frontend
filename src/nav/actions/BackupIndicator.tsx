@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   type BackupJob,
   type BackupLevel,
@@ -5,7 +6,7 @@ import {
   summarizeBackup,
   useBackupStatus,
 } from '@/api/backup';
-import { BackupIcon } from '@/components/icons.tsx';
+import { BackupIcon, ChevronRightIcon } from '@/components/icons.tsx';
 import Menu from '@/components/menu/Menu.tsx';
 import MenuItem from '@/components/menu/MenuItem.tsx';
 import MenuSeparator from '@/components/menu/MenuSeparator.tsx';
@@ -55,10 +56,10 @@ function BackupIndicator() {
       <div className={styles.details}>
         <div className={styles.heading}>{title}</div>
         {error !== null && <div className={styles.error}>{error}</div>}
-        {data.jobs.map((job) => (
-          <Job key={job.name} job={job} />
-        ))}
       </div>
+      {data.jobs.map((job) => (
+        <Job key={job.name} job={job} />
+      ))}
       <MenuSeparator />
       <MenuItem
         keepOpen
@@ -75,29 +76,49 @@ function BackupIndicator() {
   );
 }
 
+// A job's targets stay hidden until it is clicked, so the menu lists the jobs
+// at a glance.
 function Job({ job }: { job: BackupJob }) {
+  const [expanded, setExpanded] = useState(false);
   const lastRun = job.last_end ? formatTime(job.last_end) : 'never';
   return (
-    <section className={styles.job}>
-      <div className={styles.jobHeader} title={job.error}>
-        <Dot state={job.state} />
-        <span className={styles.jobName}>{job.name}</span>
-        <span className={styles.muted}>
-          {stateLabels[job.state] ?? job.state} · last run {lastRun}
-        </span>
-      </div>
-      {job.error && <div className={styles.error}>{job.error}</div>}
-      {job.targets.map((t) => (
-        <div key={`${t.server}/${t.bucket}`} className={styles.target} title={t.error}>
-          <Dot state={t.state} />
-          <span className={styles.targetName}>
-            {t.server} / {t.bucket}
+    <>
+      <MenuItem
+        keepOpen
+        expanded={expanded}
+        icon={<Dot state={job.state} />}
+        title={job.error}
+        trailing={
+          <span className={styles.jobTrailing}>
+            <span className={styles.muted}>
+              {stateLabels[job.state] ?? job.state} · last run {lastRun}
+            </span>
+            <span className={`${styles.chevron}${expanded ? ` ${styles.expanded}` : ''}`}>
+              <ChevronRightIcon />
+            </span>
           </span>
-          <span className={styles.muted}>{stateLabels[t.state] ?? t.state}</span>
-          {t.error && <div className={styles.targetError}>{t.error}</div>}
+        }
+        onClick={() => setExpanded((e) => !e)}
+      >
+        {job.name}
+      </MenuItem>
+      {expanded && (
+        <div className={styles.targets}>
+          {job.error && <div className={styles.error}>{job.error}</div>}
+          {job.targets.length === 0 && <div className={styles.muted}>No targets</div>}
+          {job.targets.map((t) => (
+            <div key={`${t.server}/${t.bucket}`} className={styles.target} title={t.error}>
+              <Dot state={t.state} />
+              <span className={styles.targetName}>
+                {t.server} / {t.bucket}
+              </span>
+              <span className={styles.muted}>{stateLabels[t.state] ?? t.state}</span>
+              {t.error && <div className={styles.targetError}>{t.error}</div>}
+            </div>
+          ))}
         </div>
-      ))}
-    </section>
+      )}
+    </>
   );
 }
 

@@ -10,6 +10,8 @@ type MenuItemProps = {
   checked?: boolean;
   // Leaves the menu open, e.g. to toggle several checkboxes in a row.
   keepOpen?: boolean;
+  // Makes the item a disclosure that shows more below it.
+  expanded?: boolean;
   title?: string;
   onClick: () => void;
   children: ReactNode;
@@ -21,6 +23,7 @@ function MenuItem({
   disabled,
   checked,
   keepOpen,
+  expanded,
   title,
   onClick,
   children,
@@ -31,6 +34,7 @@ function MenuItem({
       type="button"
       role={checked === undefined ? 'menuitem' : 'menuitemcheckbox'}
       aria-checked={checked}
+      aria-expanded={expanded}
       title={title}
       className={styles.item}
       tabIndex={-1}

@@ -33,13 +33,14 @@
   font-weight: 600;
 }
 
-.job {
+.targets {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  max-width: 420px;
+  padding: 2px 10px 6px 28px;
 }
 
-.jobHeader,
 .target {
   display: flex;
   flex-wrap: wrap;
@@ -47,16 +48,29 @@
   gap: 7px;
 }
 
-.jobName {
-  font-weight: 500;
-}
-
-.target {
-  padding-left: 14px;
-}
-
 .targetName {
   flex-grow: 1;
+}
+
+.jobTrailing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chevron {
+  display: inline-flex;
+  transition: transform 0.15s;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
 }
 
 .muted {
