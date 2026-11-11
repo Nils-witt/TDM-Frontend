@@ -12,27 +12,13 @@ import Menu from '@/components/menu/Menu.tsx';
 import MenuItem from '@/components/menu/MenuItem.tsx';
 import MenuSeparator from '@/components/menu/MenuSeparator.tsx';
 import { formatTime } from '@/pages/dashboard/widgets/shared/logbookEntries';
+import { backupLevelState, backupStateLabels, backupTitle } from './backupLabels';
 import styles from './BackupIndicator.module.scss';
-
-const stateLabels: Record<BackupState, string> = {
-  idle: 'Not run yet',
-  running: 'Running',
-  ok: 'OK',
-  incomplete: 'Incomplete',
-  failed: 'Failed',
-};
 
 const levelClass: Record<BackupLevel, string> = {
   good: styles.good,
   degraded: styles.degraded,
   failed: styles.failed,
-};
-
-// An instance's dot shows its summary in the colors of the run states.
-const levelState: Record<BackupLevel, BackupState> = {
-  good: 'ok',
-  degraded: 'incomplete',
-  failed: 'failed',
 };
 
 // Shown only when admins configured a go-backup-tool instance. While the API
@@ -44,16 +30,7 @@ function BackupIndicator() {
   // A copy stored by an older version has no instances.
   const instances = data.instances ?? [];
   const summary = summarizeBackup(instances, error !== null);
-  const title =
-    error !== null
-      ? 'Backups: status unavailable'
-      : summary.level === 'good'
-        ? 'Backups: all good'
-        : summary.level === 'failed'
-          ? 'Backups: all failed'
-          : summary.failing === 0
-            ? 'Backups: no configured job found'
-            : `Backups: ${summary.failing} of ${summary.total} failing`;
+  const title = backupTitle(summary, error !== null);
 
   return (
     <Menu
@@ -93,7 +70,7 @@ function Instance({ instance, first }: { instance: BackupInstanceStatus; first: 
     <section>
       {!first && <MenuSeparator />}
       <div className={styles.instanceHeading}>
-        <Dot state={levelState[level]} />
+        <Dot state={backupLevelState[level]} />
         <span>{instance.name}</span>
       </div>
       {instance.error ? (
@@ -122,7 +99,7 @@ function Job({ job }: { job: BackupJob }) {
         trailing={
           <span className={styles.jobTrailing}>
             <span className={styles.muted}>
-              {stateLabels[job.state] ?? job.state} · last run {lastRun}
+              {backupStateLabels[job.state] ?? job.state} · last run {lastRun}
             </span>
             <span className={`${styles.chevron}${expanded ? ` ${styles.expanded}` : ''}`}>
               <ChevronRightIcon />
@@ -143,7 +120,7 @@ function Job({ job }: { job: BackupJob }) {
               <span className={styles.targetName}>
                 {t.server} / {t.bucket}
               </span>
-              <span className={styles.muted}>{stateLabels[t.state] ?? t.state}</span>
+              <span className={styles.muted}>{backupStateLabels[t.state] ?? t.state}</span>
               {t.error && <div className={styles.targetError}>{t.error}</div>}
             </div>
           ))}

@@ -1,0 +1,15 @@
+// The icon is a bit smaller than the header's other buttons, as in the menu bar.
+.button svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.good {
+  color: var(--success);
+}
+.degraded {
+  color: var(--warning);
+}
+.failed {
+  color: var(--error);
+}
