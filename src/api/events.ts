@@ -32,6 +32,7 @@ const typePaths: Record<string, string[]> = {
   user_preferences: ['/api/v1/me/preferences'],
   export_templates: ['/api/v1/export-templates'],
   reports: ['/api/v1/reports'],
+  workflows: ['/api/v1/workflows'],
 };
 
 // Every change is recorded there.

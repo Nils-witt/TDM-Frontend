@@ -25,6 +25,7 @@ const MapStylesWidget = lazy(() => import('./MapStyles/MapStyles.tsx'));
 const MapAdminWidget = lazy(() => import('./MapAdmin/MapAdmin.tsx'));
 const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
+const WorkflowsWidget = lazy(() => import('./Workflows/Workflows.tsx'));
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
 const CreateReportWidget = lazy(() => import('./CreateReport/CreateReport.tsx'));
 const PdfViewerWidget = lazy(() => import('./PdfViewer/PdfViewer.tsx'));
@@ -437,6 +438,19 @@ const Layouts: Widget = {
   Component: LayoutsWidget,
 };
 
+// The rules the API runs on its own: a trigger, filters and actions, edited
+// as a graph.
+const Workflows: Widget = {
+  ...adminWidget,
+  id: 'Workflows',
+  name: 'Workflows',
+  description: 'Manages the workflows the API runs when missions and tasks change.',
+  maxWidth: 200,
+  defaultWidth: 110,
+  defaultHeight: 70,
+  Component: WorkflowsWidget,
+};
+
 const ExportTemplates: Widget = {
   ...adminWidget,
   id: 'ExportTemplates',
@@ -491,6 +505,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     MapStyles,
     MapAdmin,
     ExportTemplates,
+    Workflows,
     Layouts,
     Users,
     Groups,
