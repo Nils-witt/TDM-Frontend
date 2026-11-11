@@ -6,13 +6,17 @@
     <title>Universam</title>
   </head>
   <body>
+    <!-- counteract colored drop shadow on iOS 27 beta status bar -->
+    <div id="status-bar-tint" aria-hidden="true"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
   <script>
-    if (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-            (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)) {
-      document.documentElement.classList.add("is-ios");
+    if (
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+    ) {
+      document.documentElement.classList.add('is-ios');
     }
   </script>
 </html>

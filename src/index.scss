@@ -9,7 +9,6 @@
 @use 'styles/lists';
 @use 'styles/logbook';
 
-
 /* counteract colored drop shadow on iOS 27 beta status bar */
 @media (display-mode: standalone) and (orientation: portrait) {
   .is-ios #status-bar-tint {
