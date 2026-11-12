@@ -46,8 +46,8 @@ function BackupIndicator() {
         {error !== null && <div className={styles.error}>{error}</div>}
       </div>
       <div className={styles.instances}>
-        {instances.map((instance, i) => (
-          <Instance key={instance.id} instance={instance} first={i === 0} />
+        {instances.map((instance) => (
+          <Instance key={instance.id} instance={instance} />
         ))}
       </div>
       <MenuSeparator />
@@ -67,23 +67,28 @@ function BackupIndicator() {
   );
 }
 
-function Instance({ instance, first }: { instance: BackupInstanceStatus; first: boolean }) {
+function Instance({ instance }: { instance: BackupInstanceStatus }) {
   const { level } = summarizeBackup([instance], false);
+  // The separator is a sibling of the section: as the section's first child
+  // it would always be hidden, and its :first-child rule drops the one before
+  // the first instance.
   return (
-    <section>
-      {!first && <MenuSeparator />}
-      <div className={styles.instanceHeading}>
-        <Dot state={backupLevelState[level]} />
-        <span>{instance.name}</span>
-      </div>
-      {instance.error ? (
-        <div className={`${styles.error} ${styles.instanceNote}`}>{instance.error}</div>
-      ) : instance.jobs.length === 0 ? (
-        <div className={`${styles.muted} ${styles.instanceNote}`}>No configured job found</div>
-      ) : (
-        instance.jobs.map((job) => <Job key={job.name} job={job} />)
-      )}
-    </section>
+    <>
+      <MenuSeparator />
+      <section className={styles.instance}>
+        <div className={styles.instanceHeading}>
+          <Dot state={backupLevelState[level]} />
+          <span>{instance.name}</span>
+        </div>
+        {instance.error ? (
+          <div className={`${styles.error} ${styles.instanceNote}`}>{instance.error}</div>
+        ) : instance.jobs.length === 0 ? (
+          <div className={`${styles.muted} ${styles.instanceNote}`}>No configured job found</div>
+        ) : (
+          instance.jobs.map((job) => <Job key={job.name} job={job} />)
+        )}
+      </section>
+    </>
   );
 }
 

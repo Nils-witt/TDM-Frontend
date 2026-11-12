@@ -31,8 +31,17 @@
   font-weight: 600;
 }
 
+// Flex columns like the dropdown, so the job rows (buttons, which shrink to
+// their content in block layout) span the menu's width.
+.instances,
+.instance {
+  display: flex;
+  flex-direction: column;
+}
+
 .instances {
   max-height: 60vh;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
