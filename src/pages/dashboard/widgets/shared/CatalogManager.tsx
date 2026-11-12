@@ -376,7 +376,7 @@ function EntryRow({
             </button>
           </form>
         ) : (
-          <div >
+          <div>
             <button
               type="button"
               className="btn"

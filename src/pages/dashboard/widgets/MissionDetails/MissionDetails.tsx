@@ -109,12 +109,7 @@ export function MissionForm({
             />
           </FieldRow>
           <FieldRow id={id('type')} label="Type">
-            <MissionTypeInput
-              key={resetKey}
-              id={id('type')}
-              value={typeValue}
-              onChange={setType}
-            />
+            <MissionTypeInput key={resetKey} id={id('type')} value={typeValue} onChange={setType} />
           </FieldRow>
           <MissionTypeDescription typeId={typeValue} />
         </Section>
