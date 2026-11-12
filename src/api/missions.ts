@@ -119,8 +119,9 @@ export type MissionFields = Partial<
   >
 >;
 
-// New missions start as drafts.
-export const createMission = (fields: MissionFields & { occurred_event: string }) =>
+// New missions start as drafts; the API rejects a status here, so another one
+// is set with a PATCH afterwards.
+export const createMission = (fields: Omit<MissionFields, 'status'> & { occurred_event: string }) =>
   request<Mission>(missionsPath, { method: 'POST', body: JSON.stringify(fields) });
 
 export const patchMission = (id: string, fields: MissionFields) =>

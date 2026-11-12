@@ -1,9 +1,13 @@
+import Autocomplete from '@mui/material/Autocomplete';
 import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
-import { useState } from 'react';
 import { type MissionStatus, missionStatuses } from '@/api/missions';
-import { useCatalogs } from '@/data/catalogContext';
+import {
+  type MissionTypeOption,
+  matchMissionTypes,
+  useMissionTypeOptions,
+} from '@/pages/dashboard/widgets/shared/missionTypeOptions';
 
 // As StatusSelect: once the stored status left draft, the API does not let it
 // return; a status unknown to this build is kept as an extra option.
@@ -42,10 +46,11 @@ export function StatusSelectMUI({
   );
 }
 
-// As MissionTypeInputs: the type is what is saved, the group only narrows the
-// types offered; a deleted type shows as "Unknown type" until another is
+// As MissionTypeInput: one field for group and type, typing searches both
+// (and the descriptions); the menu groups the types and adds their
+// descriptions. A deleted type shows as "Unknown type" until another is
 // picked.
-export function MissionTypeInputsMUI({
+export function MissionTypeInputMUI({
   value,
   onChange,
   disabled,
@@ -54,67 +59,50 @@ export function MissionTypeInputsMUI({
   onChange: (typeId: string | null) => void;
   disabled?: boolean;
 }) {
-  const { missionTypes, missionTypeGroups } = useCatalogs();
-  const type = value === null ? undefined : missionTypes.byId.get(value);
-  const [pickedGroup, setPickedGroup] = useState<string | null>(null);
-  const group = pickedGroup ?? type?.group_id ?? '';
-  const groups = [...missionTypeGroups.items].sort((a, b) => a.name.localeCompare(b.name));
-  const types = missionTypes.items
-    .filter((t) => t.group_id === group)
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const typeLabel = (v: unknown) => {
-    if (v === '') return group === '' ? '-' : 'Choose a type…';
-    return missionTypes.byId.get(v as string)?.name ?? 'Unknown type';
-  };
+  const { options, byId } = useMissionTypeOptions();
+  const type = value === null ? null : (byId.get(value) ?? null);
+  // Autocomplete's value has to be one of its options.
+  const unknown: MissionTypeOption | null =
+    value !== null && !type
+      ? { id: value, label: 'Unknown type', name: 'Unknown type', group: '', description: '' }
+      : null;
 
   return (
-    <>
-      <TextField
-        select
-        label="Group"
-        size="small"
-        value={group}
-        disabled={disabled}
-        onChange={(e) => {
-          setPickedGroup(e.target.value);
-          if (type?.group_id !== e.target.value) onChange(null);
-        }}
-        slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-      >
-        <MenuItem value="">No type</MenuItem>
-        {groups.map((g) => (
-          <MenuItem key={g.id} value={g.id}>
-            {g.name}
-          </MenuItem>
-        ))}
-      </TextField>
-      <TextField
-        select
-        label="Type"
-        size="small"
-        value={value ?? ''}
-        disabled={disabled || (group === '' && value === null)}
-        onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
-        helperText={type?.description || undefined}
-        slotProps={{
-          // The field shows the name only; the menu adds the descriptions.
-          select: { displayEmpty: true, renderValue: typeLabel },
-          inputLabel: { shrink: true },
-          formHelperText: { sx: { whiteSpace: 'pre-line' } },
-        }}
-      >
-        <MenuItem value="">{group === '' ? '-' : 'Choose a type…'}</MenuItem>
-        {value !== null && !type && <MenuItem value={value}>Unknown type</MenuItem>}
-        {types.map((t) => (
-          <MenuItem key={t.id} value={t.id}>
-            <ListItemText
-              primary={t.name}
-              secondary={t.description || undefined}
-              slotProps={{ secondary: { sx: { whiteSpace: 'normal' } } }}
-            />
-          </MenuItem>
-        ))}
-      </TextField>
-    </>
+    <Autocomplete<MissionTypeOption, false, false, false>
+      fullWidth
+      autoHighlight
+      disabled={disabled}
+      options={unknown ? [unknown, ...options] : options}
+      value={type ?? unknown}
+      onChange={(_, picked) => onChange(picked?.id ?? null)}
+      filterOptions={(o, { inputValue }) => matchMissionTypes(o, inputValue)}
+      groupBy={(o) => o.group}
+      getOptionLabel={(o) => o.label}
+      getOptionKey={(o) => o.id}
+      isOptionEqualToValue={(o, v) => o.id === v.id}
+      noOptionsText="No matching type"
+      renderOption={({ key, ...props }, o) => (
+        <li key={key} {...props}>
+          <ListItemText
+            primary={o.name}
+            secondary={o.description || undefined}
+            slotProps={{ secondary: { sx: { whiteSpace: 'pre-line' } } }}
+          />
+        </li>
+      )}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Type"
+          size="small"
+          placeholder="Search group or type…"
+          helperText={type?.description || undefined}
+          slotProps={{
+            ...params.slotProps,
+            formHelperText: { sx: { whiteSpace: 'pre-line' } },
+          }}
+        />
+      )}
+    />
   );
 }

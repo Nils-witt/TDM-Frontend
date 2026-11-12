@@ -105,9 +105,30 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
     const sentType = typeEdit;
     setBusy(true);
     try {
-      const m = creating
-        ? await createMission({ ...body, occurred_event: value('occurred_event') })
-        : await patchMission(mission.id, body);
+      if (creating) {
+        const { status, ...fields } = body;
+        const draft = await createMission({ ...fields, occurred_event: value('occurred_event') });
+        let m = draft;
+        if (status !== undefined && status !== 'draft') {
+          try {
+            m = await patchMission(draft.id, { status });
+          } catch (err) {
+            // The mission exists now, so the form must switch to it, or a
+            // retry would create it twice. The status stays edited.
+            const { status: _unsent, ...rest } = sent;
+            drop(rest, sentType);
+            await onSaved(draft);
+            throw new Error(
+              `Created as draft, setting the status failed: ${(err as Error).message}`,
+            );
+          }
+        }
+        drop(sent, sentType);
+        setError(null);
+        await onSaved(m);
+        return;
+      }
+      const m = await patchMission(mission.id, body);
       drop(sent, sentType);
       setError(null);
       await onSaved(m);

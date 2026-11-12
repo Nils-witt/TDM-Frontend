@@ -1,11 +1,20 @@
 import { useState } from 'react';
+import { SuggestInput } from '@/components/SuggestInput';
 import { useCatalogs } from '@/data/catalogContext';
 import styles from './MissionType.module.scss';
+import {
+  firstLine,
+  matchMissionTypes,
+  resolveMissionType,
+  useMissionTypeOptions,
+} from './missionTypeOptions';
 
-// The type is what is saved; the group only narrows the types offered. A type
-// no longer in the catalog (deleted) stays shown as "Unknown type" until
-// another is picked.
-export function MissionTypeInputs({
+// One field for group and type: typing searches both (and the descriptions),
+// and the type is set as soon as the text names one (see resolveMissionType);
+// emptying it clears the type. Text naming none is dropped on blur, showing
+// the stored type again. A type no longer in the catalog (deleted) shows as
+// "Unknown type" until another is picked.
+export function MissionTypeInput({
   id,
   value,
   onChange,
@@ -14,55 +23,41 @@ export function MissionTypeInputs({
   value: string | null;
   onChange: (typeId: string | null) => void;
 }) {
-  const { missionTypes, missionTypeGroups } = useCatalogs();
-  const type = value === null ? undefined : missionTypes.byId.get(value);
-  // Picked before a type of the group is: '' for none.
-  const [pickedGroup, setPickedGroup] = useState<string | null>(null);
-  const group = pickedGroup ?? type?.group_id ?? '';
-  const groups = [...missionTypeGroups.items].sort((a, b) => a.name.localeCompare(b.name));
-  const types = missionTypes.items
-    .filter((t) => t.group_id === group)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const { options, byId } = useMissionTypeOptions();
+  const current = value === null ? '' : (byId.get(value)?.label ?? 'Unknown type');
+  // null while not typing, so the field follows the value.
+  const [text, setText] = useState<string | null>(null);
+  // Until something is typed, every type is offered.
+  const matches = text === null ? options : matchMissionTypes(options, text);
 
   return (
-    <>
-      <select
-        id={id}
-        className="grow"
-        aria-label={id ? undefined : 'Type group'}
-        value={group}
-        onChange={(e) => {
-          setPickedGroup(e.target.value);
-          if (type?.group_id !== e.target.value) onChange(null);
-        }}
-      >
-        <option value="">No type</option>
-        {groups.map((g) => (
-          <option key={g.id} value={g.id}>
-            {g.name}
-          </option>
-        ))}
-      </select>
-      <select
-        className="grow"
-        aria-label="Type"
-        value={value ?? ''}
-        disabled={group === '' && value === null}
-        onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
-      >
-        <option value="">{group === '' ? '-' : 'Choose a type…'}</option>
-        {value !== null && !type && <option value={value}>Unknown type</option>}
-        {types.map((t) => (
-          <option key={t.id} value={t.id} title={t.description || undefined}>
-            {t.name}
-          </option>
-        ))}
-      </select>
-    </>
+    <SuggestInput
+      id={id}
+      className="grow"
+      aria-label={id ? undefined : 'Mission type'}
+      placeholder="Search group or type…"
+      value={text ?? current}
+      onChange={(t) => {
+        setText(t);
+        if (t.trim() === '') {
+          onChange(null);
+          return;
+        }
+        const picked = resolveMissionType(options, t);
+        if (picked) onChange(picked.id);
+      }}
+      onBlur={() => setText(null)}
+      suggestions={matches.map((o) => ({
+        key: o.id,
+        value: o.label,
+        detail: firstLine(o.description) || undefined,
+        onPick: () => onChange(o.id),
+      }))}
+    />
   );
 }
 
-// Shown below MissionTypeInputs; nothing for a type without one.
+// Shown below MissionTypeInput; nothing for a type without one.
 export function MissionTypeDescription({ typeId }: { typeId: string | null }) {
   const { missionTypes } = useCatalogs();
   const description = typeId === null ? '' : (missionTypes.byId.get(typeId)?.description ?? '');

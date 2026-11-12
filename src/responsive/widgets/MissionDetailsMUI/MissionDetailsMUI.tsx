@@ -18,7 +18,7 @@ import { FormActionBarMUI } from '../shared/ActionsMUI';
 import { ConfirmDialogMUI } from '../shared/DialogsMUI';
 import NearbyPlacesButtonMUI from '../shared/NearbyPlacesButtonMUI';
 import { FieldRowMUI, FormErrorMUI, FormMUI, FormSectionMUI } from '../shared/FormMUI';
-import { MissionTypeInputsMUI, StatusSelectMUI } from '../shared/MissionInputsMUI';
+import { MissionTypeInputMUI, StatusSelectMUI } from '../shared/MissionInputsMUI';
 
 // The Mission Details form in MUI, with useMissionForm's rules: without a
 // mission it creates one, a closed mission is read-only, and saving a close
@@ -103,7 +103,7 @@ export function MissionFormMUI({
             />
           </FieldRowMUI>
           <FieldRowMUI>
-            <MissionTypeInputsMUI
+            <MissionTypeInputMUI
               key={resetKey}
               value={typeValue}
               onChange={setType}
