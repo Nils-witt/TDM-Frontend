@@ -58,7 +58,8 @@ import {
 // and skips the rest.
 
 export const bundleFormat = 'universam-config';
-export const bundleVersion = 1;
+// 2: mission types are objects with a description.
+export const bundleVersion = 2;
 
 export const sections = [
   { key: 'mission_types', label: 'Mission types' },
@@ -76,7 +77,9 @@ export type SectionKey = (typeof sections)[number]['key'];
 
 export const sectionLabel = (key: SectionKey) => sections.find((s) => s.key === key)!.label;
 
-export type BundleMissionTypeGroup = { name: string; types: string[] };
+// Version 1 files name a type only; importing one keeps its description.
+export type BundleMissionType = string | { name: string; description: string };
+export type BundleMissionTypeGroup = { name: string; types: BundleMissionType[] };
 export type BundleMapStyle = { name: string; url: string; is_default: boolean };
 export type BundleBackupInstance = { name: string; url: string; jobs: string[] };
 export type BundleTemplate = { name: string; source: string };
@@ -255,7 +258,10 @@ export async function exportBundle(wanted: ReadonlySet<SectionKey>): Promise<Con
   if (wanted.has('mission_types')) {
     bundle.mission_types = c.missionTypeGroups.toSorted(byName).map((g) => ({
       name: g.name,
-      types: names(c.missionTypes.filter((t) => t.group_id === g.id)),
+      types: c.missionTypes
+        .filter((t) => t.group_id === g.id)
+        .toSorted(byName)
+        .map((t) => ({ name: t.name, description: t.description ?? '' })),
     }));
   }
   if (wanted.has('logbook_types')) bundle.logbook_types = names(c.logbookTypes);
@@ -337,7 +343,8 @@ export function parseBundle(text: string): ConfigBundle {
   const named = (x: unknown): x is Record<string, unknown> =>
     isObject(x) && isString(x.name) && x.name.trim() !== '';
 
-  list('mission_types', (x) => named(x) && isStringList(x.types));
+  const missionType = (t: unknown) => isString(t) || (named(t) && isString(t.description));
+  list('mission_types', (x) => named(x) && Array.isArray(x.types) && x.types.every(missionType));
   list('logbook_types', (x) => isString(x) && x.trim() !== '');
   list('file_types', (x) => isString(x) && x.trim() !== '');
   list(
@@ -415,7 +422,7 @@ export async function planImport(
   };
 
   if (wanted.has('mission_types') && bundle.mission_types) {
-    const existing = new Set(c.missionTypes.map((t) => `${t.group_id}\u0000${fold(t.name)}`));
+    const existing = new Map(c.missionTypes.map((t) => [`${t.group_id}\u0000${fold(t.name)}`, t]));
     const seenGroups = new Set<string>();
     for (const g of bundle.mission_types) {
       const groupName = g.name.trim();
@@ -436,11 +443,25 @@ export async function planImport(
       } else same('mission_types');
       const seenTypes = new Set<string>();
       for (const raw of g.types) {
-        const name = raw.trim();
+        const name = (isString(raw) ? raw : raw.name).trim();
+        const description = isString(raw) ? null : raw.description.trim();
         if (name === '' || seenTypes.has(fold(name))) continue;
         seenTypes.add(fold(name));
-        if (groupId !== undefined && existing.has(`${groupId}\u0000${fold(name)}`)) {
-          same('mission_types');
+        const current =
+          groupId === undefined ? undefined : existing.get(`${groupId}\u0000${fold(name)}`);
+        if (current) {
+          if (description === null || description === (current.description ?? '')) {
+            same('mission_types');
+          } else {
+            steps.push({
+              section: 'mission_types',
+              kind: 'update',
+              label: `“${groupName} / ${current.name}” description`,
+              run: async () => {
+                await missionTypesApi.patch(current.id, { description });
+              },
+            });
+          }
           continue;
         }
         steps.push({
@@ -450,7 +471,7 @@ export async function planImport(
           run: async (ctx) => {
             const id = ctx.missionTypeGroups.get(key);
             if (id === undefined) throw new Error(`group “${groupName}” was not created`);
-            await missionTypesApi.create({ name, group_id: id });
+            await missionTypesApi.create({ name, group_id: id, description: description ?? '' });
           },
         });
       }

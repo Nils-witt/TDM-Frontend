@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCatalogs } from '@/data/catalogContext';
+import styles from './MissionType.module.scss';
 
 // The type is what is saved; the group only narrows the types offered. A type
 // no longer in the catalog (deleted) stays shown as "Unknown type" until
@@ -52,11 +53,19 @@ export function MissionTypeInputs({
         <option value="">{group === '' ? '-' : 'Choose a type…'}</option>
         {value !== null && !type && <option value={value}>Unknown type</option>}
         {types.map((t) => (
-          <option key={t.id} value={t.id}>
+          <option key={t.id} value={t.id} title={t.description || undefined}>
             {t.name}
           </option>
         ))}
       </select>
     </>
   );
+}
+
+// Shown below MissionTypeInputs; nothing for a type without one.
+export function MissionTypeDescription({ typeId }: { typeId: string | null }) {
+  const { missionTypes } = useCatalogs();
+  const description = typeId === null ? '' : (missionTypes.byId.get(typeId)?.description ?? '');
+  if (description === '') return null;
+  return <p className={styles.description}>{description}</p>;
 }

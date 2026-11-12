@@ -50,6 +50,22 @@
   color: var(--text-secondary);
 }
 
+// Long ones are cut to keep the rows short; the title shows all of it.
+.description {
+  max-width: 20rem;
+
+  span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  input {
+    width: 100%;
+  }
+}
+
 .actions {
   width: 1%;
   white-space: nowrap;

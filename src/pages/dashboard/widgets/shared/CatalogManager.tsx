@@ -33,10 +33,15 @@ type Props<T extends CatalogEntry> = {
   // After "Delete the <noun> "<name>"?".
   deleteNote: string;
   parents?: Parents;
+  // With a description per entry (mission types).
+  describe?: boolean;
 };
 
 const parentId = (t: CatalogEntry) =>
   'group_id' in t && typeof t.group_id === 'string' ? t.group_id : '';
+
+const descriptionOf = (t: CatalogEntry) =>
+  'description' in t && typeof t.description === 'string' ? t.description : '';
 
 const byName = (a: CatalogEntry, b: CatalogEntry) => a.name.localeCompare(b.name);
 
@@ -51,6 +56,7 @@ function CatalogManager<T extends CatalogEntry>({
   api,
   deleteNote,
   parents,
+  describe = false,
 }: Props<T>) {
   const { openWidget } = useWidgetWindows();
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +75,7 @@ function CatalogManager<T extends CatalogEntry>({
     }
     return byName(a, b);
   });
-  const columns = parents ? 4 : 3;
+  const columns = 3 + (parents ? 1 : 0) + (describe ? 1 : 0);
 
   const write = async (fn: () => Promise<unknown>) => {
     try {
@@ -89,6 +95,7 @@ function CatalogManager<T extends CatalogEntry>({
       <CreateEntry
         noun={noun}
         parents={parents}
+        describe={describe}
         create={async (input) => {
           await api.create(input);
           await collection.reload();
@@ -103,6 +110,7 @@ function CatalogManager<T extends CatalogEntry>({
               <tr>
                 {parents && <th>{parents.label}</th>}
                 <th>Name</th>
+                {describe && <th>Description</th>}
                 <th>Changed</th>
                 <th>
                   <span className={styles.hidden}>Actions</span>
@@ -122,6 +130,7 @@ function CatalogManager<T extends CatalogEntry>({
                   key={t.id}
                   entry={t}
                   parents={parents}
+                  describe={describe}
                   parentName={parentName(t)}
                   save={(input) => write(() => api.patch(t.id, input))}
                   onDelete={() => setDeleting(t)}
@@ -161,14 +170,17 @@ function CatalogManager<T extends CatalogEntry>({
 function CreateEntry({
   noun,
   parents,
+  describe,
   create,
 }: {
   noun: string;
   parents?: Parents;
+  describe: boolean;
   create: (input: CatalogInput) => Promise<void>;
 }) {
   const [name, setName] = useState('');
   const [parent, setParent] = useState('');
+  const [description, setDescription] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const id = useId();
@@ -179,8 +191,12 @@ function CreateEntry({
     if (busy) return;
     setBusy(true);
     try {
-      await create(parents ? { name: name.trim(), group_id: parent } : { name: name.trim() });
+      const input: CatalogInput = { name: name.trim() };
+      if (parents) input.group_id = parent;
+      if (describe) input.description = description.trim();
+      await create(input);
       setName('');
+      setDescription('');
       setError(null);
     } catch (err) {
       setError((err as Error).message);
@@ -223,6 +239,17 @@ function CreateEntry({
             required
           />
         </FieldRow>
+        {describe && (
+          <FieldRow id={`${id}-description`} label="Description">
+            <textarea
+              id={`${id}-description`}
+              className="grow"
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </FieldRow>
+        )}
       </Section>
       <FormActions submitLabel="Create" busy={busy} canSubmit={name.trim() !== ''} />
       <FormError error={error} onClose={() => setError(null)} />
@@ -233,6 +260,7 @@ function CreateEntry({
 type EntryRowProps = {
   entry: CatalogEntry;
   parents?: Parents;
+  describe: boolean;
   parentName: string;
   // Sends only the changed fields; false keeps the row in edit mode.
   save: (input: Partial<CatalogInput>) => Promise<boolean>;
@@ -242,8 +270,18 @@ type EntryRowProps = {
 
 // While edited, the inputs belong to a form placed in the actions cell, as a
 // form cannot wrap a table row.
-function EntryRow({ entry, parents, parentName, save, onDelete, onHistory }: EntryRowProps) {
-  const [edit, setEdit] = useState<{ name: string; parent: string } | null>(null);
+function EntryRow({
+  entry,
+  parents,
+  describe,
+  parentName,
+  save,
+  onDelete,
+  onHistory,
+}: EntryRowProps) {
+  const [edit, setEdit] = useState<{ name: string; parent: string; description: string } | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
   const formId = useId();
   const offline = useOffline();
@@ -254,6 +292,9 @@ function EntryRow({ entry, parents, parentName, save, onDelete, onHistory }: Ent
     const input: Partial<CatalogInput> = {};
     if (edit.name.trim() !== entry.name) input.name = edit.name.trim();
     if (parents && edit.parent !== parentId(entry)) input.group_id = edit.parent;
+    if (describe && edit.description.trim() !== descriptionOf(entry)) {
+      input.description = edit.description.trim();
+    }
     if (Object.keys(input).length === 0) {
       setEdit(null);
       return;
@@ -304,6 +345,23 @@ function EntryRow({ entry, parents, parentName, save, onDelete, onHistory }: Ent
           entry.name
         )}
       </td>
+      {describe && (
+        <td className={styles.description}>
+          {edit ? (
+            <input
+              form={formId}
+              aria-label="Description"
+              value={edit.description}
+              onChange={(e) => setEdit({ ...edit, description: e.target.value })}
+              autoComplete="off"
+            />
+          ) : (
+            <span className="muted" title={descriptionOf(entry) || undefined}>
+              {descriptionOf(entry)}
+            </span>
+          )}
+        </td>
+      )}
       <td className={styles.meta}>
         {formatTime(entry.updated_at)} · {entry.updated_by}
       </td>
@@ -318,12 +376,18 @@ function EntryRow({ entry, parents, parentName, save, onDelete, onHistory }: Ent
             </button>
           </form>
         ) : (
-          <span className="row">
+          <div >
             <button
               type="button"
               className="btn"
               disabled={offline}
-              onClick={() => setEdit({ name: entry.name, parent: parentId(entry) })}
+              onClick={() =>
+                setEdit({
+                  name: entry.name,
+                  parent: parentId(entry),
+                  description: descriptionOf(entry),
+                })
+              }
             >
               Edit
             </button>
@@ -340,7 +404,7 @@ function EntryRow({ entry, parents, parentName, save, onDelete, onHistory }: Ent
             >
               <DeleteIcon />
             </button>
-          </span>
+          </div>
         )}
       </td>
     </tr>

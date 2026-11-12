@@ -37,6 +37,7 @@ function MissionTypesWidget() {
         api={missionTypesApi}
         deleteNote="Missions given it keep it, but it is no longer offered."
         parents={{ label: 'Group', collection: missionTypeGroups }}
+        describe
       />
     </div>
   );
@@ -94,7 +95,7 @@ function CsvActions() {
     const done = plan.steps.length - failures.length;
     setResult(
       failures.length === 0
-        ? { ok: true, text: `Imported ${done} new entries; ${plan.unchanged} rows existed.` }
+        ? { ok: true, text: `Imported ${done} entries; ${plan.unchanged} rows were unchanged.` }
         : {
             ok: false,
             text: `Imported ${done} of ${plan.steps.length} entries. Failed: ${failures.join('; ')}`,
@@ -105,6 +106,7 @@ function CsvActions() {
   const counts = pending && {
     groups: pending.plan.steps.filter((s) => s.kind === 'create-group').length,
     types: pending.plan.steps.filter((s) => s.kind === 'create-type').length,
+    updates: pending.plan.steps.filter((s) => s.kind === 'update-type').length,
   };
 
   return (
@@ -155,7 +157,8 @@ function CsvActions() {
             <>
               <SectionText>
                 Import {pending.fileName}: create {counts.groups} groups and {counts.types} mission
-                types?
+                types
+                {counts.updates > 0 && <>, and change the description of {counts.updates}</>}?
               </SectionText>
               <SectionText>Nothing is renamed or deleted.</SectionText>
             </>
@@ -179,10 +182,16 @@ async function runImport(plan: ImportPlan): Promise<string[]> {
       if (step.kind === 'create-group') {
         const g = await missionTypeGroupsApi.create({ name: step.name });
         created.set(step.name.toLocaleLowerCase(), g.id);
+      } else if (step.kind === 'update-type') {
+        await missionTypesApi.patch(step.id, { description: step.description });
       } else {
         const groupId = step.groupId ?? created.get(step.groupName.toLocaleLowerCase());
         if (groupId === undefined) throw new Error(`group "${step.groupName}" was not created`);
-        await missionTypesApi.create({ name: step.name, group_id: groupId });
+        await missionTypesApi.create({
+          name: step.name,
+          group_id: groupId,
+          description: step.description,
+        });
       }
     } catch (err) {
       failures.push(`line ${step.row.line}: ${(err as Error).message}`);

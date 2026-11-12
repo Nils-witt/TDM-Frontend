@@ -1,3 +1,4 @@
+import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import { useState } from 'react';
@@ -61,6 +62,10 @@ export function MissionTypeInputsMUI({
   const types = missionTypes.items
     .filter((t) => t.group_id === group)
     .sort((a, b) => a.name.localeCompare(b.name));
+  const typeLabel = (v: unknown) => {
+    if (v === '') return group === '' ? '-' : 'Choose a type…';
+    return missionTypes.byId.get(v as string)?.name ?? 'Unknown type';
+  };
 
   return (
     <>
@@ -90,13 +95,23 @@ export function MissionTypeInputsMUI({
         value={value ?? ''}
         disabled={disabled || (group === '' && value === null)}
         onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
-        slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        helperText={type?.description || undefined}
+        slotProps={{
+          // The field shows the name only; the menu adds the descriptions.
+          select: { displayEmpty: true, renderValue: typeLabel },
+          inputLabel: { shrink: true },
+          formHelperText: { sx: { whiteSpace: 'pre-line' } },
+        }}
       >
         <MenuItem value="">{group === '' ? '-' : 'Choose a type…'}</MenuItem>
         {value !== null && !type && <MenuItem value={value}>Unknown type</MenuItem>}
         {types.map((t) => (
           <MenuItem key={t.id} value={t.id}>
-            {t.name}
+            <ListItemText
+              primary={t.name}
+              secondary={t.description || undefined}
+              slotProps={{ secondary: { sx: { whiteSpace: 'normal' } } }}
+            />
           </MenuItem>
         ))}
       </TextField>
