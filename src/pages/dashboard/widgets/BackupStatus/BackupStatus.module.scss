@@ -1,0 +1,111 @@
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.instanceHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jobRow {
+  cursor: pointer;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.chevron {
+  display: inline-flex;
+  transition: transform 0.15s;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.targets {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 1.75rem;
+}
+
+.targetsRow:hover {
+  background: none;
+}
+
+.target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.targetName {
+  flex-grow: 1;
+  overflow-wrap: anywhere;
+}
+
+.error,
+.targetError {
+  color: var(--error);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.targetError {
+  flex-basis: 100%;
+  padding-left: 14px;
+  font-size: 0.9em;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-disabled);
+
+  &.ok {
+    background: var(--success);
+  }
+  &.incomplete {
+    background: var(--warning);
+  }
+  &.failed {
+    background: var(--error);
+  }
+  &.running {
+    background: var(--dropdown-highlight);
+  }
+}

@@ -11,6 +11,7 @@ import { BackupIcon, ChevronRightIcon } from '@/components/icons.tsx';
 import Menu from '@/components/menu/Menu.tsx';
 import MenuItem from '@/components/menu/MenuItem.tsx';
 import MenuSeparator from '@/components/menu/MenuSeparator.tsx';
+import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
 import { formatTime } from '@/pages/dashboard/widgets/shared/logbookEntries';
 import { backupLevelState, backupStateLabels, backupTitle } from './backupLabels';
 import styles from './BackupIndicator.module.scss';
@@ -25,6 +26,7 @@ const levelClass: Record<BackupLevel, string> = {
 // cannot be reached, the last answer stays listed below the error.
 function BackupIndicator() {
   const { data, error, reload } = useBackupStatus();
+  const { openWidget } = useWidgetWindows();
   if (!data?.enabled) return null;
 
   // A copy stored by an older version has no instances.
@@ -60,6 +62,7 @@ function BackupIndicator() {
       >
         Refresh
       </MenuItem>
+      <MenuItem onClick={() => openWidget('BackupStatus')}>Show in Window</MenuItem>
     </Menu>
   );
 }

@@ -26,6 +26,7 @@ const MapAdminWidget = lazy(() => import('./MapAdmin/MapAdmin.tsx'));
 const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
 const WorkflowsWidget = lazy(() => import('./Workflows/Workflows.tsx'));
+const BackupStatusWidget = lazy(() => import('./BackupStatus/BackupStatus.tsx'));
 const BackupInstancesWidget = lazy(() => import('./BackupInstances/BackupInstances.tsx'));
 const ConfigTransferWidget = lazy(() => import('./ConfigTransfer/ConfigTransfer.tsx'));
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
@@ -339,6 +340,22 @@ const MapView: Widget = {
   Component: MapWidget,
 };
 
+// The menu bar's backup status as a widget; readable by every user, like the
+// menu bar's indicator.
+const BackupStatus: Widget = {
+  id: 'BackupStatus',
+  name: 'Backup status',
+  category: 'general',
+  description: 'The jobs of the configured backup servers, with their state and targets.',
+  minWidth: 20,
+  maxWidth: 160,
+  minHeight: 8,
+  maxHeight: 800,
+  defaultWidth: 60,
+  defaultHeight: 35,
+  Component: BackupStatusWidget,
+};
+
 // The admin widgets open from the Admin menu only (shown to admins), so the
 // picker leaves them out; a layout holding one shows non-admins a notice.
 const adminWidget = {
@@ -537,6 +554,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     Groups,
     Permissions,
     AuditLog,
+    BackupStatus,
     Example,
   ].map((w) => [w.id, w]),
 );
