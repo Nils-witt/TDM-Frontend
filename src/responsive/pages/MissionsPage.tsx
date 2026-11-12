@@ -1,8 +1,10 @@
 import { useCallback, useDeferredValue, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router';
+import { useOffline } from '@/api/connectivity';
 import { type Mission, type MissionStatus, shortLocation } from '@/api/missions';
 import Alert from '@/components/Alert';
 import Spinner from '@/components/Spinner';
+import SymbolIcon from '@/components/symbols/SymbolIcon';
 import { useCatalogs } from '@/data/catalogContext';
 import { useMissions } from '@/data/missionsContext';
 import { useMissionTypeName } from '@/data/missionTypeName';
@@ -97,6 +99,8 @@ function MissionsPage() {
     closed: shown === null || shown.includes('closed'),
   });
   const searchText = useSearchText();
+  // Nothing can be created offline.
+  const offline = useOffline();
   // Keeps typing responsive with many missions.
   const deferredQuery = useDeferredValue(query);
 
@@ -114,7 +118,20 @@ function MissionsPage() {
   return (
     <div className={styles.page}>
       <div className={styles.toolbar}>
-        <h1 className={styles.heading}>Missions</h1>
+        <div className={styles.headingRow}>
+          <h1 className={styles.heading}>Missions</h1>
+          {offline ? (
+            <button type="button" className={styles.create} disabled>
+              <SymbolIcon name="add" />
+              New
+            </button>
+          ) : (
+            <Link to={responsivePaths.newMission} className={styles.create}>
+              <SymbolIcon name="add" />
+              New
+            </Link>
+          )}
+        </div>
         <input
           type="search"
           className={styles.search}

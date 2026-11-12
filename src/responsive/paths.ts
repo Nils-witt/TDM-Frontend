@@ -5,6 +5,7 @@ import { mobileBasePath } from '@/app/mobileRoute';
 export const responsivePaths = {
   root: mobileBasePath,
   missions: `${mobileBasePath}/missions`,
+  newMission: `${mobileBasePath}/missions/new`,
   archive: `${mobileBasePath}/archive`,
   map: `${mobileBasePath}/map`,
   reports: `${mobileBasePath}/reports`,
