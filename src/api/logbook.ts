@@ -26,7 +26,13 @@ export type LogFile = EntityMeta &
     size: number;
     // Lowercase hex SHA-256 of the content.
     digest: string;
+    // Pinned to the mission for every user; null (or absent in rows stored
+    // before pins existed) when not pinned.
+    pinned_at?: string | null;
+    pinned_by?: string | null;
   };
+
+export const isPinned = (f: LogFile) => f.pinned_at != null;
 
 // Revoked items are left out.
 export const logEntriesPath = (missionId: string) =>
@@ -79,4 +85,11 @@ export const revokeLogEntry = (id: string, reason: string) =>
   request<LogEntry>(`/api/v1/log-entries/${encodeURIComponent(id)}/revoke`, {
     method: 'POST',
     body: JSON.stringify({ reason }),
+  });
+
+// A pin is shared by every user of the mission. The mission must not be
+// closed.
+export const pinLogFile = (id: string, pinned: boolean) =>
+  request<LogFile>(`/api/v1/log-files/${encodeURIComponent(id)}/pin`, {
+    method: pinned ? 'PUT' : 'DELETE',
   });

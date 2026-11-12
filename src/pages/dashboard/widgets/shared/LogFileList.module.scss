@@ -37,3 +37,33 @@
     opacity: 0.6;
   }
 }
+
+// Faint until hovered, so an unpinned file's pin does not compete with its name.
+.pin {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  &:disabled {
+    cursor: progress;
+  }
+}
+
+.pinned {
+  display: inline-flex;
+  color: var(--primary);
+  opacity: 1;
+
+  .icon {
+    font-variation-settings: 'FILL' 1;
+  }
+}

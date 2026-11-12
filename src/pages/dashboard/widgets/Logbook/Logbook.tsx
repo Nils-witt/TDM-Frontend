@@ -138,7 +138,7 @@ const EntryItem = memo(function EntryItem({
     >
       <div className="content">
         <p className="primary pre">{e.text}</p>
-        {files.length > 0 && <LogFileList files={files} onError={onError} />}
+        {files.length > 0 && <LogFileList files={files} canPin={canRevoke} onError={onError} />}
         <p className="secondary">
           {formatTime(e.created_at)} · <LogbookTypeBadge typeId={e.type_id} /> · {created}
         </p>

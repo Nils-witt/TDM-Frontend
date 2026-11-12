@@ -130,7 +130,7 @@ const EntryItemMUI = memo(function EntryItemMUI({
   return (
     <Stack component="li" sx={{ py: 1.5, gap: 0.75 }}>
       <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{e.text}</Typography>
-      {files.length > 0 && <LogFileListMUI files={files} onError={onError} />}
+      {files.length > 0 && <LogFileListMUI files={files} canPin={canRevoke} onError={onError} />}
       <Stack direction="row" useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography component="span" variant="body2" color="text.secondary">
           {formatTime(e.created_at)}
