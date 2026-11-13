@@ -63,10 +63,11 @@ function markerElement(m: MapMarker, onClick: () => void): HTMLElement {
   el.type = 'button';
   el.className = styles.marker;
   el.dataset.status = m.status;
-  el.title = m.title;
-  el.setAttribute('aria-label', m.title);
+  el.title = m.unsaved ? `${m.title}\n(unsaved)` : m.title;
+  el.setAttribute('aria-label', el.title);
   el.setAttribute('aria-pressed', String(m.selected));
   if (m.selected) el.classList.add(styles.selected);
+  if (m.unsaved) el.classList.add(styles.unsaved);
   const pin = document.createElement('span');
   pin.className = styles.pin;
   pin.setAttribute('aria-hidden', 'true');
@@ -201,7 +202,7 @@ export function MissionMap({
       container: container.current,
       center: [i.longitude, i.latitude],
       zoom: i.zoom,
-      attributionControl: { compact: true },
+      attributionControl: false,
       transformRequest,
     });
     m.addControl(new NavigationControl(), 'top-right');

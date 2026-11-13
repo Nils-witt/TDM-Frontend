@@ -301,7 +301,8 @@ const PdfViewer: Widget = {
 };
 
 // style picks one of the map styles admins configure (see MapStyles); latitude,
-// longitude and zoom the start view; show-<status> which missions it shows.
+// longitude and zoom the start view; show-<status> which missions it shows;
+// only-selected shows just the selected one; show-unsaved whether Mission Details' unsaved edits move the pins.
 // With a tile server configured in the API a switcher turns its overlays on
 // and off.
 const MapView: Widget = {
@@ -336,6 +337,10 @@ const MapView: Widget = {
       type: 'boolean' as const,
       default: s.value !== 'closed',
     })),
+    // Overrides the show-<status> options.
+    { key: 'only-selected', label: 'Only the selected mission', type: 'boolean', default: false },
+    // A mission's unsaved edits in Mission Details (position, status, title).
+    { key: 'show-unsaved', label: 'Show unsaved changes', type: 'boolean', default: true },
   ],
   Component: MapWidget,
 };

@@ -51,6 +51,12 @@
     --pin-color: var(--text-disabled);
   }
 
+  // Where a form's unsaved edits put it.
+  &.unsaved .pin {
+    border-style: dashed;
+    opacity: 0.85;
+  }
+
   &.selected {
     --pin-size: 2.5rem;
 

@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import {
   createMission,
   type Mission,
@@ -10,6 +10,7 @@ import { useOffline } from '@/api/connectivity';
 import { useMissions } from '@/data/missionsContext';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
+import { type MissionDraft, useRegisterMissionDraft } from './missionDrafts';
 
 export type TextKey =
   | 'occurred_event'
@@ -87,6 +88,29 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   );
   const dirty = changedText.length > 0 || coordsChanged || typeChanged;
   const canSubmit = dirty && value('occurred_event').trim() !== '';
+
+  // What the Map shows before the save. Coordinates only once both parse (or
+  // both are blank), so a half-typed one doesn't move the pin.
+  const draft = useMemo<MissionDraft | null>(() => {
+    if (!mission || !dirty) return null;
+    const d: Record<string, unknown> = {};
+    for (const k of changedText) d[k] = edits[k];
+    if (typeChanged) d.mission_type = typeEdit;
+    if (coordsChanged) {
+      try {
+        const lat = parseCoord(coordValue('lat'), 'Latitude');
+        const lon = parseCoord(coordValue('lon'), 'Longitude');
+        if (lat === null && lon === null) d.address_coordinates = null;
+        else if (lat !== null && lon !== null) d.address_coordinates = { lat, lon };
+      } catch {
+        // Not a number yet.
+      }
+    }
+    return d as MissionDraft;
+    // changedText, coordValue and the flags derive from these.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mission, edits, typeEdit]);
+  useRegisterMissionDraft(mission?.id ?? null, draft);
 
   // Unless they changed again meanwhile.
   const drop = (sent: Edits, sentType: string | null | undefined) => {
