@@ -32,10 +32,10 @@ export function sectionsByStatus(missions: readonly Mission[]): MissionSection[]
 // missions of other scopes than the selected one (null = Default).
 export function useMissionsListWidget(hidden: readonly string[], currentScopeOnly: boolean) {
   const { items: loaded, error, loading } = useMissions({ closed: !hidden.includes('closed') });
-  const { scopeId } = useSelectedScope();
+  const { matches } = useSelectedScope();
   const all = useMemo(
-    () => (currentScopeOnly ? loaded.filter((m) => (m.scope ?? null) === scopeId) : loaded),
-    [loaded, currentScopeOnly, scopeId],
+    () => (currentScopeOnly ? loaded.filter((m) => matches(m.scope)) : loaded),
+    [loaded, currentScopeOnly, matches],
   );
   // Keyed by content, as callers pass a new array each render.
   const hiddenKey = hidden.join('\n');

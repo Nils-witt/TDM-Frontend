@@ -28,7 +28,7 @@ export type MapMarker = {
 export function useMapMarkers(options: ResolvedOptions, selectedId: string | null) {
   const onlySelected = options['only-selected'] === true;
   const currentScopeOnly = options.currentScopeOnly === true;
-  const { scopeId } = useSelectedScope();
+  const { matches } = useSelectedScope();
   // The selected mission is found by useMission whatever its status.
   const { items: shown, error } = useMissions({
     closed: !onlySelected && options['show-closed'] !== false,
@@ -61,7 +61,7 @@ export function useMapMarkers(options: ResolvedOptions, selectedId: string | nul
       (m.id === selectedId ||
         (!onlySelected &&
           options[`show-${m.status}`] !== false &&
-          (!currentScopeOnly || (m.scope ?? null) === scopeId)))
+          (!currentScopeOnly || matches(m.scope))))
         ? [
             {
               id: m.id,
@@ -75,7 +75,7 @@ export function useMapMarkers(options: ResolvedOptions, selectedId: string | nul
           ]
         : [],
     );
-  }, [items, missionTypes, selectedId, options, onlySelected, currentScopeOnly, scopeId]);
+  }, [items, missionTypes, selectedId, options, onlySelected, currentScopeOnly, matches]);
 
   const selected = markers.find((m) => m.selected);
   return { markers, selected, error };

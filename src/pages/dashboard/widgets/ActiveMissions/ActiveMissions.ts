@@ -53,11 +53,9 @@ const periodOf = ({ amount, unit }: Frame) =>
 // Default).
 export function useActiveMissionsWidget(options: ResolvedOptions) {
   const { items: loaded, error, loading } = useMissions();
-  const { scopeId } = useSelectedScope();
+  const { matches } = useSelectedScope();
   const missions =
-    options.currentScopeOnly === true
-      ? loaded.filter((m) => (m.scope ?? null) === scopeId)
-      : loaded;
+    options.currentScopeOnly === true ? loaded.filter((m) => matches(m.scope)) : loaded;
   const frames = framesOf(options);
   // The frames move on with time, missions leaving them without a change.
   const now = useNow(frames.some((f) => f.unit.value === 'minutes') ? 10_000 : 60_000);

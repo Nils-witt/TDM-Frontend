@@ -250,8 +250,9 @@ export function useMissionArchive({
   currentScopeOnly?: boolean;
 }) {
   const offline = useOffline();
-  const { scopeId } = useSelectedScope();
-  const scope: ScopeFilter = currentScopeOnly ? scopeId : undefined;
+  const { scopeId, global } = useSelectedScope();
+  // Global searches every scope, as without the option.
+  const scope: ScopeFilter = currentScopeOnly && !global ? scopeId : undefined;
   const { missionTypes, missionTypeGroups } = useCatalogs();
   const [ownQuery, setOwnQuery] = useState<ArchiveQuery>(() => ({
     filter: { ...emptyFilter, status: initialStatus },

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
-import { defaultScopeName, useSelectedScope } from '@/data/selectedScope';
+import { selectedScopeName, selectedScopeTitle, useSelectedScope } from '@/data/selectedScope';
 import styles from './ScopePicker.module.scss';
 
 // The menu's MUI parts load only once it is opened.
@@ -9,9 +9,9 @@ const ScopeMenuMUI = lazy(() => import('./ScopeMenuMUI'));
 // The header's counterpart of the menu bar's ScopeMenu: the mission scope of
 // this tab, which new missions are created in.
 function ScopePicker() {
-  const { scope } = useSelectedScope();
+  const selected = useSelectedScope();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const name = scope?.name ?? defaultScopeName;
+  const name = selectedScopeName(selected);
 
   return (
     <>
@@ -20,7 +20,7 @@ function ScopePicker() {
         className={`icon-btn ${styles.button}`}
         aria-label={`Scope: ${name}`}
         aria-haspopup="menu"
-        title={`New missions are created in ${name}`}
+        title={selectedScopeTitle(selected)}
         onClick={(e) => setAnchor(e.currentTarget)}
       >
         <span className={styles.name}>{name}</span>

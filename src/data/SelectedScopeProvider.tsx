@@ -5,6 +5,8 @@ import { SelectedScopeContext } from './selectedScope';
 // Per tab, surviving reloads; a new tab starts in Default (a tab opened from
 // this one starts with a copy of session storage, so it keeps the scope).
 const storageKey = 'universam.missionScope';
+// Stored for Global; no scope ID looks like it.
+const globalValue = '*global';
 
 function load(): string | null {
   try {
@@ -31,13 +33,23 @@ function SelectedScopeProvider({ children }: { children: ReactNode }) {
     store(id);
     setStored(id);
   }, []);
+  const setGlobal = useCallback(() => setScope(globalValue), [setScope]);
 
+  const global = stored === globalValue;
   // A deleted scope falls back to Default once the catalog is known; while it
   // loads the stored one is kept, so a reload does not lose it.
-  const scope = stored === null ? null : (scopes.byId.get(stored) ?? null);
-  const scopeId = stored !== null && (scope !== null || scopes.loading) ? stored : null;
+  const scope = stored === null || global ? null : (scopes.byId.get(stored) ?? null);
+  const scopeId = stored !== null && !global && (scope !== null || scopes.loading) ? stored : null;
 
-  const value = useMemo(() => ({ scopeId, scope, setScope }), [scopeId, scope, setScope]);
+  const matches = useCallback(
+    (s: string | null | undefined) => global || (s ?? null) === scopeId,
+    [global, scopeId],
+  );
+
+  const value = useMemo(
+    () => ({ scopeId, scope, global, matches, setScope, setGlobal }),
+    [scopeId, scope, global, matches, setScope, setGlobal],
+  );
   return <SelectedScopeContext value={value}>{children}</SelectedScopeContext>;
 }
 

@@ -2,23 +2,35 @@ import Menu from '@/components/menu/Menu';
 import MenuItem from '@/components/menu/MenuItem';
 import MenuSeparator from '@/components/menu/MenuSeparator';
 import { useCatalogs } from '@/data/catalogContext';
-import { defaultScopeName, scopeOptions, useSelectedScope } from '@/data/selectedScope';
+import {
+  defaultScopeName,
+  globalScopeName,
+  scopeOptions,
+  selectedScopeName,
+  selectedScopeTitle,
+  useSelectedScope,
+} from '@/data/selectedScope';
 
 // The mission scope of this tab, which new missions are created in.
 function ScopeMenu() {
   const { scopes } = useCatalogs();
-  const { scopeId, scope, setScope } = useSelectedScope();
-  const name = scope?.name ?? defaultScopeName;
+  const selected = useSelectedScope();
+  const { scopeId, global, setScope, setGlobal } = selected;
+  const name = selectedScopeName(selected);
   const options = scopeOptions(scopes.items);
 
   return (
     <Menu
       trigger={name}
       label={`Scope: ${name}`}
-      title={`New missions are created in ${name}`}
+      title={selectedScopeTitle(selected)}
       tourId="scope"
     >
-      <MenuItem checked={scopeId === null} onClick={() => setScope(null)}>
+      <MenuItem checked={global} onClick={setGlobal}>
+        {globalScopeName}
+      </MenuItem>
+      <MenuSeparator />
+      <MenuItem checked={!global && scopeId === null} onClick={() => setScope(null)}>
         {defaultScopeName}
       </MenuItem>
       {options.length > 0 && <MenuSeparator />}

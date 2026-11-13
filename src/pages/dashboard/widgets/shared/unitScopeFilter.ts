@@ -6,7 +6,7 @@ import type { WidgetOption } from '../widgetOptions';
 
 // The unit widgets' (Add Unit, Unit Status, Unit Requests) counterpart of the
 // mission widgets' option: only the units of the scope selected in the menu
-// bar (useSelectedScope), Default for the units in none.
+// bar (useSelectedScope), Default for the units in none, every unit in Global.
 export const unitScopeOption: WidgetOption = {
   key: 'currentScopeOnly',
   label: 'Only the current scope',
@@ -19,9 +19,9 @@ export const unitScopeOption: WidgetOption = {
 export function useUnitScopeMatch(enabled: boolean): (unitId: string) => boolean {
   const { byUnit } = useUnitScopes();
   const scopes = useCatalogs().scopes.byId;
-  const { scopeId } = useSelectedScope();
+  const { matches } = useSelectedScope();
   return useCallback(
-    (unitId: string) => !enabled || unitScopeOf(byUnit, scopes, unitId) === scopeId,
-    [enabled, byUnit, scopes, scopeId],
+    (unitId: string) => !enabled || matches(unitScopeOf(byUnit, scopes, unitId)),
+    [enabled, byUnit, scopes, matches],
   );
 }
