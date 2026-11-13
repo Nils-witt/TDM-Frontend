@@ -14,3 +14,11 @@
   align-items: center;
   gap: 6px;
 }
+
+// A request leaves the unit's status alone: its badge is drawn dashed.
+.request {
+  display: inline-flex;
+  border-radius: var(--radius);
+  outline: 2px dashed currentColor;
+  outline-offset: 1px;
+}

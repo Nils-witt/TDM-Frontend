@@ -14,6 +14,7 @@ import ChannelIndicator from './actions/ChannelIndicator';
 import Clock from './actions/Clock';
 import LiveIndicator from './actions/LiveIndicator';
 import BackupIndicator from './actions/BackupIndicator';
+import UnitRequestIndicator from './actions/UnitRequestIndicator';
 import Fullscreen from './actions/Fullscreen';
 import UserMenu from './actions/UserMenu';
 import styles from './Nav.module.scss';
@@ -58,6 +59,7 @@ function Nav() {
                 <NavMenuItem label="Active Missions" widget="ActiveMissions" />
                 <NavMenuItem label="Map" widget="Map" />
                 <NavMenuItem label="Unit Status" widget="UnitStatus" />
+                <NavMenuItem label="Unit Requests" widget="UnitRequests" />
                 <NavMenuItem label="Units in Mission" widget="MissionUnits" />
                 <NavMenuItem label="Add Unit…" widget="AddUnit" />
               </TopLevelMenu>
@@ -93,6 +95,7 @@ function Nav() {
             </nav>
             <div className={styles.right}>
               <LiveIndicator />
+              <UnitRequestIndicator />
               <BackupIndicator />
               <ChannelIndicator />
               <UserMenu />

@@ -154,7 +154,8 @@ export type Attachments = ReturnType<typeof useAttachments>;
 
 // The form is disabled while no mission is selected, and for a closed one.
 // Commands in the sender, receiver and entry fields are expanded on adding.
-export function useLogbookFormWidget() {
+// initialSender prefills the sender (the widget's sender option).
+export function useLogbookFormWidget(initialSender = '') {
   const { mission, readOnly, logEntries, logFiles } = useSelectedMission();
   const { principal } = useSession();
   const ctx = useMemo(() => ({ mission, principal }), [mission, principal]);
@@ -167,7 +168,7 @@ export function useLogbookFormWidget() {
       ? typeChoice
       : (types[0]?.id ?? noType);
   const [text, setText] = useState('');
-  const [sender, setSender] = useState('');
+  const [sender, setSender] = useState(initialSender);
   const [receiver, setReceiver] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

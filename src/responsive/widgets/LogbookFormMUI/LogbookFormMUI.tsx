@@ -36,7 +36,7 @@ function LogbookFormMUI({ options }: WidgetProps) {
     disabled,
     canAdd,
     add,
-  } = useLogbookFormWidget();
+  } = useLogbookFormWidget(String(options.sender ?? ''));
   const formId = useId();
 
   const notice =

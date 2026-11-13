@@ -32,6 +32,7 @@ const BackupStatusWidget = lazy(() => import('./BackupStatus/BackupStatus.tsx'))
 const UnitStatusWidget = lazy(() => import('./UnitStatus/UnitStatus.tsx'));
 const MissionUnitsWidget = lazy(() => import('./MissionUnits/MissionUnits.tsx'));
 const AddUnitWidget = lazy(() => import('./AddUnit/AddUnit.tsx'));
+const UnitRequestsWidget = lazy(() => import('./UnitRequests/UnitRequests.tsx'));
 const BackupInstancesWidget = lazy(() => import('./BackupInstances/BackupInstances.tsx'));
 const ConfigTransferWidget = lazy(() => import('./ConfigTransfer/ConfigTransfer.tsx'));
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
@@ -205,6 +206,8 @@ const LogbookForm: Widget = {
   defaultHeight: 20,
   options: [
     { key: 'showMission', label: 'Show the selected mission', type: 'boolean', default: true },
+    // Unit Requests sets it to the acknowledged unit.
+    { key: 'sender', label: 'Sender', type: 'text', default: '' },
   ],
   Component: LogbookFormWidget,
 };
@@ -405,6 +408,23 @@ const MissionUnits: Widget = {
   defaultHeight: 25,
   options: [unitFunctionOption],
   Component: MissionUnitsWidget,
+};
+
+// FMS 0, 5 and 9 leave a unit's status alone and wait here to be
+// acknowledged.
+const UnitRequests: Widget = {
+  id: 'UnitRequests',
+  name: 'Unit requests',
+  category: 'general',
+  description: 'The units’ pending FMS 0, 5 and 9 requests, to acknowledge.',
+  minWidth: 20,
+  maxWidth: 160,
+  minHeight: 8,
+  maxHeight: 800,
+  defaultWidth: 40,
+  defaultHeight: 30,
+  options: [unitFunctionOption],
+  Component: UnitRequestsWidget,
 };
 
 // A unit is on one mission at a time; units on another one are shown, but
@@ -625,6 +645,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     AuditLog,
     BackupStatus,
     UnitStatus,
+    UnitRequests,
     MissionUnits,
     AddUnit,
     Example,

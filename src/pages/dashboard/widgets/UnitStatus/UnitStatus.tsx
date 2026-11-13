@@ -20,6 +20,8 @@ import tableStyles from '../shared/CatalogManager.module.scss';
 import styles from './UnitStatus.module.scss';
 
 // The latest FMS status changes of the units server's units, newest first.
+// Requests (0, 5, 9) are listed as changes too, marked: the unit keeps the
+// status it had.
 // The API pushes them through the event stream, so the list follows them
 // without polling. The changes do not name the unit's function, so the
 // optional function filter takes it from the current units: the changes of a
@@ -142,9 +144,16 @@ function Change({ change: c }: { change: UnitStatusChange }) {
           {c.to === null ? (
             <span className="muted">cleared</span>
           ) : (
-            <>
+            <span className={c.request ? styles.request : undefined}>
               <FmsBadge code={c.to} />
-            </>
+            </span>
+          )}
+          {c.request && (
+            <span
+              className={tableStyles.meta}
+              title="A request: the unit's status stays as it was until it reports another one"
+            >
+            </span>
           )}
         </span>
       </td>

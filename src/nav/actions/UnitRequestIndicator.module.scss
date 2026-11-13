@@ -1,0 +1,64 @@
+// An icon with the pending count, with less padding than a text item.
+.indicator {
+  padding: 0 6px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+
+  &.none {
+    opacity: 0.6;
+  }
+  &.pending {
+    color: var(--warning);
+  }
+  &.urgent {
+    color: var(--error);
+  }
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.count {
+  font-size: 0.85em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  padding: 4px 10px 6px;
+}
+
+.heading {
+  font-weight: 600;
+}
+
+// Flex columns like the dropdown, so the rows (buttons) span its width.
+.requests {
+  display: flex;
+  flex-direction: column;
+  max-height: 60vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.muted {
+  opacity: 0.6;
+}
+
+.error {
+  color: var(--error);
+  font-size: 0.9em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

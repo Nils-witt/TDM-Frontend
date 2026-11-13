@@ -37,7 +37,7 @@ function LogbookFormWidget({ options }: WidgetProps) {
     disabled,
     canAdd,
     add,
-  } = useLogbookFormWidget();
+  } = useLogbookFormWidget(String(options.sender ?? ''));
 
   const id = useId();
   const notice =
