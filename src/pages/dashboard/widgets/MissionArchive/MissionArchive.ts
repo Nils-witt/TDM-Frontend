@@ -7,6 +7,8 @@ import {
   type MissionSortKey,
   missionSearchPath,
 } from '@/api/missions';
+import type { MissionUnit } from '@/api/missionUnits';
+import { scopeKey, useTables } from '@/api/replica';
 import { useResource } from '@/api/resource';
 import { useCatalogs } from '@/data/catalogContext';
 import { useMissions } from '@/data/missionsContext';
@@ -26,6 +28,8 @@ export type ArchiveFilter = {
   objectName: string;
   callee: string;
   tag: string;
+  // Any unit ever assigned, by name, call sign or ID.
+  unit: string;
   createdFrom: string;
   createdTo: string;
 };
@@ -42,6 +46,7 @@ export const emptyFilter: ArchiveFilter = {
   objectName: '',
   callee: '',
   tag: '',
+  unit: '',
   createdFrom: '',
   createdTo: '',
 };
@@ -99,7 +104,20 @@ function dayStart(date: string, days = 0): number {
   return new Date(y, m - 1, d + days).getTime();
 }
 
-function matcher(f: ArchiveFilter, c: TypeCatalogs): (m: Mission) => boolean {
+// The searchable text of each mission's assigned units, by mission ID.
+type UnitTexts = ReadonlyMap<string, string>;
+
+function unitTexts(units: readonly MissionUnit[]): UnitTexts {
+  const byMission = new Map<string, string>();
+  for (const u of units) {
+    const text = [u.unit_name, u.unit_call_sign, u.unit_id].join('\n');
+    const prev = byMission.get(u.mission);
+    byMission.set(u.mission, prev === undefined ? text : `${prev}\n${text}`);
+  }
+  return byMission;
+}
+
+function matcher(f: ArchiveFilter, c: TypeCatalogs, units: UnitTexts): (m: Mission) => boolean {
   const n = (s: string) => fold(s.trim());
   const text = n(f.text);
   const event = n(f.event);
@@ -109,6 +127,7 @@ function matcher(f: ArchiveFilter, c: TypeCatalogs): (m: Mission) => boolean {
   const objectName = n(f.objectName);
   const callee = n(f.callee);
   const tag = n(f.tag);
+  const unit = n(f.unit);
   const from = f.createdFrom === '' ? -Infinity : dayStart(f.createdFrom);
   const to = f.createdTo === '' ? Infinity : dayStart(f.createdTo, 1);
 
@@ -126,6 +145,9 @@ function matcher(f: ArchiveFilter, c: TypeCatalogs): (m: Mission) => boolean {
     if (!contains(m.address_object_name, objectName)) return false;
     if (!contains(`${m.callee} ${m.callee_phone}`, callee)) return false;
     if (tag !== '' && !m.tags.some((t) => fold(t).includes(tag))) return false;
+    // Per field, as the API does, so a match does not span two units.
+    if (unit !== '' && !(units.get(m.id) ?? '').split('\n').some((v) => fold(v).includes(unit)))
+      return false;
     const created = Date.parse(m.created_at);
     if (created < from || created >= to) return false;
     if (text !== '') {
@@ -188,6 +210,7 @@ export function searchPath(f: ArchiveFilter, sort: Sort, page: number): string {
     object: f.objectName,
     callee: f.callee,
     tag: f.tag,
+    unit: f.unit,
     created_from: f.createdFrom && new Date(dayStart(f.createdFrom)).toISOString(),
     created_to: f.createdTo && new Date(dayStart(f.createdTo, 1)).toISOString(),
     sort: sort.key,
@@ -221,6 +244,13 @@ export function useMissionArchive({
 
   const remote = useResource<MissionSearchPage>(offline ? null : searchPath(filter, sort, page));
   const local = useMissions({ closed: offline });
+  // Offline, the unit filter reads the stored assignments of every stored
+  // mission; only then, as each mission is a scope of its own.
+  const unitScopes =
+    offline && filter.unit.trim() !== ''
+      ? local.items.map((m) => scopeKey('mission_units', m.id))
+      : [];
+  const localUnits = useTables<MissionUnit>(unitScopes);
 
   // The last page stays shown while the next one loads, so the table does
   // not collapse on every page turn.
@@ -233,8 +263,12 @@ export function useMissionArchive({
   );
   const localMatches = useMemo(
     () =>
-      offline ? local.items.filter(matcher(filter, catalogs)).sort(comparator(sort, catalogs)) : [],
-    [offline, local.items, filter, sort, catalogs],
+      offline
+        ? local.items
+            .filter(matcher(filter, catalogs, unitTexts(localUnits.items)))
+            .sort(comparator(sort, catalogs))
+        : [],
+    [offline, local.items, localUnits.items, filter, sort, catalogs],
   );
 
   const total = offline ? localMatches.length : (shown?.total ?? 0);

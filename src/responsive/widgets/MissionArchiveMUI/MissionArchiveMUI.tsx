@@ -28,10 +28,12 @@ import {
   typeName,
   useMissionArchive,
 } from '@/pages/dashboard/widgets/MissionArchive/MissionArchive.ts';
+import { useUnitSuggestions } from '@/pages/dashboard/widgets/MissionArchive/unitSuggestions';
 import { formatTime } from '@/pages/dashboard/widgets/shared/logbookEntries';
 import type { WidgetProps } from '@/pages/dashboard/widgets/widgetOptions';
 import { responsivePaths } from '../../paths';
 import StatusChip from '../../StatusChip';
+import AddressFieldMUI from '../shared/AddressFieldMUI';
 import { FieldRowMUI, FormActionsMUI, FormMUI, FormSectionMUI, MutedMUI } from '../shared/FormMUI';
 import { useArchiveUrlState } from './archiveUrl';
 
@@ -169,6 +171,7 @@ function FilterFormMUI({
   const [draft, setDraft] = useState(filter);
   const { missionTypes, missionTypeGroups } = useCatalogs();
   const set = (key: keyof ArchiveFilter) => (value: string) => setDraft({ ...draft, [key]: value });
+  const unitSuggest = useUnitSuggestions(draft.unit);
 
   const groups = [...missionTypeGroups.items].sort((a, b) => a.name.localeCompare(b.name));
   const types = missionTypes.items
@@ -281,6 +284,12 @@ function FilterFormMUI({
             </FieldRowMUI>
             {text('callee', 'Callee', 'Name or phone')}
             {text('tag', 'Tag')}
+            <AddressFieldMUI
+              label="Unit"
+              value={draft.unit}
+              onChange={set('unit')}
+              {...unitSuggest}
+            />
             <FieldRowMUI>
               <TextField
                 label="Created from"

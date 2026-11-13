@@ -23,6 +23,7 @@ const params: [keyof ArchiveFilter, string][] = [
   ['objectName', 'object'],
   ['callee', 'callee'],
   ['tag', 'tag'],
+  ['unit', 'unit'],
   ['createdFrom', 'from'],
   ['createdTo', 'to'],
 ];

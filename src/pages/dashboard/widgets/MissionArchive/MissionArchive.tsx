@@ -3,6 +3,7 @@ import { type Mission, missionStatuses } from '@/api/missions';
 import Alert from '@/components/Alert';
 import { FieldRow, FormActions, Section, SectionHeading, WidgetForm } from '@/components/form';
 import Spinner from '@/components/Spinner';
+import { SuggestInput } from '@/components/SuggestInput';
 import { useCatalogs } from '@/data/catalogContext';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import table from '../shared/CatalogManager.module.scss';
@@ -22,6 +23,7 @@ import {
   useMissionArchive,
 } from './MissionArchive.ts';
 import styles from './MissionArchive.module.scss';
+import { useUnitSuggestions } from './unitSuggestions';
 
 // The status option is the status filter it starts with.
 function MissionArchiveWidget({ options }: WidgetProps) {
@@ -80,6 +82,7 @@ function FilterForm({
   const { missionTypes, missionTypeGroups } = useCatalogs();
   const id = useId();
   const set = (key: keyof ArchiveFilter) => (value: string) => setDraft({ ...draft, [key]: value });
+  const unitSuggest = useUnitSuggestions(draft.unit);
 
   const groups = [...missionTypeGroups.items].sort((a, b) => a.name.localeCompare(b.name));
   const types = missionTypes.items
@@ -168,6 +171,17 @@ function FilterForm({
             {text('district', 'District')}
             {text('callee', 'Callee', 'Name or phone')}
             {text('tag', 'Tag')}
+            <FieldRow id={`${id}-unit`} label="Unit">
+              <SuggestInput
+                id={`${id}-unit`}
+                className="grow"
+                type="search"
+                value={draft.unit}
+                placeholder="Name or call sign, released ones included"
+                onChange={set('unit')}
+                {...unitSuggest}
+              />
+            </FieldRow>
             <FieldRow id={`${id}-from`} label="Created">
               <input
                 id={`${id}-from`}

@@ -45,7 +45,8 @@ export const fetchMissions = listFetcher<Mission>('missions');
 
 // The query parameters of GET /api/v1/missions/search. Text ones match
 // case-insensitively as substrings; created_from (inclusive) and created_to
-// (exclusive) are RFC 3339 timestamps. Unlike the mission list, it finds
+// (exclusive) are RFC 3339 timestamps. unit matches the name, call sign or ID
+// of any unit ever assigned, released ones included. Unlike the mission list, it finds
 // missions closed any time ago. Pages are numbered from 1.
 export type MissionSearch = Partial<
   Record<
@@ -60,6 +61,7 @@ export type MissionSearch = Partial<
     | 'object'
     | 'callee'
     | 'tag'
+    | 'unit'
     | 'created_from'
     | 'created_to',
     string
