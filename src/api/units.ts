@@ -30,11 +30,52 @@ export type Unit = {
   // The function code of the tactical name, e.g. "83" in "12/83-1"; empty
   // when the unit has none.
   function: string;
+  // Absent (like symbol) from an older API's (or a stored older) answer.
+  tactical_name?: UnitTacticalName | null;
+  // The tactical symbol's @taktische-zeichen/core component IDs by component,
+  // as the units server stores them; null when the unit has none.
+  symbol?: UnitSymbol | null;
   status: UnitStatus | null;
   // One per request code at most, by code. Absent from an older API's (or a
   // stored older) answer.
   requests?: UnitStatusRequest[];
+  // The last known position; null when unknown. Absent from an older API's
+  // (or a stored older) answer.
+  position?: UnitPosition | null;
   updated_at: string;
+};
+
+// A call sign's parts, e.g. Rotkreuz, Musterstadt, 12, 83 and 1 of
+// "Rotkreuz Musterstadt 12/83-1"; missing parts are empty.
+export type UnitTacticalName = {
+  organisation: string;
+  regional_association: string;
+  local_association: string;
+  function: string;
+  number: string;
+};
+
+export type UnitSymbol = Partial<
+  Record<
+    | 'grundzeichen'
+    | 'organisation'
+    | 'fachaufgabe'
+    | 'einheit'
+    | 'verwaltungsstufe'
+    | 'funktion'
+    | 'symbol',
+    string
+  >
+>;
+
+// WGS 84 degrees; accuracy (meters), course (degrees from true north) and at
+// (when it was measured) are null when unknown.
+export type UnitPosition = {
+  lat: number;
+  lon: number;
+  accuracy: number | null;
+  course: number | null;
+  at: string | null;
 };
 
 // connected: the API's stream from the units server is up; while it is not,

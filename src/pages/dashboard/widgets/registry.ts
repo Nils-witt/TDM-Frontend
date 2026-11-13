@@ -337,13 +337,15 @@ const PdfViewer: Widget = {
 // style picks one of the map styles admins configure (see MapStyles); latitude,
 // longitude and zoom the start view; show-<status> which missions it shows;
 // only-selected shows just the selected one; show-unsaved whether Mission Details' unsaved edits move the pins.
+// show-units shows the units server's units at their last known position (only-selected: those
+// on the selected mission; currentScopeOnly: those in the tab's unit scope).
 // With a tile server configured in the API a switcher turns its overlays on
 // and off.
 const MapView: Widget = {
   id: 'Map',
   name: 'Map',
   category: 'map',
-  description: 'Missions on a map; click a mission to select it.',
+  description: 'Missions and units on a map; click a mission, or a unit on one, to select it.',
   emits: ['selection'],
   consumes: ['selection'],
   minWidth: 15,
@@ -382,6 +384,7 @@ const MapView: Widget = {
     },
     // A mission's unsaved edits in Mission Details (position, status, title).
     { key: 'show-unsaved', label: 'Show unsaved changes', type: 'boolean', default: true },
+    { key: 'show-units', label: 'Show units', type: 'boolean', default: true },
   ],
   Component: MapWidget,
 };

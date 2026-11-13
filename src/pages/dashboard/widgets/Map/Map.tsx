@@ -29,7 +29,7 @@ import type { Point } from '@/components/menu/useContextMenu';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import type { WidgetProps } from '../widgetOptions';
-import { type MapMarker, useMapMarkers } from './Map.ts';
+import { type MapMarker, type UnitMarker, useMapMarkers, useMapUnits } from './Map.ts';
 import { formatPlace, useMapActions } from './mapActions';
 import styles from './Map.module.scss';
 import OverlaySwitcher from './OverlaySwitcher';
@@ -80,6 +80,47 @@ function markerElement(m: MapMarker, onClick: () => void): HTMLElement {
     e.stopPropagation();
     onClick();
   });
+  return el;
+}
+
+// A unit is its tactical symbol with its FMS status in a corner, or without a
+// symbol a label with its status and short call sign; the short call sign is
+// also shown below a symbol that does not name the unit. Centered on its
+// position; one on a mission selects that mission when clicked.
+function unitElement(u: UnitMarker, onClick: (() => void) | null): HTMLElement {
+  const el = document.createElement(onClick ? 'button' : 'div');
+  if (el instanceof HTMLButtonElement) el.type = 'button';
+  el.className = styles.unit;
+  if (u.tone) el.dataset.tone = u.tone;
+  if (u.selected) el.classList.add(styles.selected);
+  el.title = u.missionId ? u.title : `${u.title}\n(no mission)`;
+  el.setAttribute('aria-label', el.title.replaceAll('\n', ', '));
+  const status = document.createElement('span');
+  status.className = styles.unitStatus;
+  status.textContent = u.status === null ? '–' : String(u.status);
+  const label = document.createElement('span');
+  label.className = styles.unitLabel;
+  label.textContent = u.label;
+  if (u.symbol) {
+    el.classList.add(styles.withSymbol);
+    const img = document.createElement('img');
+    img.className = styles.unitSymbol;
+    img.src = u.symbol;
+    img.alt = '';
+    el.append(img, status);
+    if (!u.symbolNamed) el.append(label);
+  } else {
+    const chip = document.createElement('span');
+    chip.className = styles.unitChip;
+    chip.append(status, label);
+    el.append(chip);
+  }
+  if (onClick) {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onClick();
+    });
+  }
   return el;
 }
 
@@ -153,6 +194,7 @@ export function MissionMap({
   notice?: ReactNode;
 }) {
   const { markers, selected, error } = useMapMarkers(options, selectedId);
+  const { units, error: unitsError } = useMapUnits(options, selectedId);
   const mapStyles = useMapStyles();
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
@@ -340,6 +382,24 @@ export function MissionMap({
     return () => placed.forEach((p) => p.remove());
   }, [markers]);
 
+  // Below the mission pins (their z-index), the selected mission's on top.
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    const placed = units
+      .toSorted((a, b) => Number(a.selected) - Number(b.selected))
+      .map((u) => {
+        const missionId = u.missionId;
+        return new Marker({
+          element: unitElement(u, missionId ? () => selectRef.current(missionId) : null),
+          anchor: 'center',
+        })
+          .setLngLat([u.longitude, u.latitude])
+          .addTo(m);
+      });
+    return () => placed.forEach((p) => p.remove());
+  }, [units]);
+
   // Fly again when the selected mission, or where it is, changes.
   const target = selected ? `${selected.longitude},${selected.latitude}` : '';
   useEffect(() => {
@@ -353,6 +413,7 @@ export function MissionMap({
     <div className={styles.wrapper}>
       {notice}
       {error && <Alert severity="error">{error}</Alert>}
+      {unitsError && <Alert severity="warning">Units: {unitsError}</Alert>}
       {mapStyles.error && <Alert severity="error">Map styles: {mapStyles.error}</Alert>}
       {!mapStyles.loading && !mapStyles.error && mapStyles.items.length === 0 && (
         <Alert severity="warning">No map style is configured.</Alert>

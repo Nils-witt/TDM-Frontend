@@ -73,6 +73,112 @@
   }
 }
 
+// A unit: its tactical symbol with its FMS status in the tone's color in the
+// top-right corner, or a chip of status and short call sign. Below the mission
+// pins; the units of the selected mission ringed.
+.unit {
+  --tone: var(--text-secondary);
+
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  z-index: 0;
+
+  &[data-tone='available'] {
+    --tone: var(--success);
+  }
+
+  &[data-tone='busy'] {
+    --tone: var(--warning);
+  }
+
+  &[data-tone='request'] {
+    --tone: var(--error);
+  }
+
+  &[data-tone='unavailable'] {
+    --tone: var(--text-disabled);
+  }
+
+  &:is(button) {
+    cursor: pointer;
+  }
+
+  &.selected .unitChip,
+  &.selected .unitSymbol {
+    outline: 2px solid var(--text);
+    outline-offset: 1px;
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    .unitChip,
+    .unitSymbol {
+      outline: 3px solid var(--text);
+      outline-offset: 1px;
+    }
+  }
+}
+
+.unitChip {
+  display: inline-flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 40%);
+}
+
+// The symbols are 3:2.
+.unitSymbol {
+  display: block;
+  width: 3.75rem;
+  height: 2.5rem;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 40%));
+}
+
+.unitStatus {
+  min-width: 1.4em;
+  padding: 0 0.25rem;
+  background: var(--tone);
+  color: #fff;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+
+  .withSymbol & {
+    position: absolute;
+    top: -0.375rem;
+    right: -0.375rem;
+    border: 1px solid #fff;
+    border-radius: var(--radius);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 40%);
+  }
+}
+
+.unitLabel {
+  padding: 0 0.375rem;
+
+  .withSymbol & {
+    margin-top: 0.125rem;
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 40%);
+  }
+}
+
 // A square with one sharp corner, turned so that corner points down at the
 // box's bottom edge.
 .pin {
