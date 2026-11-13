@@ -4,12 +4,23 @@ $trigger: var(--primary);
 $filter: var(--warning);
 $action: var(--success);
 
+// The editor's wrapper and form, so the editor fits the widget's height
+// instead of growing with the palette and the parameters.
+.fit {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+// Side by side, the palette and the parameters scroll on their own; below the
+// minimum height the widget scrolls. Stacked when narrow, the editor scrolls.
 .editor {
   display: flex;
+  flex: 1 1 0;
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: stretch;
-  flex-grow: 1;
+  min-height: 20rem;
+  overflow-y: auto;
 }
 
 .palette {
@@ -53,6 +64,8 @@ $action: var(--success);
 .canvas {
   flex: 1 1 24rem;
   min-width: 16rem;
+  // React Flow has no height of its own, so when stacked the canvas needs one.
+  min-height: 16rem;
   border: 1px solid var(--divider);
   border-radius: var(--radius);
   background: var(--bg);

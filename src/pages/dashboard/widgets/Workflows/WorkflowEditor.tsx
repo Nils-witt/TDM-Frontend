@@ -158,7 +158,7 @@ function Editor({ workflow, catalog, readOnly, onSave, onCancel }: Props) {
 
   return (
     <WorkflowCatalogContext value={catalog}>
-      <WidgetForm id={id} onSubmit={(e) => void submit(e)}>
+      <WidgetForm id={id} className={styles.fit} onSubmit={(e) => void submit(e)}>
         <FormActionBar
           label="Workflow"
           form={id}

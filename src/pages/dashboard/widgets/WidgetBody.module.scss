@@ -21,10 +21,22 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
+  // A column, so a widget's top-level elements stack as in normal flow and
+  // span the full width, and one with flex-grow (a form, say) fills the rest of
+  // the height. They keep their content's height, so the body scrolls instead
+  // of squeezing them (a scrolling table wrapper would otherwise collapse to
+  // nothing); one that should fit the body and scroll inside sets height: 100%
+  // or flex-shrink with min-height: 0.
   display: flex;
+  flex-direction: column;
 
   // A window has no padding of its own, so the content gets it.
   &.window {
     padding: 1rem;
   }
+}
+
+// Without specificity, so a widget's own class can let its root shrink.
+:where(.body) > * {
+  flex-shrink: 0;
 }

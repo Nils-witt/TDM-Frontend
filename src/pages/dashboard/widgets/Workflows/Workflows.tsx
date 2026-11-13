@@ -13,6 +13,7 @@ import { EmptyState } from '../shared/WidgetStates';
 import table from '../shared/CatalogManager.module.scss';
 import { summary } from './graph';
 import { WorkflowEditor } from './WorkflowEditor';
+import styles from './Workflows.module.scss';
 
 function WorkflowsWidget() {
   const workflows = useWorkflows();
@@ -38,7 +39,7 @@ function WorkflowsWidget() {
 
   if (editing !== null && catalog) {
     return (
-      <div className={sectionStack}>
+      <div className={`${sectionStack} ${styles.fit}`}>
         <WorkflowEditor
           key={editing === 'new' ? 'new' : editing.id}
           workflow={editing === 'new' ? null : editing}
