@@ -65,7 +65,10 @@ function MissionsListWidget({ options }: WidgetProps) {
   const hidden = missionStatuses
     .filter((s) => options[`hide-${s.value}`] === true)
     .map((s) => s.value);
-  const { missions, sections, error, loading, selectedId, select } = useMissionsListWidget(hidden);
+  const { missions, sections, error, loading, selectedId, select } = useMissionsListWidget(
+    hidden,
+    options.currentScopeOnly === true,
+  );
 
   if (error) return <Alert severity="error">{error}</Alert>;
   if (loading) return null;

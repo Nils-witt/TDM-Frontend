@@ -42,7 +42,11 @@ import { useArchiveUrlState } from './archiveUrl';
 function MissionArchiveMUI({ options }: WidgetProps) {
   const initialStatus = String(options.status ?? '');
   const state = useArchiveUrlState(initialStatus);
-  const archive = useMissionArchive({ initialStatus, state });
+  const archive = useMissionArchive({
+    initialStatus,
+    state,
+    currentScopeOnly: options.currentScopeOnly === true,
+  });
 
   if (archive.error) return <Alert severity="error">{archive.error}</Alert>;
   return (

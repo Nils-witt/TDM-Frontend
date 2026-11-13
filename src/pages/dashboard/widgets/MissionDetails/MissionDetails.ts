@@ -9,6 +9,8 @@ import {
 import { useOffline } from '@/api/connectivity';
 import { useMissions } from '@/data/missionsContext';
 import { useSelectedMission } from '@/data/selectedMissionContext';
+import { useCatalogs } from '@/data/catalogContext';
+import { scopeName, useSelectedScope } from '@/data/selectedScope';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import { type MissionDraft, useRegisterMissionDraft } from './missionDrafts';
 
@@ -69,6 +71,8 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   const [resetKey, setResetKey] = useState(0);
   const creating = mission === null;
   const offline = useOffline();
+  const { scopeId } = useSelectedScope();
+  const { scopes } = useCatalogs();
   const closed = mission?.status === 'closed';
   // Offline nothing can be saved, a new mission neither.
   const readOnly = closed || offline;
@@ -131,7 +135,11 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
     try {
       if (creating) {
         const { status, ...fields } = body;
-        const draft = await createMission({ ...fields, occurred_event: value('occurred_event') });
+        const draft = await createMission({
+          ...fields,
+          occurred_event: value('occurred_event'),
+          scope: scopeId,
+        });
         let m = draft;
         if (status !== undefined && status !== 'draft') {
           try {
@@ -236,6 +244,8 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
     cancelClose: () => setPendingClose(null),
     resetKey,
     id,
+    // A new mission is created in the selected scope; the scope is not edited.
+    scopeName: scopeName(creating ? scopeId : mission?.scope, scopes.byId),
   };
 }
 

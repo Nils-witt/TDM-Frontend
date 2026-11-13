@@ -51,6 +51,7 @@ export function MissionForm({
     confirmClose,
     cancelClose,
     resetKey,
+    scopeName,
     id,
   } = useMissionForm(mission, onSaved);
   // The menu bar's Save Mission (⌘S) submits it.
@@ -97,6 +98,9 @@ export function MissionForm({
           <SectionText>
             {mission ? `${formatTime(mission.created_at)} · ${mission.created_by}` : '-/-'}
           </SectionText>
+        </Section>
+        <Section legend="Scope">
+          <SectionText>{scopeName}</SectionText>
         </Section>
         <Section legend="Status" disabled={readOnly}>
           <FieldRow id={id('status')} label="Status">

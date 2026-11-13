@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { type Mission, missionStatuses } from '@/api/missions';
 import { useMissions } from '@/data/missionsContext';
+import { useSelectedScope } from '@/data/selectedScope';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
 
 export type MissionSection = { status: string; label: string; missions: Mission[] };
@@ -27,9 +28,15 @@ export function sectionsByStatus(missions: readonly Mission[]): MissionSection[]
 }
 
 // `hidden` holds the statuses whose missions, and sections, are left out.
-// Closed missions are loaded only if shown.
-export function useMissionsListWidget(hidden: readonly string[]) {
-  const { items: all, error, loading } = useMissions({ closed: !hidden.includes('closed') });
+// Closed missions are loaded only if shown. currentScopeOnly leaves out the
+// missions of other scopes than the selected one (null = Global).
+export function useMissionsListWidget(hidden: readonly string[], currentScopeOnly: boolean) {
+  const { items: loaded, error, loading } = useMissions({ closed: !hidden.includes('closed') });
+  const { scopeId } = useSelectedScope();
+  const all = useMemo(
+    () => (currentScopeOnly ? loaded.filter((m) => (m.scope ?? null) === scopeId) : loaded),
+    [loaded, currentScopeOnly, scopeId],
+  );
   // Keyed by content, as callers pass a new array each render.
   const hiddenKey = hidden.join('\n');
   const hiddenSet = useMemo(

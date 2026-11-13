@@ -4,6 +4,7 @@ import OfflineBanner from '@/components/OfflineBanner';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
 import LiveIndicator from '@/nav/actions/LiveIndicator';
 import BackupStatus from './BackupStatus';
+import ScopePicker from './ScopePicker';
 import { responsivePaths } from './paths';
 import styles from './AppFrame.module.scss';
 
@@ -31,6 +32,7 @@ function AppFrame() {
       <header className={styles.header}>
         <span className={styles.brand}>TMD</span>
         <span className={styles.headerEnd}>
+          <ScopePicker />
           <BackupStatus />
           <LiveIndicator />
           <button

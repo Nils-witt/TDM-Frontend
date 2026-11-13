@@ -11,6 +11,7 @@ export const auditEntityTypes = [
   'mission_types',
   'logbook_types',
   'file_types',
+  'scopes',
   'log_entries',
   'log_files',
   'tasks',

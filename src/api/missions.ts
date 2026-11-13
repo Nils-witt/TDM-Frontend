@@ -37,6 +37,9 @@ export type Mission = EntityMeta & {
   // Who called the mission in.
   callee: string;
   callee_phone: string;
+  // The mission scope's ID; null is the implicit Global scope. Rows
+  // replicated before the API had it lack it.
+  scope?: string | null;
 };
 
 export const missionsPath = '/api/v1/missions';
@@ -46,8 +49,9 @@ export const fetchMissions = listFetcher<Mission>('missions');
 // The query parameters of GET /api/v1/missions/search. Text ones match
 // case-insensitively as substrings; created_from (inclusive) and created_to
 // (exclusive) are RFC 3339 timestamps. unit matches the name, call sign or ID
-// of any unit ever assigned, released ones included. Unlike the mission list, it finds
-// missions closed any time ago. Pages are numbered from 1.
+// of any unit ever assigned, released ones included. scope is a mission
+// scope's ID, or 'global' for the missions without one. Unlike the mission
+// list, it finds missions closed any time ago. Pages are numbered from 1.
 export type MissionSearch = Partial<
   Record<
     | 'q'
@@ -62,6 +66,7 @@ export type MissionSearch = Partial<
     | 'callee'
     | 'tag'
     | 'unit'
+    | 'scope'
     | 'created_from'
     | 'created_to',
     string
@@ -122,9 +127,10 @@ export type MissionFields = Partial<
 >;
 
 // New missions start as drafts; the API rejects a status here, so another one
-// is set with a PATCH afterwards.
-export const createMission = (fields: Omit<MissionFields, 'status'> & { occurred_event: string }) =>
-  request<Mission>(missionsPath, { method: 'POST', body: JSON.stringify(fields) });
+// is set with a PATCH afterwards. scope is the selected one (useSelectedScope).
+export const createMission = (
+  fields: Omit<MissionFields, 'status'> & { occurred_event: string; scope: string | null },
+) => request<Mission>(missionsPath, { method: 'POST', body: JSON.stringify(fields) });
 
 export const patchMission = (id: string, fields: MissionFields) =>
   request<Mission>(missionPath(id), { method: 'PATCH', body: JSON.stringify(fields) });

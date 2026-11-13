@@ -4,6 +4,7 @@ import { offline } from '@/api/connectivity';
 import { type Coordinates, createMission, type Mission, patchMission } from '@/api/missions';
 import type { Point } from '@/components/menu/useContextMenu';
 import { useMissions } from '@/data/missionsContext';
+import { useSelectedScope } from '@/data/selectedScope';
 
 // Six decimals are about 10 cm, more than a click can aim.
 const round = (v: number) => Math.round(v * 1e6) / 1e6;
@@ -23,6 +24,7 @@ export const formatPlace = (p: Coordinates, address: ReverseAddress | null | und
 // both actions would fail, it does not open.
 export function useMapActions(selected: Mission | null, onCreated: (m: Mission) => void) {
   const missions = useMissions();
+  const { scopeId } = useSelectedScope();
   const [menu, setMenu] = useState<{ at: Point; position: Coordinates } | null>(null);
   // Where the new mission's dialog creates it.
   const [creating, setCreating] = useState<Coordinates | null>(null);
@@ -83,6 +85,7 @@ export function useMapActions(selected: Mission | null, onCreated: (m: Mission) 
     const m = await createMission({
       occurred_event: occurred,
       address_coordinates: creating,
+      scope: scopeId,
       ...(a && addressFields(a)),
     });
     await missions.reload();

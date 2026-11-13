@@ -1,0 +1,15 @@
+// Text and an arrow, unlike the header's other, icon-only buttons.
+.button {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  max-width: 10rem;
+  gap: 0;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}

@@ -1,5 +1,11 @@
 import { createContext, use } from 'react';
-import type { FileType, LogbookType, MissionType, MissionTypeGroup } from '@/api/catalogs';
+import type {
+  FileType,
+  LogbookType,
+  MissionScope,
+  MissionType,
+  MissionTypeGroup,
+} from '@/api/catalogs';
 import type { Collection } from '@/api/collection';
 
 // The catalogs that missions, log entries and files refer to by ID.
@@ -8,6 +14,7 @@ export type Catalogs = {
   missionTypes: Collection<MissionType>;
   logbookTypes: Collection<LogbookType>;
   fileTypes: Collection<FileType>;
+  scopes: Collection<MissionScope>;
 };
 
 export const CatalogContext = createContext<Catalogs | null>(null);

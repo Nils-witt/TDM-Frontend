@@ -22,6 +22,7 @@ const typePaths: Record<string, string[]> = {
   mission_types: ['/api/v1/mission-types'],
   logbook_types: ['/api/v1/logbook-types'],
   file_types: ['/api/v1/file-types'],
+  scopes: ['/api/v1/scopes'],
   missions: ['/api/v1/missions'],
   log_entries: ['/api/v1/log-entries'],
   log_files: ['/api/v1/log-files'],

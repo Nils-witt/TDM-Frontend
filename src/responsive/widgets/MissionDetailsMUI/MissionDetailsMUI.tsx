@@ -53,6 +53,7 @@ export function MissionFormMUI({
     confirmClose,
     cancelClose,
     resetKey,
+    scopeName,
   } = useMissionForm(mission, onSaved);
   // ⌘S submits it, as on the desktop.
   const [form, setForm] = useState<HTMLFormElement | null>(null);
@@ -92,6 +93,9 @@ export function MissionFormMUI({
           <Typography variant="body2">
             {mission ? `${formatTime(mission.created_at)} · ${mission.created_by}` : '-/-'}
           </Typography>
+        </FormSectionMUI>
+        <FormSectionMUI legend="Scope">
+          <Typography variant="body2">{scopeName}</Typography>
         </FormSectionMUI>
         <FormSectionMUI legend="Status" disabled={readOnly}>
           <FieldRowMUI>

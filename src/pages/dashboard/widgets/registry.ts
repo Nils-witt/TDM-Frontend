@@ -18,6 +18,7 @@ const AttachmentViewerWidget = lazy(() => import('./AttachmentViewer/AttachmentV
 const MissionTypesWidget = lazy(() => import('./MissionTypes/MissionTypes.tsx'));
 const LogbookTypesWidget = lazy(() => import('./LogbookTypes/LogbookTypes.tsx'));
 const FileTypesWidget = lazy(() => import('./FileTypes/FileTypes.tsx'));
+const ScopesWidget = lazy(() => import('./Scopes/Scopes.tsx'));
 const UsersWidget = lazy(() => import('./Users/Users.tsx'));
 const GroupsWidget = lazy(() => import('./Groups/Groups.tsx'));
 const PermissionsWidget = lazy(() => import('./Permissions/Permissions.tsx'));
@@ -72,6 +73,13 @@ const MissionsList: Widget = {
   defaultHeight: 4,
   options: [
     { key: 'groupByStatus', label: 'Group by status', type: 'boolean', default: false },
+    // The scope selected in the menu bar (useSelectedScope).
+    {
+      key: 'currentScopeOnly',
+      label: 'Only the current scope',
+      type: 'boolean',
+      default: true,
+    },
     ...missionStatuses.map((s) => ({
       key: `collapse-${s.value}`,
       label: `Start "${s.label}" collapsed`,
@@ -115,6 +123,13 @@ const MissionArchive: Widget = {
         ...missionStatuses.map((s) => ({ value: s.value, label: s.label })),
       ],
     },
+    // The scope selected in the menu bar (useSelectedScope), as in Missions.
+    {
+      key: 'currentScopeOnly',
+      label: 'Only the current scope',
+      type: 'boolean',
+      default: true,
+    },
   ],
   Component: MissionArchiveWidget,
 };
@@ -148,26 +163,35 @@ const ActiveMissions: Widget = {
   maxHeight: 30,
   defaultWidth: 15,
   defaultHeight: 8,
-  options: Array.from({ length: frameCount }, (_, i) => {
-    const n = i + 1;
-    const keys = frameKeys(n);
-    return [
-      {
-        key: keys.amount,
-        label: n === 1 ? 'Time frame 1' : `Time frame ${n} (0 = off)`,
-        type: 'number' as const,
-        default: n === 1 ? 24 : 0,
-        min: n === 1 ? 1 : 0,
-      },
-      {
-        key: keys.unit,
-        label: `Time frame ${n} unit`,
-        type: 'select' as const,
-        default: 'hours',
-        choices: windowUnits.map((u) => ({ value: u.value, label: u.label })),
-      },
-    ];
-  }).flat(),
+  options: [
+    ...Array.from({ length: frameCount }, (_, i) => {
+      const n = i + 1;
+      const keys = frameKeys(n);
+      return [
+        {
+          key: keys.amount,
+          label: n === 1 ? 'Time frame 1' : `Time frame ${n} (0 = off)`,
+          type: 'number' as const,
+          default: n === 1 ? 24 : 0,
+          min: n === 1 ? 1 : 0,
+        },
+        {
+          key: keys.unit,
+          label: `Time frame ${n} unit`,
+          type: 'select' as const,
+          default: 'hours',
+          choices: windowUnits.map((u) => ({ value: u.value, label: u.label })),
+        },
+      ];
+    }).flat(),
+    // The scope selected in the menu bar (useSelectedScope), as in Missions.
+    {
+      key: 'currentScopeOnly',
+      label: 'Only the current scope',
+      type: 'boolean' as const,
+      default: true,
+    },
+  ],
   Component: ActiveMissionsWidget,
 };
 
@@ -347,6 +371,13 @@ const MapView: Widget = {
     })),
     // Overrides the show-<status> options.
     { key: 'only-selected', label: 'Only the selected mission', type: 'boolean', default: false },
+    // The scope selected in the menu bar (useSelectedScope), as in Missions.
+    {
+      key: 'currentScopeOnly',
+      label: 'Only the current scope',
+      type: 'boolean',
+      default: true,
+    },
     // A mission's unsaved edits in Mission Details (position, status, title).
     { key: 'show-unsaved', label: 'Show unsaved changes', type: 'boolean', default: true },
   ],
@@ -482,6 +513,14 @@ const FileTypes: Widget = {
   name: 'File types',
   description: 'Manages the types of attached files.',
   Component: FileTypesWidget,
+};
+
+const Scopes: Widget = {
+  ...adminWidget,
+  id: 'Scopes',
+  name: 'Scopes',
+  description: 'Manages the mission scopes that users select to create missions in.',
+  Component: ScopesWidget,
 };
 
 // userId highlights a user; Groups sets it.
@@ -632,6 +671,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     MissionTypes,
     LogbookTypes,
     FileTypes,
+    Scopes,
     MapStyles,
     MapAdmin,
     ExportTemplates,

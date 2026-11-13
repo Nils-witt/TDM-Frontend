@@ -12,6 +12,7 @@ import { scopeKey, useTables } from '@/api/replica';
 import { useResource } from '@/api/resource';
 import { useCatalogs } from '@/data/catalogContext';
 import { useMissions } from '@/data/missionsContext';
+import { useSelectedScope } from '@/data/selectedScope';
 
 // Text fields match case-insensitively as substrings; '' matches anything.
 // createdFrom and createdTo are dates (YYYY-MM-DD) in local time, both
@@ -196,9 +197,22 @@ function comparator(sort: Sort, c: TypeCatalogs): (a: Mission, b: Mission) => nu
 
 export const pageSize = 50;
 
+// Which scope's missions match: undefined every scope's, null Global's (the
+// missions without one), else the scope with that ID.
+export type ScopeFilter = string | null | undefined;
+
+const inScope = (m: Mission, scope: ScopeFilter) =>
+  scope === undefined || (m.scope ?? null) === scope;
+
 // The API's search parameters; the dates become local day boundaries.
-export function searchPath(f: ArchiveFilter, sort: Sort, page: number): string {
+export function searchPath(
+  f: ArchiveFilter,
+  sort: Sort,
+  page: number,
+  scope: ScopeFilter = undefined,
+): string {
   return missionSearchPath({
+    scope: scope === undefined ? '' : (scope ?? 'global'),
     q: f.text,
     event: f.event,
     status: f.status,
@@ -224,14 +238,20 @@ export function searchPath(f: ArchiveFilter, sort: Sort, page: number): string {
 // ago included (the synced missions hold only recently closed ones). Its pages
 // reload on mission events, as the path lies under /api/v1/missions. Offline,
 // the missions stored in the browser are searched, sorted and paged instead.
+// currentScopeOnly finds only the missions of the selected scope
+// (useSelectedScope); it is not part of the query, so it follows the scope.
 export function useMissionArchive({
   initialStatus = '',
   state,
+  currentScopeOnly = false,
 }: {
   initialStatus?: string;
   state?: ArchiveQueryState;
+  currentScopeOnly?: boolean;
 }) {
   const offline = useOffline();
+  const { scopeId } = useSelectedScope();
+  const scope: ScopeFilter = currentScopeOnly ? scopeId : undefined;
   const { missionTypes, missionTypeGroups } = useCatalogs();
   const [ownQuery, setOwnQuery] = useState<ArchiveQuery>(() => ({
     filter: { ...emptyFilter, status: initialStatus },
@@ -242,7 +262,9 @@ export function useMissionArchive({
   const { filter, sort, page } = query;
   const setPage = (p: number) => setQuery({ ...query, page: p });
 
-  const remote = useResource<MissionSearchPage>(offline ? null : searchPath(filter, sort, page));
+  const remote = useResource<MissionSearchPage>(
+    offline ? null : searchPath(filter, sort, page, scope),
+  );
   const local = useMissions({ closed: offline });
   // Offline, the unit filter reads the stored assignments of every stored
   // mission; only then, as each mission is a scope of its own.
@@ -265,10 +287,11 @@ export function useMissionArchive({
     () =>
       offline
         ? local.items
+            .filter((m) => inScope(m, scope))
             .filter(matcher(filter, catalogs, unitTexts(localUnits.items)))
             .sort(comparator(sort, catalogs))
         : [],
-    [offline, local.items, localUnits.items, filter, sort, catalogs],
+    [offline, local.items, localUnits.items, filter, sort, catalogs, scope],
   );
 
   const total = offline ? localMatches.length : (shown?.total ?? 0);

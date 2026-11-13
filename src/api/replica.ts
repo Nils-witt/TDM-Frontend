@@ -4,6 +4,7 @@ import {
   logbookTypesPath,
   missionTypeGroupsPath,
   missionTypesPath,
+  scopesPath,
 } from './catalogs';
 import { ApiError } from './client';
 import type { Collection } from './collection';
@@ -39,6 +40,7 @@ const listOf: Record<ReplicaTable, { path: string; key: string }> = {
   mission_types: { path: missionTypesPath, key: 'mission_types' },
   logbook_types: { path: logbookTypesPath, key: 'logbook_types' },
   file_types: { path: fileTypesPath, key: 'file_types' },
+  scopes: { path: scopesPath, key: 'scopes' },
   log_entries: { path: '/api/v1/log-entries', key: 'log_entries' },
   log_files: { path: '/api/v1/log-files', key: 'log_files' },
   tasks: { path: '/api/v1/tasks', key: 'tasks' },

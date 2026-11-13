@@ -1,6 +1,7 @@
 import type { Mission } from '@/api/missions';
 import { useNow } from '@/app/useNow';
 import { useMissions } from '@/data/missionsContext';
+import { useSelectedScope } from '@/data/selectedScope';
 import type { ResolvedOptions } from '../widgetOptions';
 
 export const windowUnits = [
@@ -48,8 +49,15 @@ function framesOf(options: ResolvedOptions): Frame[] {
 const periodOf = ({ amount, unit }: Frame) =>
   amount === 1 ? unit.singular : `${amount} ${unit.label}`;
 
+// currentScopeOnly counts only the missions of the selected scope (null =
+// Global).
 export function useActiveMissionsWidget(options: ResolvedOptions) {
-  const { items: missions, error, loading } = useMissions();
+  const { items: loaded, error, loading } = useMissions();
+  const { scopeId } = useSelectedScope();
+  const missions =
+    options.currentScopeOnly === true
+      ? loaded.filter((m) => (m.scope ?? null) === scopeId)
+      : loaded;
   const frames = framesOf(options);
   // The frames move on with time, missions leaving them without a change.
   const now = useNow(frames.some((f) => f.unit.value === 'minutes') ? 10_000 : 60_000);

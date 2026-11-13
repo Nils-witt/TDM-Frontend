@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { type Mission, type MissionStatus, shortLocation } from '@/api/missions';
 import { useCatalogs } from '@/data/catalogContext';
 import { useMission, useMissions } from '@/data/missionsContext';
+import { useSelectedScope } from '@/data/selectedScope';
 import { useMissionDrafts } from '../MissionDetails/missionDrafts';
 import type { ResolvedOptions } from '../widgetOptions';
 
@@ -20,10 +21,14 @@ export type MapMarker = {
 // mission whatever its status. The selection is the caller's: the dashboard's
 // on the desktop, the URL's in the responsive UI. Closed missions are loaded
 // only if shown. only-selected leaves out every mission but the selected one.
+// currentScopeOnly leaves out the missions of other scopes than the selected
+// one (null = Global).
 // With show-unsaved, a mission with unsaved edits in a Mission
 // Details form of this window shows them (its position, status and title).
 export function useMapMarkers(options: ResolvedOptions, selectedId: string | null) {
   const onlySelected = options['only-selected'] === true;
+  const currentScopeOnly = options.currentScopeOnly === true;
+  const { scopeId } = useSelectedScope();
   // The selected mission is found by useMission whatever its status.
   const { items: shown, error } = useMissions({
     closed: !onlySelected && options['show-closed'] !== false,
@@ -53,7 +58,10 @@ export function useMapMarkers(options: ResolvedOptions, selectedId: string | nul
     };
     return items.flatMap(({ m, unsaved }) =>
       m.address_coordinates !== null &&
-      (m.id === selectedId || (!onlySelected && options[`show-${m.status}`] !== false))
+      (m.id === selectedId ||
+        (!onlySelected &&
+          options[`show-${m.status}`] !== false &&
+          (!currentScopeOnly || (m.scope ?? null) === scopeId)))
         ? [
             {
               id: m.id,
@@ -67,7 +75,7 @@ export function useMapMarkers(options: ResolvedOptions, selectedId: string | nul
           ]
         : [],
     );
-  }, [items, missionTypes, selectedId, options, onlySelected]);
+  }, [items, missionTypes, selectedId, options, onlySelected, currentScopeOnly, scopeId]);
 
   const selected = markers.find((m) => m.selected);
   return { markers, selected, error };

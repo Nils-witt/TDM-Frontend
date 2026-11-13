@@ -12,6 +12,9 @@ import {
   missionTypeGroupsPath,
   missionTypesApi,
   missionTypesPath,
+  type MissionScope,
+  scopesApi,
+  scopesPath,
 } from '@/api/catalogs';
 import { request } from '@/api/client';
 import { fetchGroups, groupsPath } from '@/api/directory';
@@ -65,6 +68,7 @@ export const sections = [
   { key: 'mission_types', label: 'Mission types' },
   { key: 'logbook_types', label: 'Logbook types' },
   { key: 'file_types', label: 'File types' },
+  { key: 'scopes', label: 'Scopes' },
   { key: 'map_styles', label: 'Map styles' },
   { key: 'map_settings', label: 'Map defaults' },
   { key: 'export_templates', label: 'Export templates' },
@@ -94,6 +98,7 @@ export type ConfigBundle = {
   mission_types?: BundleMissionTypeGroup[];
   logbook_types?: string[];
   file_types?: string[];
+  scopes?: string[];
   map_styles?: BundleMapStyle[];
   map_settings?: { default_overlays: string[] };
   export_templates?: BundleTemplate[];
@@ -115,6 +120,7 @@ type Current = {
   missionTypes: MissionType[];
   logbookTypes: LogbookType[];
   fileTypes: FileType[];
+  scopes: MissionScope[];
   mapStyles: MapStyle[];
   mapSettings: MapSettings | null;
   templates: ExportTemplate[];
@@ -135,6 +141,7 @@ async function loadCurrent(wanted: ReadonlySet<SectionKey>): Promise<Current> {
     missionTypes,
     logbookTypes,
     fileTypes,
+    scopes,
     mapStyles,
     mapSettings,
     templates,
@@ -153,6 +160,7 @@ async function loadCurrent(wanted: ReadonlySet<SectionKey>): Promise<Current> {
       ? requestAll<LogbookType>(logbookTypesPath, 'logbook_types')
       : none,
     needs(wanted, 'file_types') ? requestAll<FileType>(fileTypesPath, 'file_types') : none,
+    needs(wanted, 'scopes') ? requestAll<MissionScope>(scopesPath, 'scopes') : none,
     needs(wanted, 'map_styles') ? requestAll<MapStyle>(mapStylesPath, 'map_styles') : none,
     needs(wanted, 'map_settings') ? request<MapSettings>(mapSettingsPath) : Promise.resolve(null),
     needs(wanted, 'export_templates')
@@ -172,6 +180,7 @@ async function loadCurrent(wanted: ReadonlySet<SectionKey>): Promise<Current> {
     missionTypes,
     logbookTypes,
     fileTypes,
+    scopes,
     mapStyles,
     mapSettings,
     templates,
@@ -266,6 +275,7 @@ export async function exportBundle(wanted: ReadonlySet<SectionKey>): Promise<Con
   }
   if (wanted.has('logbook_types')) bundle.logbook_types = names(c.logbookTypes);
   if (wanted.has('file_types')) bundle.file_types = names(c.fileTypes);
+  if (wanted.has('scopes')) bundle.scopes = names(c.scopes);
   if (wanted.has('map_styles')) {
     bundle.map_styles = c.mapStyles
       .toSorted(byName)
@@ -347,6 +357,7 @@ export function parseBundle(text: string): ConfigBundle {
   list('mission_types', (x) => named(x) && Array.isArray(x.types) && x.types.every(missionType));
   list('logbook_types', (x) => isString(x) && x.trim() !== '');
   list('file_types', (x) => isString(x) && x.trim() !== '');
+  list('scopes', (x) => isString(x) && x.trim() !== '');
   list(
     'map_styles',
     (x) =>
@@ -479,7 +490,7 @@ export async function planImport(
   }
 
   const catalog = (
-    section: 'logbook_types' | 'file_types',
+    section: 'logbook_types' | 'file_types' | 'scopes',
     entries: readonly CatalogEntry[],
     create: (name: string) => Promise<CatalogEntry>,
     onCreated?: (ctx: ImportContext, entry: CatalogEntry) => void,
@@ -509,6 +520,7 @@ export async function planImport(
     (ctx, t) => ctx.logbookTypes.set(fold(t.name), t.id),
   );
   catalog('file_types', c.fileTypes, (name) => fileTypesApi.create({ name }));
+  catalog('scopes', c.scopes, (name) => scopesApi.create({ name }));
 
   if (wanted.has('map_styles') && bundle.map_styles) {
     const byNameFolded = new Map(c.mapStyles.map((s) => [fold(s.name), s]));
@@ -746,6 +758,7 @@ export const sectionPaths: Record<SectionKey, string[]> = {
   mission_types: [missionTypeGroupsPath, missionTypesPath],
   logbook_types: [logbookTypesPath],
   file_types: [fileTypesPath],
+  scopes: [scopesPath],
   map_styles: [mapStylesPath],
   map_settings: [mapSettingsPath],
   export_templates: [exportTemplatesPath],

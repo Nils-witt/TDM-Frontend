@@ -8,6 +8,9 @@ export type CatalogEntry = EntityMeta & { id: string; name: string };
 export type MissionTypeGroup = CatalogEntry;
 export type LogbookType = CatalogEntry;
 export type FileType = CatalogEntry;
+// A mission scope (not a layout's scope). A mission without one is in the
+// implicit Global scope, which has no entry.
+export type MissionScope = CatalogEntry;
 
 // Unique by name within its group only. description tells when to pick it;
 // rows replicated before the API had it lack it.
@@ -17,11 +20,13 @@ export const missionTypeGroupsPath = '/api/v1/mission-type-groups';
 export const missionTypesPath = '/api/v1/mission-types';
 export const logbookTypesPath = '/api/v1/logbook-types';
 export const fileTypesPath = '/api/v1/file-types';
+export const scopesPath = '/api/v1/scopes';
 
 export const fetchMissionTypeGroups = listFetcher<MissionTypeGroup>('mission_type_groups');
 export const fetchMissionTypes = listFetcher<MissionType>('mission_types');
 export const fetchLogbookTypes = listFetcher<LogbookType>('logbook_types');
 export const fetchFileTypes = listFetcher<FileType>('file_types');
+export const fetchScopes = listFetcher<MissionScope>('scopes');
 
 // What a create sends; group_id and description are for mission types only.
 export type CatalogInput = { name: string; group_id?: string; description?: string };
@@ -48,3 +53,4 @@ export const missionTypeGroupsApi = catalogApi<MissionTypeGroup>(missionTypeGrou
 export const missionTypesApi = catalogApi<MissionType>(missionTypesPath);
 export const logbookTypesApi = catalogApi<LogbookType>(logbookTypesPath);
 export const fileTypesApi = catalogApi<FileType>(fileTypesPath);
+export const scopesApi = catalogApi<MissionScope>(scopesPath);

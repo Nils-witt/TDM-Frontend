@@ -38,6 +38,7 @@ export const tableIndex = {
   mission_types: null,
   logbook_types: null,
   file_types: null,
+  scopes: null,
   log_entries: 'mission',
   log_files: 'mission',
   tasks: 'mission',
@@ -66,6 +67,7 @@ interface OfflineDB extends DBSchema {
   mission_types: Table<{ group_id: string }>;
   logbook_types: Table;
   file_types: Table;
+  scopes: Table;
   log_entries: Table<{ mission: string }>;
   log_files: Table<{ mission: string; entry: string; digest: string }>;
   tasks: Table<{ mission: string }>;
@@ -97,9 +99,13 @@ function createMissionUnits(d: IDBPDatabase<OfflineDB>) {
   d.createObjectStore('mission_units', { keyPath: 'id' }).createIndex('mission', 'mission');
 }
 
+function createScopes(d: IDBPDatabase<OfflineDB>) {
+  d.createObjectStore('scopes', { keyPath: 'id' });
+}
+
 // Null where IndexedDB is blocked (some private windows): no offline data.
 function open(): Promise<IDBPDatabase<OfflineDB> | null> {
-  db ??= openDB<OfflineDB>('universam-offline', 4, {
+  db ??= openDB<OfflineDB>('universam-offline', 5, {
     upgrade(d, oldVersion, _newVersion, tx) {
       if (oldVersion >= 2) {
         // Version 2 synced missions whole. Its record would clear the store
@@ -110,6 +116,8 @@ function open(): Promise<IDBPDatabase<OfflineDB> | null> {
         }
         // Version 4 added the unit assignments.
         if (oldVersion < 4) createMissionUnits(d);
+        // Version 5 added the mission scopes.
+        if (oldVersion < 5) createScopes(d);
         return;
       }
       // Version 1 kept the mission domain per path and blobs per path. It
@@ -120,6 +128,7 @@ function open(): Promise<IDBPDatabase<OfflineDB> | null> {
       d.createObjectStore('mission_types', { keyPath: 'id' }).createIndex('group_id', 'group_id');
       d.createObjectStore('logbook_types', { keyPath: 'id' });
       d.createObjectStore('file_types', { keyPath: 'id' });
+      createScopes(d);
       d.createObjectStore('log_entries', { keyPath: 'id' }).createIndex('mission', 'mission');
       const files = d.createObjectStore('log_files', { keyPath: 'id' });
       files.createIndex('mission', 'mission');

@@ -16,6 +16,7 @@ import LiveIndicator from './actions/LiveIndicator';
 import BackupIndicator from './actions/BackupIndicator';
 import UnitRequestIndicator from './actions/UnitRequestIndicator';
 import Fullscreen from './actions/Fullscreen';
+import ScopeMenu from './actions/ScopeMenu';
 import UserMenu from './actions/UserMenu';
 import styles from './Nav.module.scss';
 
@@ -73,6 +74,7 @@ function Nav() {
                   <NavMenuItem label="Mission Types" widget="MissionTypes" />
                   <NavMenuItem label="Logbook Types" widget="LogbookTypes" />
                   <NavMenuItem label="File Types" widget="FileTypes" />
+                  <NavMenuItem label="Scopes" widget="Scopes" />
                   <NavMenuItem label="Map Defaults" widget="MapAdmin" />
                   <NavMenuItem label="Map Styles" widget="MapStyles" />
                   <NavMenuItem label="Export Templates" widget="ExportTemplates" />
@@ -98,6 +100,7 @@ function Nav() {
               <UnitRequestIndicator />
               <BackupIndicator />
               <ChannelIndicator />
+              <ScopeMenu />
               <UserMenu />
               <Clock />
               <Fullscreen />

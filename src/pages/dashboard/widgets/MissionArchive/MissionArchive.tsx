@@ -27,7 +27,10 @@ import { useUnitSuggestions } from './unitSuggestions';
 
 // The status option is the status filter it starts with.
 function MissionArchiveWidget({ options }: WidgetProps) {
-  const archive = useMissionArchive({ initialStatus: String(options.status ?? '') });
+  const archive = useMissionArchive({
+    initialStatus: String(options.status ?? ''),
+    currentScopeOnly: options.currentScopeOnly === true,
+  });
   const { selectedId, update } = useDashboard();
 
   if (archive.error) return <Alert severity="error">{archive.error}</Alert>;

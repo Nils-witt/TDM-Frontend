@@ -205,6 +205,7 @@ function ImportSection() {
         touched.has('mission_types') && catalogs.missionTypes.reload(),
         touched.has('logbook_types') && catalogs.logbookTypes.reload(),
         touched.has('file_types') && catalogs.fileTypes.reload(),
+        touched.has('scopes') && catalogs.scopes.reload(),
       ].filter((x) => x !== false),
     );
     setBusy(false);
