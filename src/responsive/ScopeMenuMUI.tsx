@@ -2,7 +2,7 @@ import Divider from '@mui/material/Divider';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useCatalogs } from '@/data/catalogContext';
-import { globalScopeName, scopeOptions, useSelectedScope } from '@/data/selectedScope';
+import { defaultScopeName, scopeOptions, useSelectedScope } from '@/data/selectedScope';
 
 function ScopeMenuMUI({ anchor, onClose }: { anchor: HTMLElement; onClose: () => void }) {
   const { scopes } = useCatalogs();
@@ -17,7 +17,7 @@ function ScopeMenuMUI({ anchor, onClose }: { anchor: HTMLElement; onClose: () =>
   return (
     <Menu anchorEl={anchor} open onClose={onClose}>
       <MenuItem selected={scopeId === null} onClick={() => pick(null)}>
-        {globalScopeName}
+        {defaultScopeName}
       </MenuItem>
       {options.length > 0 && <Divider />}
       {options.map((s) => (

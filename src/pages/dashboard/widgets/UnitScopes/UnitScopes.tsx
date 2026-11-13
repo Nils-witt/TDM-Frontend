@@ -7,7 +7,7 @@ import { useErrorState } from '@/api/resource';
 import { unitScopeOf, useUnitScopes } from '@/api/unitScopes';
 import { type Unit, unitFunctions, unitLabel, useUnits } from '@/api/units';
 import { useCatalogs } from '@/data/catalogContext';
-import { globalScopeName, scopeOptions } from '@/data/selectedScope';
+import { defaultScopeName, scopeOptions } from '@/data/selectedScope';
 import tableStyles from '../shared/CatalogManager.module.scss';
 import FilterToggle from '../shared/FilterToggle';
 import FmsBadge from '../shared/FmsBadge';
@@ -19,15 +19,15 @@ import type { WidgetProps } from '../widgetOptions';
 import { useWidgetState } from '../widgetState';
 import styles from './UnitScopes.module.scss';
 
-// The select's value for Global; scope IDs are UUIDs.
-const global = '';
+// The select's value for Default; scope IDs are UUIDs.
+const defaultScope = '';
 // The scope filter's value for every scope.
 const allScopes = '*';
 
 const parseString = (v: unknown) => (typeof v === 'string' ? v : undefined);
 
 // Puts the units of the units server into mission scopes, one each; a unit in
-// none is in Global. The unit widgets show the units of the tab's scope.
+// none is in Default. The unit widgets show the units of the tab's scope.
 function UnitScopes({ options }: WidgetProps) {
   const units = useUnits();
   const unitScopes = useUnitScopes();
@@ -52,10 +52,12 @@ function UnitScopes({ options }: WidgetProps) {
       .filter((u) => {
         if (!matchesFunction(fns.filter, u.function)) return false;
         if (scopeFilter !== allScopes) {
-          const s = unitScopeOf(unitScopes.byUnit, scopes.byId, u.id) ?? global;
-          // A filter on a deleted scope shows Global's units.
+          const s = unitScopeOf(unitScopes.byUnit, scopes.byId, u.id) ?? defaultScope;
+          // A filter on a deleted scope shows Default's units.
           const want =
-            scopeFilter === global || scopes.byId.has(scopeFilter) ? scopeFilter : global;
+            scopeFilter === defaultScope || scopes.byId.has(scopeFilter)
+              ? scopeFilter
+              : defaultScope;
           if (s !== want) return false;
         }
         const text = `${u.call_sign} ${u.name}`.toLowerCase();
@@ -68,7 +70,7 @@ function UnitScopes({ options }: WidgetProps) {
     setSaving(unit.id);
     setError(null);
     unitScopes
-      .set(unit.id, scope === global ? null : scope)
+      .set(unit.id, scope === defaultScope ? null : scope)
       .catch((err: unknown) => setError(`${unitLabel(unit)}: ${(err as Error).message}`))
       .finally(() => setSaving(null));
   };
@@ -105,7 +107,7 @@ function UnitScopes({ options }: WidgetProps) {
 
   const scopeChoices = (
     <>
-      <option value={global}>{globalScopeName}</option>
+      <option value={defaultScope}>{defaultScopeName}</option>
       {sortedScopes.map((s) => (
         <option key={s.id} value={s.id}>
           {s.name}
@@ -186,7 +188,7 @@ function UnitScopes({ options }: WidgetProps) {
                       <select
                         aria-label={`Scope of ${label}`}
                         className={styles.scopeSelect}
-                        value={scopeOf(u.id) ?? global}
+                        value={scopeOf(u.id) ?? defaultScope}
                         disabled={offline || saving === u.id}
                         onChange={(e) => change(u, e.target.value)}
                       >

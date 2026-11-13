@@ -22,7 +22,7 @@ export type MapMarker = {
 // on the desktop, the URL's in the responsive UI. Closed missions are loaded
 // only if shown. only-selected leaves out every mission but the selected one.
 // currentScopeOnly leaves out the missions of other scopes than the selected
-// one (null = Global).
+// one (null = Default).
 // With show-unsaved, a mission with unsaved edits in a Mission
 // Details form of this window shows them (its position, status and title).
 export function useMapMarkers(options: ResolvedOptions, selectedId: string | null) {

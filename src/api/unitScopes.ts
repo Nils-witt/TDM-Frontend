@@ -6,7 +6,7 @@ import { listFetcher } from './list';
 import { useResource, useResourceCache } from './resource';
 
 // The mission scope a unit of the units server (units.ts) belongs to, one at
-// most. The API lists no row for a unit in the Global scope, nor for one
+// most. The API lists no row for a unit in the Default scope, nor for one
 // whose scope was deleted.
 export type UnitScope = EntityMeta & {
   id: string;
@@ -18,15 +18,15 @@ export const unitScopesPath = '/api/v1/unit-scopes';
 
 const fetchUnitScopes = listFetcher<UnitScope>('unit_scopes');
 
-// scope null moves the unit to Global; the API then answers 204.
+// scope null moves the unit to Default; the API then answers 204.
 const putUnitScope = (unitId: string, scope: string | null) =>
   request<UnitScope | undefined>(`${unitScopesPath}/${encodeURIComponent(unitId)}`, {
     method: 'PUT',
     body: JSON.stringify({ scope }),
   });
 
-// The scope ID of the unit, null for Global. A scope the catalog no longer
-// has counts as Global, as it does for a tab.
+// The scope ID of the unit, null for Default. A scope the catalog no longer
+// has counts as Default, as it does for a tab.
 export function unitScopeOf(
   byUnit: ReadonlyMap<string, UnitScope>,
   scopes: ReadonlyMap<string, MissionScope>,

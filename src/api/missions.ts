@@ -37,7 +37,7 @@ export type Mission = EntityMeta & {
   // Who called the mission in.
   callee: string;
   callee_phone: string;
-  // The mission scope's ID; null is the implicit Global scope. Rows
+  // The mission scope's ID; null is the implicit Default scope. Rows
   // replicated before the API had it lack it.
   scope?: string | null;
 };

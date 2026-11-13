@@ -50,7 +50,7 @@ const periodOf = ({ amount, unit }: Frame) =>
   amount === 1 ? unit.singular : `${amount} ${unit.label}`;
 
 // currentScopeOnly counts only the missions of the selected scope (null =
-// Global).
+// Default).
 export function useActiveMissionsWidget(options: ResolvedOptions) {
   const { items: loaded, error, loading } = useMissions();
   const { scopeId } = useSelectedScope();

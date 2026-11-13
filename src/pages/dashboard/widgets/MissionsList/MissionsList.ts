@@ -29,7 +29,7 @@ export function sectionsByStatus(missions: readonly Mission[]): MissionSection[]
 
 // `hidden` holds the statuses whose missions, and sections, are left out.
 // Closed missions are loaded only if shown. currentScopeOnly leaves out the
-// missions of other scopes than the selected one (null = Global).
+// missions of other scopes than the selected one (null = Default).
 export function useMissionsListWidget(hidden: readonly string[], currentScopeOnly: boolean) {
   const { items: loaded, error, loading } = useMissions({ closed: !hidden.includes('closed') });
   const { scopeId } = useSelectedScope();

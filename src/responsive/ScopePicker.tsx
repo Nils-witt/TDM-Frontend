@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
-import { globalScopeName, useSelectedScope } from '@/data/selectedScope';
+import { defaultScopeName, useSelectedScope } from '@/data/selectedScope';
 import styles from './ScopePicker.module.scss';
 
 // The menu's MUI parts load only once it is opened.
@@ -11,7 +11,7 @@ const ScopeMenuMUI = lazy(() => import('./ScopeMenuMUI'));
 function ScopePicker() {
   const { scope } = useSelectedScope();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const name = scope?.name ?? globalScopeName;
+  const name = scope?.name ?? defaultScopeName;
 
   return (
     <>

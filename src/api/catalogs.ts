@@ -9,7 +9,7 @@ export type MissionTypeGroup = CatalogEntry;
 export type LogbookType = CatalogEntry;
 export type FileType = CatalogEntry;
 // A mission scope (not a layout's scope). A mission without one is in the
-// implicit Global scope, which has no entry.
+// implicit Default scope, which has no entry.
 export type MissionScope = CatalogEntry;
 
 // Unique by name within its group only. description tells when to pick it;

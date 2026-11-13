@@ -2,7 +2,7 @@ import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useCatalogs } from './catalogContext';
 import { SelectedScopeContext } from './selectedScope';
 
-// Per tab, surviving reloads; a new tab starts in Global (a tab opened from
+// Per tab, surviving reloads; a new tab starts in Default (a tab opened from
 // this one starts with a copy of session storage, so it keeps the scope).
 const storageKey = 'universam.missionScope';
 
@@ -32,7 +32,7 @@ function SelectedScopeProvider({ children }: { children: ReactNode }) {
     setStored(id);
   }, []);
 
-  // A deleted scope falls back to Global once the catalog is known; while it
+  // A deleted scope falls back to Default once the catalog is known; while it
   // loads the stored one is kept, so a reload does not lose it.
   const scope = stored === null ? null : (scopes.byId.get(stored) ?? null);
   const scopeId = stored !== null && (scope !== null || scopes.loading) ? stored : null;

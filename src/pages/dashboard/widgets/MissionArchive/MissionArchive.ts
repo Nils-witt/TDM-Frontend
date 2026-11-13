@@ -197,7 +197,7 @@ function comparator(sort: Sort, c: TypeCatalogs): (a: Mission, b: Mission) => nu
 
 export const pageSize = 50;
 
-// Which scope's missions match: undefined every scope's, null Global's (the
+// Which scope's missions match: undefined every scope's, null Default's (the
 // missions without one), else the scope with that ID.
 export type ScopeFilter = string | null | undefined;
 
