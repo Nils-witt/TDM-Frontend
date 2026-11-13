@@ -21,7 +21,7 @@ import styles from './AddUnit.module.scss';
 // there first.
 function AddUnit({ options }: WidgetProps) {
   const fns = useUnitFunctionFilter(options);
-  const state = useAssignUnit(useSelectedMission(), fns.filter);
+  const state = useAssignUnit(useSelectedMission(), fns.filter, options.currentScopeOnly === true);
   const { mission, readOnly, list, assigning, assign } = state;
   const { update } = useDashboard();
   const id = useId();
@@ -98,7 +98,9 @@ function AddUnit({ options }: WidgetProps) {
         <EmptyState>
           {state.query || fns.activeFilters > 0
             ? 'No unit matches.'
-            : 'The units server has no units.'}
+            : options.currentScopeOnly === true
+              ? 'No unit is in the current scope.'
+              : 'The units server has no units.'}
         </EmptyState>
       ) : (
         <div className={tableStyles.tableWrap}>

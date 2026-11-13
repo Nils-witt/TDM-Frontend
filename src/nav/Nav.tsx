@@ -61,6 +61,7 @@ function Nav() {
                 <NavMenuItem label="Map" widget="Map" />
                 <NavMenuItem label="Unit Status" widget="UnitStatus" />
                 <NavMenuItem label="Unit Requests" widget="UnitRequests" />
+                <NavMenuItem label="Unit Scopes" widget="UnitScopes" />
                 <NavMenuItem label="Units in Mission" widget="MissionUnits" />
                 <NavMenuItem label="Add Unit…" widget="AddUnit" />
               </TopLevelMenu>

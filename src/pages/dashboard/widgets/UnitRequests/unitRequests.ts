@@ -10,6 +10,7 @@ import {
   useUnits,
 } from '@/api/units';
 import { matchesFunction } from '../shared/unitFunctionFilter';
+import { useUnitScopeMatch } from '../shared/unitScopeFilter';
 
 // The units' FMS 0, 5 and 9 requests, for the Unit Requests widget and the
 // menu bar's indicator. They come with the units (useUnits()), so the event
@@ -22,11 +23,12 @@ export const unitRequestKey = (r: UnitRequestRow) => `${r.unit.id}/${r.request.c
 
 const none: ReadonlySet<string> = new Set();
 
-// The requests of units with a function in fns (empty = all): the pending
-// ones newest reported first, then the acknowledged ones, most recently
-// acknowledged first.
-export function useUnitRequests(fns: ReadonlySet<string> = none) {
+// The requests of units with a function in fns (empty = all) and, with
+// currentScopeOnly, in the tab's scope: the pending ones newest reported
+// first, then the acknowledged ones, most recently acknowledged first.
+export function useUnitRequests(fns: ReadonlySet<string> = none, currentScopeOnly = true) {
   const units = useUnits();
+  const inScope = useUnitScopeMatch(currentScopeOnly);
   const offline = useOffline();
   const [acknowledging, setAcknowledging] = useState<string | null>(null);
   const [ownError, setError] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export function useUnitRequests(fns: ReadonlySet<string> = none) {
     [units.data],
   );
   const { pending, acknowledged } = useMemo(() => {
-    const rows = all.filter((r) => matchesFunction(fns, r.unit.function));
+    const rows = all.filter((r) => inScope(r.unit.id) && matchesFunction(fns, r.unit.function));
     return {
       pending: rows
         .filter((r) => isPendingRequest(r.request))
@@ -54,7 +56,7 @@ export function useUnitRequests(fns: ReadonlySet<string> = none) {
           (b.request.acknowledged_at ?? '').localeCompare(a.request.acknowledged_at ?? ''),
         ),
     };
-  }, [all, fns]);
+  }, [all, fns, inScope]);
 
   const { reload } = units;
   // Resolves to whether it succeeded; a failure is shown as error.

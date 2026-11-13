@@ -14,6 +14,7 @@ import WidgetActionBar, { WidgetAction } from '../shared/WidgetActionBar';
 import FmsBadge from '../shared/FmsBadge';
 import FilterToggle from '../shared/FilterToggle';
 import { useUnitFunctionFilter } from '../shared/unitFunctionFilter';
+import { useUnitScopeMatch } from '../shared/unitScopeFilter';
 import UnitFunctionFilterSection from '../shared/UnitFunctionFilterSection';
 import { EmptyState } from '../shared/WidgetStates';
 import tableStyles from '../shared/CatalogManager.module.scss';
@@ -31,6 +32,7 @@ function UnitStatus({ options }: WidgetProps) {
   const { data, error, reload } = useUnitStatusChanges(limit);
   const units = useUnits();
   const fns = useUnitFunctionFilter(options);
+  const inScope = useUnitScopeMatch(options.currentScopeOnly === true);
 
   const functionOf = useMemo(
     () => new Map((units.data?.units ?? []).map((u) => [u.id, u.function])),
@@ -39,13 +41,13 @@ function UnitStatus({ options }: WidgetProps) {
   const functions = useMemo(() => unitFunctions(functionOf.values()), [functionOf]);
   const changes = useMemo(
     () =>
-      fns.filter.size === 0
-        ? data?.changes
-        : (data?.changes ?? []).filter((c) => {
-            const f = functionOf.get(c.unit_id);
-            return f !== undefined && fns.filter.has(f);
-          }),
-    [data, fns.filter, functionOf],
+      data?.changes.filter((c) => {
+        if (!inScope(c.unit_id)) return false;
+        if (fns.filter.size === 0) return true;
+        const f = functionOf.get(c.unit_id);
+        return f !== undefined && fns.filter.has(f);
+      }),
+    [data, fns.filter, functionOf, inScope],
   );
 
   const actions = (
@@ -152,8 +154,7 @@ function Change({ change: c }: { change: UnitStatusChange }) {
             <span
               className={tableStyles.meta}
               title="A request: the unit's status stays as it was until it reports another one"
-            >
-            </span>
+            ></span>
           )}
         </span>
       </td>

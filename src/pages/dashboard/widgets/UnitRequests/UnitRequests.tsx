@@ -27,7 +27,7 @@ const parseBool = (v: unknown) => (typeof v === 'boolean' ? v : undefined);
 // below (until the unit reports that code again).
 function UnitRequests({ options }: WidgetProps) {
   const fns = useUnitFunctionFilter(options);
-  const state = useUnitRequests(fns.filter);
+  const state = useUnitRequests(fns.filter, options.currentScopeOnly === true);
   const { pending, acknowledged } = state;
   const [showAcknowledged, setShowAcknowledged] = useWidgetState(
     'showAcknowledged',

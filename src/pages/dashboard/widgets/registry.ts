@@ -4,6 +4,7 @@ import { maxUnitStatusChanges } from '@/api/units';
 import { frameCount, frameKeys, windowUnits } from './ActiveMissions/ActiveMissions.ts';
 import { logbookFilterOptions } from './shared/logbookFilterOptions';
 import { unitFunctionOption } from './shared/unitFunctionFilter';
+import { unitScopeOption } from './shared/unitScopeFilter';
 import type { Widget } from './widget';
 
 const ExampleWidget = lazy(() => import('./Example/Example.tsx'));
@@ -34,6 +35,7 @@ const UnitStatusWidget = lazy(() => import('./UnitStatus/UnitStatus.tsx'));
 const MissionUnitsWidget = lazy(() => import('./MissionUnits/MissionUnits.tsx'));
 const AddUnitWidget = lazy(() => import('./AddUnit/AddUnit.tsx'));
 const UnitRequestsWidget = lazy(() => import('./UnitRequests/UnitRequests.tsx'));
+const UnitScopesWidget = lazy(() => import('./UnitScopes/UnitScopes.tsx'));
 const BackupInstancesWidget = lazy(() => import('./BackupInstances/BackupInstances.tsx'));
 const ConfigTransferWidget = lazy(() => import('./ConfigTransfer/ConfigTransfer.tsx'));
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
@@ -421,6 +423,7 @@ const UnitStatus: Widget = {
       max: maxUnitStatusChanges,
     },
     unitFunctionOption,
+    unitScopeOption,
   ],
   Component: UnitStatusWidget,
 };
@@ -454,7 +457,7 @@ const UnitRequests: Widget = {
   maxHeight: 800,
   defaultWidth: 40,
   defaultHeight: 30,
-  options: [unitFunctionOption],
+  options: [unitFunctionOption, unitScopeOption],
   Component: UnitRequestsWidget,
 };
 
@@ -472,8 +475,25 @@ const AddUnit: Widget = {
   maxHeight: 800,
   defaultWidth: 30,
   defaultHeight: 30,
-  options: [unitFunctionOption],
+  options: [unitFunctionOption, unitScopeOption],
   Component: AddUnitWidget,
+};
+
+// Every user may move a unit between scopes; the unit widgets show the units
+// of the tab's scope.
+const UnitScopes: Widget = {
+  id: 'UnitScopes',
+  name: 'Unit scopes',
+  category: 'general',
+  description: 'Puts the units of the units server into mission scopes.',
+  minWidth: 20,
+  maxWidth: 160,
+  minHeight: 8,
+  maxHeight: 800,
+  defaultWidth: 40,
+  defaultHeight: 35,
+  options: [unitFunctionOption],
+  Component: UnitScopesWidget,
 };
 
 // The admin widgets open from the Admin menu only (shown to admins), so the
@@ -686,6 +706,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     BackupStatus,
     UnitStatus,
     UnitRequests,
+    UnitScopes,
     MissionUnits,
     AddUnit,
     Example,

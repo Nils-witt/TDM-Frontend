@@ -9,6 +9,7 @@ import { useReplica } from '@/api/replica';
 import { type Unit, unitFunctions, unitLabel, useUnits } from '@/api/units';
 import type { MissionData } from '@/data/missionData';
 import { matchesFunction } from '../shared/unitFunctionFilter';
+import { useUnitScopeMatch } from '../shared/unitScopeFilter';
 import { useMissions } from '@/data/missionsContext';
 
 // The state of the Units in Mission and Add Unit widgets, apart from how they
@@ -114,14 +115,17 @@ const matches = (u: Unit, words: string[], fns: ReadonlySet<string>) => {
   return words.every((w) => text.includes(w));
 };
 
-// Every unit of the units server, matched against the search text and the
-// functions fns (empty = all), with where it is: free, on this mission or on another one. A unit on another
-// mission has to be released there first.
+// Every unit of the units server, matched against the search text, the
+// functions fns (empty = all) and, with currentScopeOnly, the tab's scope,
+// with where it is: free, on this mission or on another one. A unit on
+// another mission has to be released there first.
 export function useAssignUnit(
   { mission, readOnly, units: assignments }: MissionData,
   fns: ReadonlySet<string>,
+  currentScopeOnly: boolean,
 ) {
   const units = useUnits();
+  const inScope = useUnitScopeMatch(currentScopeOnly);
   const active = useActiveMissionUnits();
   const missions = useMissions();
   const apply = useApplyAssignment();
@@ -143,7 +147,7 @@ export function useAssignUnit(
   const list = useMemo((): AssignableUnit[] => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean);
     return (units.data?.units ?? [])
-      .filter((u) => matches(u, words, fns))
+      .filter((u) => inScope(u.id) && matches(u, words, fns))
       .map((unit) => {
         if (here.has(unit.id)) return { unit, state: { kind: 'here' } };
         const other = active.byUnit.get(unit.id);
@@ -159,7 +163,7 @@ export function useAssignUnit(
         }
         return { unit, state: { kind: 'free' } };
       });
-  }, [units.data, query, fns, here, active.byUnit, missions.byId, mission?.id]);
+  }, [units.data, query, fns, inScope, here, active.byUnit, missions.byId, mission?.id]);
 
   const assign = useCallback(
     (unit: Unit) => {
