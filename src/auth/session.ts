@@ -1,6 +1,12 @@
 import { type User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import { type AuthConfig, getAuthConfig, type Principal, whoAmI } from '@/api/auth';
-import { accessTokenRenewed, ApiError, setAccessTokenSource, setApiTarget } from '@/api/client';
+import {
+  accessTokenRenewed,
+  ApiError,
+  setAccessTokenSource,
+  setApiTarget,
+  setTokenRefresh,
+} from '@/api/client';
 import { isNetworkError } from '@/api/connectivity';
 import { clearOffline, loadSession, saveSession } from '@/api/offlineStore';
 
@@ -25,6 +31,88 @@ let user: User | null = null;
 
 setAccessTokenSource(() => (user && !user.expired ? user.access_token : null));
 
+// Seconds the current access token was valid for when this tab got it.
+let tokenLifetime = 0;
+
+function setUser(u: User | null) {
+  user = u;
+  tokenLifetime = u?.expires_in ?? 0;
+  scheduleRenewal();
+}
+
+// One refresh at a time: Authentik rotates refresh tokens, so a second
+// request with the same one would be refused and end the session.
+let renewing: Promise<void> | null = null;
+
+function renew(): Promise<void> {
+  const m = manager;
+  if (!m || !user?.refresh_token) return Promise.resolve();
+  renewing ??= m
+    .signinSilent()
+    .then(() => {
+      retryDelay = 0;
+    })
+    .finally(() => {
+      renewing = null;
+    });
+  return renewing;
+}
+
+// The library's own renewal runs once per token and gives up after an
+// error, and its timer is late in a throttled or sleeping background tab.
+// This one renews early, retries while the provider cannot be reached, and
+// checks again whenever the tab or the network comes back.
+let renewalTimer: ReturnType<typeof setTimeout> | undefined;
+let retryDelay = 0;
+const minRetryDelay = 5_000;
+const maxRetryDelay = 60_000;
+
+// Ahead of expiry by half the lifetime, at most two minutes: background
+// tabs may run timers only once a minute.
+function renewalLead(): number {
+  return Math.min(120, tokenLifetime / 2);
+}
+
+function scheduleRenewal(delay?: number) {
+  clearTimeout(renewalTimer);
+  renewalTimer = undefined;
+  if (!user?.refresh_token) return;
+  const wait = delay ?? Math.max(0, ((user.expires_in ?? 0) - renewalLead()) * 1000);
+  renewalTimer = setTimeout(renewInBackground, wait);
+}
+
+function renewInBackground() {
+  renew().catch((err: unknown) => {
+    // A refused refresh token cannot recover; the session ends at expiry.
+    if (!isNetworkError(err)) return;
+    retryDelay = Math.min(maxRetryDelay, Math.max(minRetryDelay, retryDelay * 2));
+    scheduleRenewal(retryDelay);
+  });
+}
+
+function renewIfDue() {
+  if (renewing || !user?.refresh_token) return;
+  if ((user.expires_in ?? 0) <= renewalLead()) renewInBackground();
+}
+
+window.addEventListener('online', renewIfDue);
+window.addEventListener('focus', renewIfDue);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') renewIfDue();
+});
+
+// Before a request with an expired (or about to expire) token, so it is not
+// sent without one and answered with a 401. A failed renewal is left to the
+// background retry and the 401.
+setTokenRefresh(async () => {
+  if (!user?.refresh_token || (user.expires_in ?? 0) > 10) return;
+  try {
+    await renew();
+  } catch {
+    // see above
+  }
+});
+
 function createManager(c: AuthConfig): UserManager {
   const m = new UserManager({
     authority: c.issuer,
@@ -43,18 +131,18 @@ function createManager(c: AuthConfig): UserManager {
     },
     // Per tab, surviving reloads.
     userStore: new WebStorageStateStore({ store: window.sessionStorage }),
-    // Renews with the refresh token, which Authentik only issues for the
-    // offline_access scope; without one the session ends when the token
-    // expires.
-    automaticSilentRenew: true,
+    // Renewed by scheduleRenewal with the refresh token, which Authentik only
+    // issues for the offline_access scope; without one the session ends when
+    // the token expires.
+    automaticSilentRenew: false,
     loadUserInfo: false,
   });
   m.events.addUserLoaded((u) => {
-    user = u;
+    setUser(u);
     accessTokenRenewed();
   });
   m.events.addUserUnloaded(() => {
-    user = null;
+    setUser(null);
   });
   return m;
 }
@@ -138,13 +226,15 @@ async function start(): Promise<SessionStart> {
   if (window.location.pathname === callbackPath) {
     const m = await ensureManager();
     setApiTarget('oidc');
+    let signedIn: User;
     try {
-      user = await m.signinRedirectCallback();
+      signedIn = await m.signinRedirectCallback();
     } catch (err) {
       window.history.replaceState(null, '', '/');
       return { status: 'signedOut', error: `Login failed: ${message(err)}` };
     }
-    const state = user.state as LoginState | undefined;
+    setUser(signedIn);
+    const state = signedIn.state as LoginState | undefined;
     window.history.replaceState(null, '', state?.returnTo ?? '/');
     return signInWithToken(m);
   }
@@ -158,14 +248,14 @@ async function start(): Promise<SessionStart> {
   }
 
   const m = await ensureManager();
-  user = await m.getUser();
+  setUser(await m.getUser());
   if (user?.expired && user.refresh_token) {
     try {
-      user = await m.signinSilent();
+      await renew();
     } catch (err) {
       // Keep the tokens for when the provider can be reached again.
       if (isNetworkError(err)) throw err;
-      user = null;
+      setUser(null);
     }
   }
   if (!user || user.expired) {
@@ -193,7 +283,7 @@ async function startOffline(err: unknown): Promise<SessionStart> {
     // The tab's tokens, if any, are sent once the API answers again.
     config = saved.config;
     manager = createManager(saved.config);
-    user = await manager.getUser();
+    setUser(await manager.getUser());
   }
   return { status: 'signedIn', principal: saved.principal, mode: saved.mode, offline: true };
 }
@@ -243,7 +333,7 @@ export async function dropTokens() {
   rememberCertificate(false);
   setApiTarget('oidc');
   await manager?.removeUser();
-  user = null;
+  setUser(null);
 }
 
 // The token could not be renewed in time.

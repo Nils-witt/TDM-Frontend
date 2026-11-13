@@ -68,6 +68,13 @@ export function setAccessTokenSource(source: () => string | null) {
 
 export const currentAccessToken = () => accessToken();
 
+// Set by the session: renews an expired token before a request is sent.
+let refreshToken: () => Promise<void> = () => Promise.resolve();
+
+export function setTokenRefresh(refresh: () => Promise<void>) {
+  refreshToken = refresh;
+}
+
 const tokenListeners = new Set<() => void>();
 
 // The session calls accessTokenRenewed after each renewal, so the event
@@ -121,6 +128,7 @@ async function send(
   if (method !== 'GET' && method !== 'HEAD' && offline()) {
     throw new ApiError(0, offlineMessage);
   }
+  if (!anonymous) await refreshToken();
   const token = anonymous ? null : accessToken();
   let res: Response;
   try {
