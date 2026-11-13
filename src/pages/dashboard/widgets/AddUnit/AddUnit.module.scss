@@ -1,0 +1,17 @@
+.search {
+  width: 100%;
+}
+
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.unavailable td {
+  color: var(--text-secondary);
+}

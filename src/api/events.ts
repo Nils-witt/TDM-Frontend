@@ -26,6 +26,7 @@ const typePaths: Record<string, string[]> = {
   log_entries: ['/api/v1/log-entries'],
   log_files: ['/api/v1/log-files'],
   tasks: ['/api/v1/tasks'],
+  mission_units: ['/api/v1/mission-units'],
   map_styles: ['/api/v1/map-styles'],
   map_settings: ['/api/v1/map-settings'],
   dashboard_layouts: ['/api/v1/layouts'],

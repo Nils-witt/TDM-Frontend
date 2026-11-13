@@ -1,15 +1,10 @@
 import Alert from '@/components/Alert';
 import Spinner from '@/components/Spinner';
-import {
-  fmsStatusLabels,
-  fmsTone,
-  type UnitStatusChange,
-  unitLabel,
-  useUnitStatusChanges,
-} from '@/api/units';
+import { type UnitStatusChange, unitLabel, useUnitStatusChanges } from '@/api/units';
 import { formatTime } from '../shared/logbookEntries';
 import type { WidgetProps } from '../widgetOptions';
 import WidgetActionBar, { WidgetAction } from '../shared/WidgetActionBar';
+import FmsBadge from '../shared/FmsBadge';
 import { EmptyState } from '../shared/WidgetStates';
 import tableStyles from '../shared/CatalogManager.module.scss';
 import styles from './UnitStatus.module.scss';
@@ -92,7 +87,7 @@ function Change({ change: c }: { change: UnitStatusChange }) {
         <span className={styles.transition}>
           {c.from !== null && (
             <>
-              <Badge code={c.from} />
+              <FmsBadge code={c.from} />
               <span className="muted" aria-label="to">
                 →
               </span>
@@ -102,20 +97,12 @@ function Change({ change: c }: { change: UnitStatusChange }) {
             <span className="muted">cleared</span>
           ) : (
             <>
-              <Badge code={c.to} />
+              <FmsBadge code={c.to} />
             </>
           )}
         </span>
       </td>
     </tr>
-  );
-}
-
-function Badge({ code }: { code: number }) {
-  return (
-    <span className={`${styles.badge} ${styles[fmsTone(code)]}`} title={fmsStatusLabels[code]}>
-      {code}
-    </span>
   );
 }
 

@@ -29,6 +29,8 @@ const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplat
 const WorkflowsWidget = lazy(() => import('./Workflows/Workflows.tsx'));
 const BackupStatusWidget = lazy(() => import('./BackupStatus/BackupStatus.tsx'));
 const UnitStatusWidget = lazy(() => import('./UnitStatus/UnitStatus.tsx'));
+const MissionUnitsWidget = lazy(() => import('./MissionUnits/MissionUnits.tsx'));
+const AddUnitWidget = lazy(() => import('./AddUnit/AddUnit.tsx'));
 const BackupInstancesWidget = lazy(() => import('./BackupInstances/BackupInstances.tsx'));
 const ConfigTransferWidget = lazy(() => import('./ConfigTransfer/ConfigTransfer.tsx'));
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
@@ -387,6 +389,38 @@ const UnitStatus: Widget = {
   Component: UnitStatusWidget,
 };
 
+const MissionUnits: Widget = {
+  id: 'MissionUnits',
+  name: 'Units in mission',
+  category: 'missions',
+  description: 'The units assigned to the selected mission, with their live FMS status.',
+  consumes: ['selection'],
+  minWidth: 20,
+  maxWidth: 120,
+  minHeight: 8,
+  maxHeight: 800,
+  defaultWidth: 30,
+  defaultHeight: 25,
+  Component: MissionUnitsWidget,
+};
+
+// A unit is on one mission at a time; units on another one are shown, but
+// cannot be assigned until released there.
+const AddUnit: Widget = {
+  id: 'AddUnit',
+  name: 'Add unit',
+  category: 'missions',
+  description: 'Assigns units of the units server to the selected mission.',
+  consumes: ['selection'],
+  minWidth: 20,
+  maxWidth: 120,
+  minHeight: 10,
+  maxHeight: 800,
+  defaultWidth: 30,
+  defaultHeight: 30,
+  Component: AddUnitWidget,
+};
+
 // The admin widgets open from the Admin menu only (shown to admins), so the
 // picker leaves them out; a layout holding one shows non-admins a notice.
 const adminWidget = {
@@ -587,6 +621,8 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     AuditLog,
     BackupStatus,
     UnitStatus,
+    MissionUnits,
+    AddUnit,
     Example,
   ].map((w) => [w.id, w]),
 );

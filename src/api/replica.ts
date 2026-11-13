@@ -9,6 +9,7 @@ import { ApiError } from './client';
 import type { Collection } from './collection';
 import { requestAll } from './list';
 import { fileContentPath } from './logbook';
+import { missionUnitsPath } from './missionUnits';
 import { missionsPath } from './missions';
 import {
   deleteRow,
@@ -41,10 +42,11 @@ const listOf: Record<ReplicaTable, { path: string; key: string }> = {
   log_entries: { path: '/api/v1/log-entries', key: 'log_entries' },
   log_files: { path: '/api/v1/log-files', key: 'log_files' },
   tasks: { path: '/api/v1/tasks', key: 'tasks' },
+  mission_units: { path: missionUnitsPath, key: 'mission_units' },
 };
 
 // A whole table, or for a scoped one the rows of one mission (log_entries,
-// log_files, tasks) or status (missions). Hooks take the key, a string, so it can be a dependency.
+// log_files, tasks, mission_units) or status (missions). Hooks take the key, a string, so it can be a dependency.
 // A transient scope is synced the same but kept in memory only, never read
 // from or written to the store: for missions closed long ago, which the
 // replica does not keep.

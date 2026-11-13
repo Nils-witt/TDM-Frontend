@@ -6,7 +6,7 @@ import { hasDigest } from '@/api/offlineStore';
 import { type Replica, scopeKey, useReplica } from '@/api/replica';
 import { useMissions } from './missionsContext';
 
-// Keeps the logbook, files, tasks and attachment contents of every mission
+// Keeps the logbook, files, tasks, unit assignments and attachment contents of every mission
 // that is not closed in the offline store, so they can be read offline
 // without having been opened. Subscribing makes them count as shown: the
 // event stream keeps them current like what is on screen.
@@ -15,6 +15,7 @@ const missionScopes = (id: string) => [
   scopeKey('log_entries', id),
   scopeKey('log_files', id),
   scopeKey('tasks', id),
+  scopeKey('mission_units', id),
 ];
 
 // Subscribes to a scope; resolves with the unsubscribe once it has rows or an

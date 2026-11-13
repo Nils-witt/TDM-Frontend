@@ -41,6 +41,7 @@ export const tableIndex = {
   log_entries: 'mission',
   log_files: 'mission',
   tasks: 'mission',
+  mission_units: 'mission',
 } as const;
 
 export type ReplicaTable = keyof typeof tableIndex;
@@ -68,6 +69,7 @@ interface OfflineDB extends DBSchema {
   log_entries: Table<{ mission: string }>;
   log_files: Table<{ mission: string; entry: string; digest: string }>;
   tasks: Table<{ mission: string }>;
+  mission_units: Table<{ mission: string }>;
   // Key: the scope key (replica.ts).
   syncs: { key: string; value: SyncRecord };
   // Key: the lowercase hex SHA-256 of the content.
@@ -91,15 +93,23 @@ const allStores: StoreName[] = [
 
 let db: Promise<IDBPDatabase<OfflineDB> | null> | null = null;
 
+function createMissionUnits(d: IDBPDatabase<OfflineDB>) {
+  d.createObjectStore('mission_units', { keyPath: 'id' }).createIndex('mission', 'mission');
+}
+
 // Null where IndexedDB is blocked (some private windows): no offline data.
 function open(): Promise<IDBPDatabase<OfflineDB> | null> {
-  db ??= openDB<OfflineDB>('universam-offline', 3, {
+  db ??= openDB<OfflineDB>('universam-offline', 4, {
     upgrade(d, oldVersion, _newVersion, tx) {
-      // Version 2 synced missions whole. Its record would clear the store
-      // once expired, rows of the per-status scopes included.
-      if (oldVersion === 2) {
-        tx.objectStore('missions').createIndex('status', 'status');
-        void tx.objectStore('syncs').delete('missions');
+      if (oldVersion >= 2) {
+        // Version 2 synced missions whole. Its record would clear the store
+        // once expired, rows of the per-status scopes included.
+        if (oldVersion === 2) {
+          tx.objectStore('missions').createIndex('status', 'status');
+          void tx.objectStore('syncs').delete('missions');
+        }
+        // Version 4 added the unit assignments.
+        if (oldVersion < 4) createMissionUnits(d);
         return;
       }
       // Version 1 kept the mission domain per path and blobs per path. It
@@ -116,6 +126,7 @@ function open(): Promise<IDBPDatabase<OfflineDB> | null> {
       files.createIndex('entry', 'entry');
       files.createIndex('digest', 'digest');
       d.createObjectStore('tasks', { keyPath: 'id' }).createIndex('mission', 'mission');
+      createMissionUnits(d);
       d.createObjectStore('syncs');
       d.createObjectStore('blobs').createIndex('savedAt', 'savedAt');
       d.createObjectStore('contents').createIndex('savedAt', 'savedAt');
