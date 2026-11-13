@@ -113,7 +113,7 @@ type RowProps = {
 };
 
 function Row({
-  row: { assignment: a, unit, function: fn },
+  row: { assignment: a, unit },
   canRelease,
   releasing,
   onRelease,
