@@ -1,0 +1,43 @@
+.nowrap {
+  white-space: nowrap;
+}
+
+.error {
+  color: var(--error);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.transition {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: var(--radius);
+  background: var(--chip);
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+
+  &.available {
+    background: var(--success);
+    color: #fff;
+  }
+  &.busy {
+    background: var(--warning);
+    color: #fff;
+  }
+  &.request {
+    background: var(--error);
+    color: #fff;
+  }
+}

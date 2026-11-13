@@ -57,6 +57,7 @@ function Nav() {
                 <NavMenuItem label="Mission Details" widget="MissionDetails" />
                 <NavMenuItem label="Active Missions" widget="ActiveMissions" />
                 <NavMenuItem label="Map" widget="Map" />
+                <NavMenuItem label="Unit Status" widget="UnitStatus" />
               </TopLevelMenu>
               <TopLevelMenu label="Logbook">
                 <NavMenuItem label="New Entry" widget="LogbookForm" shortcut="newLogEntry" />

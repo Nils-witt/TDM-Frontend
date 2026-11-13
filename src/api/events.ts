@@ -34,6 +34,9 @@ const typePaths: Record<string, string[]> = {
   reports: ['/api/v1/reports'],
   workflows: ['/api/v1/workflows'],
   backup_instances: ['/api/v1/backup-instances', '/api/v1/backup-status'],
+  // Not a table: the units the API follows on the units server, their status
+  // changes and the connection to it.
+  units: ['/api/v1/units'],
 };
 
 // Every change is recorded there.

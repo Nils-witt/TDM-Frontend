@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import { missionStatuses } from '@/api/missions';
+import { maxUnitStatusChanges } from '@/api/units';
 import { frameCount, frameKeys, windowUnits } from './ActiveMissions/ActiveMissions.ts';
 import { logbookFilterOptions } from './shared/logbookFilterOptions';
 import type { Widget } from './widget';
@@ -27,6 +28,7 @@ const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
 const WorkflowsWidget = lazy(() => import('./Workflows/Workflows.tsx'));
 const BackupStatusWidget = lazy(() => import('./BackupStatus/BackupStatus.tsx'));
+const UnitStatusWidget = lazy(() => import('./UnitStatus/UnitStatus.tsx'));
 const BackupInstancesWidget = lazy(() => import('./BackupInstances/BackupInstances.tsx'));
 const ConfigTransferWidget = lazy(() => import('./ConfigTransfer/ConfigTransfer.tsx'));
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
@@ -361,6 +363,30 @@ const BackupStatus: Widget = {
   Component: BackupStatusWidget,
 };
 
+const UnitStatus: Widget = {
+  id: 'UnitStatus',
+  name: 'Unit status',
+  category: 'general',
+  description: 'The latest FMS status changes of the units, live from the units server.',
+  minWidth: 20,
+  maxWidth: 160,
+  minHeight: 8,
+  maxHeight: 800,
+  defaultWidth: 40,
+  defaultHeight: 35,
+  options: [
+    {
+      key: 'limit',
+      label: 'Number of changes shown',
+      type: 'number',
+      default: 50,
+      min: 1,
+      max: maxUnitStatusChanges,
+    },
+  ],
+  Component: UnitStatusWidget,
+};
+
 // The admin widgets open from the Admin menu only (shown to admins), so the
 // picker leaves them out; a layout holding one shows non-admins a notice.
 const adminWidget = {
@@ -560,6 +586,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     Permissions,
     AuditLog,
     BackupStatus,
+    UnitStatus,
     Example,
   ].map((w) => [w.id, w]),
 );
