@@ -21,6 +21,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
+  display: flex;
 
   // A window has no padding of its own, so the content gets it.
   &.window {

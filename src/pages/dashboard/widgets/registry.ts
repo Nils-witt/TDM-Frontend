@@ -3,6 +3,7 @@ import { missionStatuses } from '@/api/missions';
 import { maxUnitStatusChanges } from '@/api/units';
 import { frameCount, frameKeys, windowUnits } from './ActiveMissions/ActiveMissions.ts';
 import { logbookFilterOptions } from './shared/logbookFilterOptions';
+import { unitFunctionOption } from './shared/unitFunctionFilter';
 import type { Widget } from './widget';
 
 const ExampleWidget = lazy(() => import('./Example/Example.tsx'));
@@ -385,6 +386,7 @@ const UnitStatus: Widget = {
       min: 1,
       max: maxUnitStatusChanges,
     },
+    unitFunctionOption,
   ],
   Component: UnitStatusWidget,
 };
@@ -401,6 +403,7 @@ const MissionUnits: Widget = {
   maxHeight: 800,
   defaultWidth: 30,
   defaultHeight: 25,
+  options: [unitFunctionOption],
   Component: MissionUnitsWidget,
 };
 
@@ -418,6 +421,7 @@ const AddUnit: Widget = {
   maxHeight: 800,
   defaultWidth: 30,
   defaultHeight: 30,
+  options: [unitFunctionOption],
   Component: AddUnitWidget,
 };
 

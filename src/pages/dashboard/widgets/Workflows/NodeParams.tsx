@@ -1,5 +1,6 @@
 import { type ReactNode, useId } from 'react';
 import { type MissionStatus, missionStatuses } from '@/api/missions';
+import { fmsStatusLabels } from '@/api/units';
 import type {
   WorkflowCatalog,
   WorkflowNodeType,
@@ -11,6 +12,11 @@ import { DeleteIcon } from '@/components/icons';
 import { useCatalogs } from '@/data/catalogContext';
 import { paramValue } from './graph';
 import styles from './Workflows.module.scss';
+
+const fmsStatusOptions = Object.entries(fmsStatusLabels).map(([code, label]) => ({
+  value: Number(code),
+  label: `${code} ${label}`,
+}));
 
 const compareOpLabels: Record<string, string> = {
   eq: 'equals',
@@ -174,6 +180,15 @@ function ParamField({
           id={id}
           options={missionStatuses}
           value={(value as MissionStatus[] | null | undefined) ?? []}
+          onChange={onChange}
+        />,
+      );
+    case 'fms_statuses':
+      return row(
+        <CheckList<number>
+          id={id}
+          options={fmsStatusOptions}
+          value={(value as number[] | null | undefined) ?? []}
           onChange={onChange}
         />,
       );

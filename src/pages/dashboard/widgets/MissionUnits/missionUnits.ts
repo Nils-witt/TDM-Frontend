@@ -6,8 +6,9 @@ import {
   useActiveMissionUnits,
 } from '@/api/missionUnits';
 import { useReplica } from '@/api/replica';
-import { type Unit, unitLabel, useUnits } from '@/api/units';
+import { type Unit, unitFunctions, unitLabel, useUnits } from '@/api/units';
 import type { MissionData } from '@/data/missionData';
+import { matchesFunction } from '../shared/unitFunctionFilter';
 import { useMissions } from '@/data/missionsContext';
 
 // The state of the Units in Mission and Add Unit widgets, apart from how they
@@ -31,11 +32,17 @@ export type MissionUnitRow = {
   // The unit as the units server knows it now; undefined once it is gone or
   // while the units are not loaded.
   unit: Unit | undefined;
+  // The unit's function now, else as it was assigned.
+  function: string;
 };
 
-// The selected mission's assignments: the current ones newest first, then the
-// released ones, most recently released first.
-export function useMissionUnits({ mission, readOnly, units: assignments }: MissionData) {
+// The selected mission's assignments with a function in fns (empty = all): the
+// current ones newest first, then the released ones, most recently released
+// first.
+export function useMissionUnits(
+  { mission, readOnly, units: assignments }: MissionData,
+  fns: ReadonlySet<string>,
+) {
   const units = useUnits();
   const apply = useApplyAssignment();
   const [releasing, setReleasing] = useState<string | null>(null);
@@ -45,8 +52,17 @@ export function useMissionUnits({ mission, readOnly, units: assignments }: Missi
     () => new Map((units.data?.units ?? []).map((u) => [u.id, u])),
     [units.data],
   );
+  const all = useMemo(
+    () =>
+      assignments.items.map((a): MissionUnitRow => {
+        const unit = byId.get(a.unit_id);
+        return { assignment: a, unit, function: unit ? unit.function : a.unit_function };
+      }),
+    [assignments.items, byId],
+  );
+  const functions = useMemo(() => unitFunctions(all.map((r) => r.function)), [all]);
   const { current, released } = useMemo(() => {
-    const rows = assignments.items.map((a) => ({ assignment: a, unit: byId.get(a.unit_id) }));
+    const rows = all.filter((r) => matchesFunction(fns, r.function));
     return {
       current: rows.filter((r) => isAssigned(r.assignment)),
       released: rows
@@ -55,7 +71,7 @@ export function useMissionUnits({ mission, readOnly, units: assignments }: Missi
           (b.assignment.released_at ?? '').localeCompare(a.assignment.released_at ?? ''),
         ),
     };
-  }, [assignments.items, byId]);
+  }, [all, fns]);
 
   const release = useCallback(
     (mu: MissionUnit) => {
@@ -76,6 +92,7 @@ export function useMissionUnits({ mission, readOnly, units: assignments }: Missi
     loading: assignments.loading,
     current,
     released,
+    functions,
     releasing,
     release,
     error: ownError ?? assignments.error,
@@ -91,15 +108,19 @@ export type AssignState =
 
 export type AssignableUnit = { unit: Unit; state: AssignState };
 
-const matches = (u: Unit, words: string[]) => {
+const matches = (u: Unit, words: string[], fns: ReadonlySet<string>) => {
+  if (!matchesFunction(fns, u.function)) return false;
   const text = `${u.call_sign} ${u.name}`.toLowerCase();
   return words.every((w) => text.includes(w));
 };
 
-// Every unit of the units server, matched against the search text, with
-// where it is: free, on this mission or on another one. A unit on another
+// Every unit of the units server, matched against the search text and the
+// functions fns (empty = all), with where it is: free, on this mission or on another one. A unit on another
 // mission has to be released there first.
-export function useAssignUnit({ mission, readOnly, units: assignments }: MissionData) {
+export function useAssignUnit(
+  { mission, readOnly, units: assignments }: MissionData,
+  fns: ReadonlySet<string>,
+) {
   const units = useUnits();
   const active = useActiveMissionUnits();
   const missions = useMissions();
@@ -115,10 +136,14 @@ export function useAssignUnit({ mission, readOnly, units: assignments }: Mission
     [assignments.items],
   );
 
+  const functions = useMemo(
+    () => unitFunctions((units.data?.units ?? []).map((u) => u.function)),
+    [units.data],
+  );
   const list = useMemo((): AssignableUnit[] => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean);
     return (units.data?.units ?? [])
-      .filter((u) => matches(u, words))
+      .filter((u) => matches(u, words, fns))
       .map((unit) => {
         if (here.has(unit.id)) return { unit, state: { kind: 'here' } };
         const other = active.byUnit.get(unit.id);
@@ -134,7 +159,7 @@ export function useAssignUnit({ mission, readOnly, units: assignments }: Mission
         }
         return { unit, state: { kind: 'free' } };
       });
-  }, [units.data, query, here, active.byUnit, missions.byId, mission?.id]);
+  }, [units.data, query, fns, here, active.byUnit, missions.byId, mission?.id]);
 
   const assign = useCallback(
     (unit: Unit) => {
@@ -159,6 +184,7 @@ export function useAssignUnit({ mission, readOnly, units: assignments }: Mission
     loading: units.data === undefined && units.error === null,
     query,
     setQuery,
+    functions,
     list,
     assigning,
     assign,

@@ -45,6 +45,7 @@ export type WorkflowParamType =
   | 'number'
   | 'mission_status'
   | 'mission_statuses'
+  | 'fms_statuses'
   | 'logbook_type'
   | 'compare_op'
   | 'name';

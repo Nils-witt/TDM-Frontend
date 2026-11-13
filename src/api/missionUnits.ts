@@ -16,6 +16,7 @@ export type MissionUnit = EntityMeta & {
   // knows it.
   unit_name: string;
   unit_call_sign: string;
+  unit_function: string;
   released_at: Timestamp | null;
   // Empty while assigned.
   released_by: string;

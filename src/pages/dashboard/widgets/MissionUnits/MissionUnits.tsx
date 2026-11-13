@@ -1,6 +1,10 @@
 import { missionUnitLabel } from '@/api/missionUnits';
 import { fmsStatusLabels } from '@/api/units';
 import { FormError } from '@/components/form';
+import { LinkOffIcon } from '@/components/icons';
+import ContextMenu from '@/components/menu/ContextMenu';
+import MenuItem from '@/components/menu/MenuItem';
+import { useContextMenu } from '@/components/menu/useContextMenu';
 import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import tableStyles from '../shared/CatalogManager.module.scss';
@@ -8,6 +12,10 @@ import FmsBadge from '../shared/FmsBadge';
 import { formatTime } from '../shared/logbookEntries';
 import WidgetActionBar, { WidgetAction } from '../shared/WidgetActionBar';
 import { EmptyState, NoMission } from '../shared/WidgetStates';
+import FilterToggle from '../shared/FilterToggle';
+import { useUnitFunctionFilter } from '../shared/unitFunctionFilter';
+import UnitFunctionFilterSection from '../shared/UnitFunctionFilterSection';
+import type { WidgetProps } from '../widgetOptions';
 import { useWidgetState } from '../widgetState';
 import { type MissionUnitRow, useMissionUnits } from './missionUnits';
 import styles from './MissionUnits.module.scss';
@@ -16,8 +24,9 @@ const parseBool = (v: unknown) => (typeof v === 'boolean' ? v : undefined);
 
 // The units assigned to the selected mission, with their live FMS status.
 // Released ones stay listed below, dimmed.
-function MissionUnits() {
-  const state = useMissionUnits(useSelectedMission());
+function MissionUnits({ options }: WidgetProps) {
+  const fns = useUnitFunctionFilter(options);
+  const state = useMissionUnits(useSelectedMission(), fns.filter);
   const { mission, readOnly, current, released, releasing, release } = state;
   const { openWidget } = useWidgetWindows();
   const [showReleased, setShowReleased] = useWidgetState('showReleased', true, parseBool);
@@ -27,6 +36,13 @@ function MissionUnits() {
       <WidgetAction disabled={mission === null || readOnly} onClick={() => openWidget('AddUnit')}>
         Add Unit…
       </WidgetAction>
+      {mission !== null && (
+        <FilterToggle
+          open={fns.showFilters}
+          active={fns.activeFilters}
+          onToggle={fns.toggleFilters}
+        />
+      )}
       <WidgetAction pressed={showReleased} onClick={() => setShowReleased((v) => !v)}>
         Released{released.length > 0 && ` (${released.length})`}
       </WidgetAction>
@@ -45,9 +61,20 @@ function MissionUnits() {
   return (
     <>
       {actions}
+      {fns.showFilters && (
+        <UnitFunctionFilterSection
+          functions={state.functions}
+          filter={fns.filter}
+          onChange={fns.setFilter}
+        />
+      )}
       {state.loading ? null : rows.length === 0 ? (
         <EmptyState>
-          {released.length > 0 ? 'No units assigned any more.' : 'No units assigned.'}
+          {fns.activeFilters > 0
+            ? 'No matching units.'
+            : released.length > 0
+              ? 'No units assigned any more.'
+              : 'No units assigned.'}
         </EmptyState>
       ) : (
         <div className={tableStyles.tableWrap}>
@@ -57,9 +84,6 @@ function MissionUnits() {
                 <th>Unit</th>
                 <th>Status</th>
                 <th>Assigned</th>
-                <th>
-                  <span className={tableStyles.hidden}>Actions</span>
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -88,16 +112,25 @@ type RowProps = {
   onRelease: () => void;
 };
 
-function Row({ row: { assignment: a, unit }, canRelease, releasing, onRelease }: RowProps) {
+function Row({
+  row: { assignment: a, unit, function: fn },
+  canRelease,
+  releasing,
+  onRelease,
+}: RowProps) {
   const active = a.released_at === null;
   const label = unit ? unit.call_sign || unit.name : missionUnitLabel(a);
   const name = unit ? unit.name : a.unit_name;
+  const menu = useContextMenu();
+  const hasMenu = active && canRelease;
   return (
-    <tr className={active ? undefined : styles.released}>
-      <td>
-        {label}
-        {name && name !== label && <span className={tableStyles.meta}> {name}</span>}
-      </td>
+    <tr
+      className={active ? undefined : styles.released}
+      // Focusable so the context-menu key and Shift+F10 open the menu too.
+      tabIndex={hasMenu ? 0 : undefined}
+      onContextMenu={hasMenu ? menu.onContextMenu : undefined}
+    >
+      <td>{label ?? name}</td>
       <td>
         {active && unit?.status ? (
           <span className={styles.status} title={fmsStatusLabels[unit.status.code]}>
@@ -108,24 +141,20 @@ function Row({ row: { assignment: a, unit }, canRelease, releasing, onRelease }:
         )}
       </td>
       <td className={tableStyles.meta}>
-        {formatTime(a.created_at)} · {a.created_by}
+        {formatTime(a.created_at)}
         {!active && a.released_at && (
           <>
             <br />
-            released {formatTime(a.released_at)} · {a.released_by}
+            {formatTime(a.released_at)}
           </>
         )}
-      </td>
-      <td className={tableStyles.actions}>
-        {active && (
-          <button
-            type="button"
-            className="btn small"
-            disabled={!canRelease || releasing}
-            onClick={onRelease}
-          >
-            Release
-          </button>
+        {/* Portaled to the body; it sits here only to stay valid table markup. */}
+        {hasMenu && (
+          <ContextMenu at={menu.at} onClose={menu.close} label="Unit">
+            <MenuItem icon={<LinkOffIcon />} disabled={releasing} onClick={onRelease}>
+              Release
+            </MenuItem>
+          </ContextMenu>
         )}
       </td>
     </tr>

@@ -10,13 +10,18 @@ import FmsBadge from '../shared/FmsBadge';
 import WidgetActionBar, { WidgetAction } from '../shared/WidgetActionBar';
 import { EmptyState, NoMission } from '../shared/WidgetStates';
 import { type AssignableUnit, useAssignUnit } from '../MissionUnits/missionUnits';
+import FilterToggle from '../shared/FilterToggle';
+import { useUnitFunctionFilter } from '../shared/unitFunctionFilter';
+import UnitFunctionFilterSection from '../shared/UnitFunctionFilterSection';
+import type { WidgetProps } from '../widgetOptions';
 import styles from './AddUnit.module.scss';
 
 // Assigns units of the units server to the selected mission. A unit is on
 // one mission at a time: one on another mission names it, and is released
 // there first.
-function AddUnit() {
-  const state = useAssignUnit(useSelectedMission());
+function AddUnit({ options }: WidgetProps) {
+  const fns = useUnitFunctionFilter(options);
+  const state = useAssignUnit(useSelectedMission(), fns.filter);
   const { mission, readOnly, list, assigning, assign } = state;
   const { update } = useDashboard();
   const id = useId();
@@ -24,6 +29,11 @@ function AddUnit() {
   const actions = (
     <WidgetActionBar label="Add unit actions">
       <WidgetAction onClick={() => void state.reload()}>Refresh</WidgetAction>
+      <FilterToggle
+        open={fns.showFilters}
+        active={fns.activeFilters}
+        onToggle={fns.toggleFilters}
+      />
     </WidgetActionBar>
   );
 
@@ -77,9 +87,18 @@ function AddUnit() {
           onChange={(e) => state.setQuery(e.target.value)}
         />
       </div>
+      {fns.showFilters && (
+        <UnitFunctionFilterSection
+          functions={state.functions}
+          filter={fns.filter}
+          onChange={fns.setFilter}
+        />
+      )}
       {list.length === 0 ? (
         <EmptyState>
-          {state.query ? 'No unit matches.' : 'The units server has no units.'}
+          {state.query || fns.activeFilters > 0
+            ? 'No unit matches.'
+            : 'The units server has no units.'}
         </EmptyState>
       ) : (
         <div className={tableStyles.tableWrap}>
@@ -87,6 +106,7 @@ function AddUnit() {
             <thead>
               <tr>
                 <th>Unit</th>
+                <th>Function</th>
                 <th>Status</th>
                 <th>
                   <span className={tableStyles.hidden}>Assignment</span>
@@ -129,6 +149,7 @@ function Row({ item: { unit, state }, canAssign, assigning, onAssign, onShowMiss
         {label}
         {label !== unit.name && <span className={tableStyles.meta}> {unit.name}</span>}
       </td>
+      <td>{unit.function}</td>
       <td>{unit.status && <FmsBadge code={unit.status.code} />}</td>
       <td className={tableStyles.actions}>
         {state.kind === 'free' && (

@@ -11,6 +11,9 @@ export type Unit = {
   name: string;
   // The tactical name as spoken; empty when the unit has none.
   call_sign: string;
+  // The function code of the tactical name, e.g. "83" in "12/83-1"; empty
+  // when the unit has none.
+  function: string;
   status: UnitStatus | null;
   updated_at: string;
 };
@@ -51,6 +54,13 @@ export function useUnits() {
 
 export function useUnitStatusChanges(limit: number) {
   return useResource<UnitStatusChangeList>(unitStatusChangesPath(limit));
+}
+
+// The distinct, non-empty function codes, in natural order ("2" before "10").
+export function unitFunctions(codes: Iterable<string>): string[] {
+  const set = new Set<string>();
+  for (const c of codes) if (c) set.add(c);
+  return [...set].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }
 
 export const unitLabel = (u: { call_sign: string; name: string }) => u.call_sign || u.name;
