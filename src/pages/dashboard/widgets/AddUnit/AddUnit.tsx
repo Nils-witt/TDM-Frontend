@@ -14,14 +14,24 @@ import FilterToggle from '../shared/FilterToggle';
 import { useUnitFunctionFilter } from '../shared/unitFunctionFilter';
 import UnitFunctionFilterSection from '../shared/UnitFunctionFilterSection';
 import type { WidgetProps } from '../widgetOptions';
+import { useWidgetState } from '../widgetState';
 import styles from './AddUnit.module.scss';
+
+const parseBool = (v: unknown) => (typeof v === 'boolean' ? v : undefined);
 
 // Assigns units of the units server to the selected mission. A unit is on
 // one mission at a time: one on another mission names it, and is released
 // there first.
 function AddUnit({ options }: WidgetProps) {
   const fns = useUnitFunctionFilter(options);
-  const state = useAssignUnit(useSelectedMission(), fns.filter, options.currentScopeOnly === true);
+  // The All Scopes action lists the units of every scope; the option
+  // currentScopeOnly is where it starts.
+  const [allScopes, setAllScopes] = useWidgetState(
+    'allScopes',
+    options.currentScopeOnly !== true,
+    parseBool,
+  );
+  const state = useAssignUnit(useSelectedMission(), fns.filter, !allScopes);
   const { mission, readOnly, list, assigning, assign } = state;
   const { update } = useDashboard();
   const id = useId();
@@ -34,6 +44,9 @@ function AddUnit({ options }: WidgetProps) {
         active={fns.activeFilters}
         onToggle={fns.toggleFilters}
       />
+      <WidgetAction pressed={allScopes} onClick={() => setAllScopes((v) => !v)}>
+        All Scopes
+      </WidgetAction>
     </WidgetActionBar>
   );
 
@@ -98,7 +111,7 @@ function AddUnit({ options }: WidgetProps) {
         <EmptyState>
           {state.query || fns.activeFilters > 0
             ? 'No unit matches.'
-            : options.currentScopeOnly === true
+            : !allScopes
               ? 'No unit is in the current scope.'
               : 'The units server has no units.'}
         </EmptyState>
