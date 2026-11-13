@@ -123,11 +123,12 @@ export type MissionFields = Partial<
     | 'address_coordinates'
     | 'callee'
     | 'callee_phone'
+    | 'scope'
   >
 >;
 
 // New missions start as drafts; the API rejects a status here, so another one
-// is set with a PATCH afterwards. scope is the selected one (useSelectedScope).
+// is set with a PATCH afterwards. scope starts as the tab's (useSelectedScope).
 export const createMission = (
   fields: Omit<MissionFields, 'status'> & { occurred_event: string; scope: string | null },
 ) => request<Mission>(missionsPath, { method: 'POST', body: JSON.stringify(fields) });

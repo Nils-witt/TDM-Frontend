@@ -10,7 +10,8 @@ import { useOffline } from '@/api/connectivity';
 import { useMissions } from '@/data/missionsContext';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import { useCatalogs } from '@/data/catalogContext';
-import { scopeName, useSelectedScope } from '@/data/selectedScope';
+import type { MissionScope } from '@/api/catalogs';
+import { defaultScopeName, scopeOptions, useSelectedScope } from '@/data/selectedScope';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
 import { type MissionDraft, useRegisterMissionDraft } from './missionDrafts';
 
@@ -62,6 +63,8 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   const [edits, setEdits] = useState<Edits>({});
   // undefined while unchanged.
   const [typeEdit, setTypeEdit] = useState<string | null | undefined>(undefined);
+  // undefined while unchanged; null is Default.
+  const [scopeEdit, setScopeEdit] = useState<string | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // The request waiting for the confirmation of closing.
@@ -83,6 +86,10 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   const set = (k: TextKey | CoordKey, v: string) => setEdits((e) => ({ ...e, [k]: v }));
   const typeValue = typeEdit === undefined ? base.mission_type : typeEdit;
   const typeChanged = typeEdit !== undefined && typeEdit !== base.mission_type;
+  // A new mission starts in the tab's scope.
+  const baseScope = creating ? scopeId : (mission.scope ?? null);
+  const scopeValue = scopeEdit === undefined ? baseScope : scopeEdit;
+  const scopeChanged = scopeEdit !== undefined && scopeEdit !== baseScope;
 
   const changedText = (Object.keys(edits) as (TextKey | CoordKey)[]).filter(
     (k): k is TextKey => k !== 'lat' && k !== 'lon' && edits[k] !== base[k],
@@ -90,7 +97,7 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   const coordsChanged = (['lat', 'lon'] as const).some(
     (k) => edits[k] !== undefined && edits[k] !== coordText(base.address_coordinates?.[k]),
   );
-  const dirty = changedText.length > 0 || coordsChanged || typeChanged;
+  const dirty = changedText.length > 0 || coordsChanged || typeChanged || scopeChanged;
   const canSubmit = dirty && value('occurred_event').trim() !== '';
 
   // What the Map shows before the save. Coordinates only once both parse (or
@@ -117,7 +124,11 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   useRegisterMissionDraft(mission?.id ?? null, draft);
 
   // Unless they changed again meanwhile.
-  const drop = (sent: Edits, sentType: string | null | undefined) => {
+  const drop = (
+    sent: Edits,
+    sentType: string | null | undefined,
+    sentScope: string | null | undefined,
+  ) => {
     setEdits((e) => {
       const next = { ...e };
       for (const [k, v] of Object.entries(sent) as [keyof Edits, string][]) {
@@ -126,19 +137,21 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
       return next;
     });
     setTypeEdit((t) => (t === sentType ? undefined : t));
+    setScopeEdit((s) => (s === sentScope ? undefined : s));
   };
 
   const send = async (body: MissionFields) => {
     const sent = { ...edits };
     const sentType = typeEdit;
+    const sentScope = scopeEdit;
     setBusy(true);
     try {
       if (creating) {
-        const { status, ...fields } = body;
+        const { status, scope: _scope, ...fields } = body;
         const draft = await createMission({
           ...fields,
           occurred_event: value('occurred_event'),
-          scope: scopeId,
+          scope: scopeValue,
         });
         let m = draft;
         if (status !== undefined && status !== 'draft') {
@@ -148,20 +161,20 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
             // The mission exists now, so the form must switch to it, or a
             // retry would create it twice. The status stays edited.
             const { status: _unsent, ...rest } = sent;
-            drop(rest, sentType);
+            drop(rest, sentType, sentScope);
             await onSaved(draft);
             throw new Error(
               `Created as draft, setting the status failed: ${(err as Error).message}`,
             );
           }
         }
-        drop(sent, sentType);
+        drop(sent, sentType, sentScope);
         setError(null);
         await onSaved(m);
         return;
       }
       const m = await patchMission(mission.id, body);
-      drop(sent, sentType);
+      drop(sent, sentType, sentScope);
       setError(null);
       await onSaved(m);
     } finally {
@@ -191,6 +204,7 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
       body.address_coordinates = lat === null || lon === null ? null : { lat, lon };
     }
     if (typeChanged) body.mission_type = typeEdit;
+    if (scopeChanged) body.scope = scopeEdit;
     if (body.status === 'closed') {
       setPendingClose(body as MissionFields);
       return;
@@ -214,6 +228,7 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   const discard = () => {
     setEdits({});
     setTypeEdit(undefined);
+    setScopeEdit(undefined);
     setError(null);
     setResetKey((k) => k + 1);
   };
@@ -244,9 +259,25 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
     cancelClose: () => setPendingClose(null),
     resetKey,
     id,
-    // A new mission is created in the selected scope; the scope is not edited.
-    scopeName: scopeName(creating ? scopeId : mission?.scope, scopes.byId),
+    scopeValue,
+    setScope: setScopeEdit,
+    scopeChoices: scopeChoices(scopes.items, scopeValue),
   };
+}
+
+// Default (null) first; a deleted scope the mission is still in is kept as an
+// option named by its ID, so it shows instead of silently changing.
+function scopeChoices(
+  scopes: readonly MissionScope[],
+  current: string | null,
+): { id: string | null; name: string }[] {
+  const choices = [
+    { id: null, name: defaultScopeName },
+    ...scopeOptions(scopes).map((s) => ({ id: s.id, name: s.name })),
+  ];
+  if (current && !scopes.some((s) => s.id === current))
+    choices.push({ id: current, name: current });
+  return choices;
 }
 
 // The missions are reloaded after a save, so every widget shows the change.

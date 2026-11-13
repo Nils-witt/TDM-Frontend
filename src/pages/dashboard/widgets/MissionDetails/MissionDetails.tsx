@@ -51,7 +51,9 @@ export function MissionForm({
     confirmClose,
     cancelClose,
     resetKey,
-    scopeName,
+    scopeValue,
+    setScope,
+    scopeChoices,
     id,
   } = useMissionForm(mission, onSaved);
   // The menu bar's Save Mission (⌘S) submits it.
@@ -99,8 +101,22 @@ export function MissionForm({
             {mission ? `${formatTime(mission.created_at)} · ${mission.created_by}` : '-/-'}
           </SectionText>
         </Section>
-        <Section legend="Scope">
-          <SectionText>{scopeName}</SectionText>
+        <Section legend="Scope" disabled={readOnly}>
+          <FieldRow id={id('scope')} label="Scope">
+            {/* Scope IDs are UUIDs, so '' stands for Default. */}
+            <select
+              id={id('scope')}
+              className="grow"
+              value={scopeValue ?? ''}
+              onChange={(e) => setScope(e.target.value || null)}
+            >
+              {scopeChoices.map((s) => (
+                <option key={s.id ?? ''} value={s.id ?? ''}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </FieldRow>
         </Section>
         <Section legend="Status" disabled={readOnly}>
           <FieldRow id={id('status')} label="Status">

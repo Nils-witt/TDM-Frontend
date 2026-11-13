@@ -1,4 +1,5 @@
 import Alert from '@mui/material/Alert';
+import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useId, useState } from 'react';
@@ -53,7 +54,9 @@ export function MissionFormMUI({
     confirmClose,
     cancelClose,
     resetKey,
-    scopeName,
+    scopeValue,
+    setScope,
+    scopeChoices,
   } = useMissionForm(mission, onSaved);
   // ⌘S submits it, as on the desktop.
   const [form, setForm] = useState<HTMLFormElement | null>(null);
@@ -94,8 +97,22 @@ export function MissionFormMUI({
             {mission ? `${formatTime(mission.created_at)} · ${mission.created_by}` : '-/-'}
           </Typography>
         </FormSectionMUI>
-        <FormSectionMUI legend="Scope">
-          <Typography variant="body2">{scopeName}</Typography>
+        <FormSectionMUI legend="Scope" disabled={readOnly}>
+          {/* Scope IDs are UUIDs, so '' stands for Default. */}
+          <TextField
+            select
+            label="Scope"
+            size="small"
+            value={scopeValue ?? ''}
+            disabled={readOnly}
+            onChange={(e) => setScope(e.target.value || null)}
+          >
+            {scopeChoices.map((s) => (
+              <MenuItem key={s.id ?? ''} value={s.id ?? ''}>
+                {s.name}
+              </MenuItem>
+            ))}
+          </TextField>
         </FormSectionMUI>
         <FormSectionMUI legend="Status" disabled={readOnly}>
           <FieldRowMUI>
