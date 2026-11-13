@@ -1,17 +1,18 @@
 import { createContext, use, useCallback, useEffect, useState } from 'react';
 
-// Identifies one widget of a layout: the layout, its monitor, the item's
-// position and the widget's ID, so two maps on one dashboard keep their own
-// state and a different widget moved into a position does not read it. null
-// (windows, the responsive UI) keeps the state in memory only.
+// Identifies one widget of a layout: the layout, its monitor, the item's ID
+// (layout.ts) and the widget's, so two maps on one dashboard keep their own
+// state, and a different widget that takes over a position-based item ID does
+// not read it. null (windows, the responsive UI) keeps the state in memory
+// only.
 export const WidgetInstanceContext = createContext<string | null>(null);
 
 export const widgetInstanceKey = (
   layoutId: string,
   monitorId: string,
-  index: number,
+  itemId: string,
   widgetId: string,
-) => `${layoutId}.${monitorId}.${index}.${widgetId}`;
+) => `${layoutId}.${monitorId}.${itemId}.${widgetId}`;
 
 // Session storage is per tab and survives reloads, but a tab opened from this
 // one starts with a copy of it; the window's name (set by LayoutProvider)

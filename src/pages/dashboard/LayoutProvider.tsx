@@ -25,7 +25,7 @@ import {
   LayoutDraftContext,
   LayoutViewContext,
 } from './layoutContext';
-import type { LayoutItem } from './layout';
+import { withItemIds, type LayoutItem } from './layout';
 import type { LayoutFile } from './layoutFile';
 import { channelsOf } from './monitors/channels';
 
@@ -238,7 +238,7 @@ function LayoutProvider({ children }: { children: ReactNode }) {
           monitors: active.monitors,
           channels: active.channels,
           monitorId: m.id,
-          widgets: m.widgets,
+          widgets: withItemIds(m.widgets),
         },
         past: [],
         future: [],
@@ -260,7 +260,7 @@ function LayoutProvider({ children }: { children: ReactNode }) {
         monitors: file.monitors,
         channels: file.channels,
         monitorId: m.id,
-        widgets: m.widgets,
+        widgets: withItemIds(m.widgets),
       },
       past: [],
       future: [],

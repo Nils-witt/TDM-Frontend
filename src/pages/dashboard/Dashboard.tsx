@@ -1,6 +1,6 @@
 import { type CSSProperties, memo, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Alert from '@/components/Alert';
-import { resolveLayout, type Box, type LayoutItem } from './layout';
+import { itemIds, resolveLayout, type Box, type LayoutItem } from './layout';
 import { useArrangement, useLayoutDraft, useLayoutView } from './layoutContext';
 import LayoutEditBar from './LayoutEditBar';
 import ArrangementEditor from './monitors/ArrangementEditor';
@@ -23,6 +23,7 @@ type FrameProps = {
   // state (widgetState.ts).
   layoutId: string;
   monitorId: string;
+  itemId: string;
   index: number;
   item: LayoutItem;
   box: Box;
@@ -31,7 +32,7 @@ type FrameProps = {
 };
 
 // While editing, the content is inert and an overlay moves and resizes it.
-function WidgetFrame({ layoutId, monitorId, index, item, box, area, editing }: FrameProps) {
+function WidgetFrame({ layoutId, monitorId, itemId, index, item, box, area, editing }: FrameProps) {
   const widget = widgets[item.widget];
   const style: CSSProperties = {
     position: 'absolute',
@@ -48,7 +49,9 @@ function WidgetFrame({ layoutId, monitorId, index, item, box, area, editing }: F
     >
       {widget ? (
         <WidgetBody placement="frame" inert={editing}>
-          <WidgetInstanceContext value={widgetInstanceKey(layoutId, monitorId, index, item.widget)}>
+          <WidgetInstanceContext
+            value={widgetInstanceKey(layoutId, monitorId, itemId, item.widget)}
+          >
             <WidgetContent widget={widget} options={item.options} />
           </WidgetInstanceContext>
         </WidgetBody>
@@ -70,6 +73,7 @@ const MemoWidgetFrame = memo(
   (prev, next) =>
     prev.layoutId === next.layoutId &&
     prev.monitorId === next.monitorId &&
+    prev.itemId === next.itemId &&
     prev.index === next.index &&
     prev.item === next.item &&
     prev.area === next.area &&
@@ -140,6 +144,8 @@ function WidgetDashboard({
     () => (area ? resolveLayout(items, area, area.em, (item) => widgets[item.widget]) : []),
     [items, area],
   );
+  // Keyed by ID, so removing a widget does not remount the ones after it.
+  const ids = useMemo(() => itemIds(items), [items]);
 
   return (
     <>
@@ -149,9 +155,10 @@ function WidgetDashboard({
             const item = items[i];
             return box ? (
               <MemoWidgetFrame
-                key={i}
+                key={ids[i]}
                 layoutId={layoutId}
                 monitorId={monitorId}
+                itemId={ids[i]}
                 index={i}
                 item={item}
                 box={box}
@@ -159,7 +166,7 @@ function WidgetDashboard({
                 editing={editing}
               />
             ) : (
-              <Alert key={i} severity="warning">
+              <Alert key={ids[i]} severity="warning">
                 Invalid layout for widget “{item.widget}”
               </Alert>
             );

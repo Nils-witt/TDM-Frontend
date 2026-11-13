@@ -14,6 +14,10 @@ type Size = Length | 'fill';
 // the widget's bounds, keeping the anchored side in place (left or top when
 // both offsets are given).
 export type LayoutItem = {
+  // Unique within its monitor and kept when the item is moved or other items
+  // are removed, so the widget keeps its state (widgets/widgetState.ts).
+  // Layouts saved before items had one lack it (see itemIds).
+  id?: string;
   widget: string;
   left?: Length;
   right?: Length;
@@ -23,6 +27,26 @@ export type LayoutItem = {
   height?: Size;
   options?: WidgetOptionValues;
 };
+
+// Each item's ID. One without (or with an invalid one) is known by its
+// position, and a duplicate by its ID and position, so the IDs are the same on
+// every load until withItemIds stores them.
+export function itemIds(items: readonly LayoutItem[]): string[] {
+  const seen = new Set<string>();
+  return items.map((item, i) => {
+    const given = typeof item.id === 'string' && item.id !== '' ? item.id : `${i}`;
+    let id = given;
+    for (let n = i; seen.has(id); n++) id = `${given}.${n}`;
+    seen.add(id);
+    return id;
+  });
+}
+
+// Stores itemIds in the items, when a layout's widgets are edited.
+export function withItemIds(items: readonly LayoutItem[]): LayoutItem[] {
+  const ids = itemIds(items);
+  return items.map((item, i) => (item.id === ids[i] ? item : { ...item, id: ids[i] }));
+}
 
 export type DashboardLayout = {
   widgets: LayoutItem[];
@@ -353,6 +377,7 @@ export function defaultItem(
   b: Bounds & { defaultWidth: number; defaultHeight: number },
 ) {
   return {
+    id: crypto.randomUUID(),
     widget: id,
     left: 0,
     top: 0,
