@@ -9,6 +9,7 @@ import WidgetEditOverlay from './WidgetEditOverlay';
 import { widgets } from './widgets/registry';
 import WidgetBody from './widgets/WidgetBody';
 import WidgetContent from './widgets/WidgetContent';
+import { WidgetInstanceContext, widgetInstanceKey } from './widgets/widgetState';
 import styles from './Dashboard.module.scss';
 
 // Each widget is inset by gutter on every side of its box, leaving twice that
@@ -18,6 +19,10 @@ const gutter = 0.25; // em
 export type Area = { width: number; height: number; em: number };
 
 type FrameProps = {
+  // The layout and monitor whose items these are, for the widgets' stored
+  // state (widgetState.ts).
+  layoutId: string;
+  monitorId: string;
   index: number;
   item: LayoutItem;
   box: Box;
@@ -26,7 +31,7 @@ type FrameProps = {
 };
 
 // While editing, the content is inert and an overlay moves and resizes it.
-function WidgetFrame({ index, item, box, area, editing }: FrameProps) {
+function WidgetFrame({ layoutId, monitorId, index, item, box, area, editing }: FrameProps) {
   const widget = widgets[item.widget];
   const style: CSSProperties = {
     position: 'absolute',
@@ -43,7 +48,9 @@ function WidgetFrame({ index, item, box, area, editing }: FrameProps) {
     >
       {widget ? (
         <WidgetBody placement="frame" inert={editing}>
-          <WidgetContent widget={widget} options={item.options} />
+          <WidgetInstanceContext value={widgetInstanceKey(layoutId, monitorId, index, item.widget)}>
+            <WidgetContent widget={widget} options={item.options} />
+          </WidgetInstanceContext>
         </WidgetBody>
       ) : (
         <Alert severity="warning">Unknown widget “{item.widget}”</Alert>
@@ -61,6 +68,8 @@ const sameBox = (a: Box, b: Box) =>
 const MemoWidgetFrame = memo(
   WidgetFrame,
   (prev, next) =>
+    prev.layoutId === next.layoutId &&
+    prev.monitorId === next.monitorId &&
     prev.index === next.index &&
     prev.item === next.item &&
     prev.area === next.area &&
@@ -72,16 +81,43 @@ const MemoWidgetFrame = memo(
 function Dashboard() {
   const { arrangement } = useArrangement();
   const { draft } = useLayoutDraft();
-  const { monitor } = useLayoutView();
+  const { active, monitor } = useLayoutView();
   if (arrangement) return <ArrangementEditor />;
-  if (draft) return <WidgetDashboard items={draft.widgets} editing />;
+  if (draft) {
+    // Editing shows the edited layout's widget state; a new one starts empty.
+    return (
+      <WidgetDashboard
+        layoutId={draft.target?.id ?? 'new'}
+        monitorId={draft.monitorId}
+        items={draft.widgets}
+        editing
+      />
+    );
+  }
   if (!monitor) return <MonitorPicker />;
-  return <WidgetDashboard items={monitor.widgets} editing={false} />;
+  return (
+    <WidgetDashboard
+      layoutId={active.id}
+      monitorId={monitor.id}
+      items={monitor.widgets}
+      editing={false}
+    />
+  );
 }
 
 // Measures its area to resolve percentage and "fill" sizes, and lays the
 // widgets out again on resize.
-function WidgetDashboard({ items, editing }: { items: LayoutItem[]; editing: boolean }) {
+function WidgetDashboard({
+  layoutId,
+  monitorId,
+  items,
+  editing,
+}: {
+  layoutId: string;
+  monitorId: string;
+  items: LayoutItem[];
+  editing: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [area, setArea] = useState<Area | null>(null);
 
@@ -114,6 +150,8 @@ function WidgetDashboard({ items, editing }: { items: LayoutItem[]; editing: boo
             return box ? (
               <MemoWidgetFrame
                 key={i}
+                layoutId={layoutId}
+                monitorId={monitorId}
                 index={i}
                 item={item}
                 box={box}

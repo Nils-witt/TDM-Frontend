@@ -33,7 +33,8 @@ import { type MapMarker, useMapMarkers } from './Map.ts';
 import { formatPlace, useMapActions } from './mapActions';
 import styles from './Map.module.scss';
 import OverlaySwitcher from './OverlaySwitcher';
-import { defaultOverlayState, type OverlayState } from './overlayState';
+import { defaultOverlayState, parseOverlayStates, type OverlayState } from './overlayState';
+import { useWidgetState } from '../widgetState';
 
 // MapLibre looks for its worker next to its own module, which Vite bundles
 // away; point it at the worker file Vite serves as an asset instead.
@@ -124,6 +125,8 @@ export type OverlayControl = {
   onChange: (id: string, state: OverlayState) => void;
 };
 
+const noOverlays: Record<string, OverlayState> = {};
+
 // The overlays admins switched on by default (Map Admin) start on, until the
 // map's own state switches them. Without overlayControl the map keeps that
 // state and shows a switcher; with it the caller keeps the state and offers
@@ -154,7 +157,12 @@ export function MissionMap({
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
   const { overlays, error: overlaysError } = useOverlays();
-  const [ownOverlayState, setOwnOverlayState] = useState<Record<string, OverlayState>>({});
+  // Kept per dashboard widget, so a reload keeps each map's overlays.
+  const [ownOverlayState, setOwnOverlayState] = useWidgetState<Record<string, OverlayState>>(
+    'overlays',
+    noOverlays,
+    parseOverlayStates,
+  );
   const defaultOverlays = useDefaultOverlayStates();
   const ownOrControlled = overlayControl?.state ?? ownOverlayState;
   const overlayState = useMemo(
