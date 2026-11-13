@@ -112,12 +112,7 @@ type RowProps = {
   onRelease: () => void;
 };
 
-function Row({
-  row: { assignment: a, unit },
-  canRelease,
-  releasing,
-  onRelease,
-}: RowProps) {
+function Row({ row: { assignment: a, unit }, canRelease, releasing, onRelease }: RowProps) {
   const active = a.released_at === null;
   const label = unit ? unit.call_sign || unit.name : missionUnitLabel(a);
   const name = unit ? unit.name : a.unit_name;
