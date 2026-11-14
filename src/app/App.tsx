@@ -14,6 +14,7 @@ import {
   startSession,
 } from '@/auth/session';
 import Alert from '@/components/Alert';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import Spinner from '@/components/Spinner';
 import Login from '@/pages/Login';
 import ResponsiveShell from '@/responsive/ResponsiveShell';
@@ -164,10 +165,14 @@ function Session() {
           {/* Mounted only now: startSession may have replaced the URL (the
               login's return path), which a router mounted earlier would miss. */}
           <BrowserRouter>
-            <Routes>
-              <Route path="/m/*" element={<ResponsiveShell />} />
-              <Route path="*" element={<Shell />} />
-            </Routes>
+            {/* The last resort, for the menu bar, providers and shells; widgets
+                and /m pages have boundaries of their own. */}
+            <ErrorBoundary what="app">
+              <Routes>
+                <Route path="/m/*" element={<ResponsiveShell />} />
+                <Route path="*" element={<Shell />} />
+              </Routes>
+            </ErrorBoundary>
           </BrowserRouter>
         </SessionContext>
       );

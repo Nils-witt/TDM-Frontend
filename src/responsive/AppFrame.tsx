@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router';
+import { NavLink, Outlet, useLocation } from 'react-router';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { useSession } from '@/app/session';
 import OfflineBanner from '@/components/OfflineBanner';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
@@ -20,6 +21,7 @@ const sections = [
 // tablet width up; only the CSS differs.
 function AppFrame() {
   const { logout } = useSession();
+  const { pathname } = useLocation();
 
   const signOut = () => {
     logout().catch((err: unknown) =>
@@ -60,7 +62,10 @@ function AppFrame() {
       </nav>
       <main className={styles.main}>
         <OfflineBanner />
-        <Outlet />
+        {/* Keyed by the path, so another page clears a failed one's error. */}
+        <ErrorBoundary what="page" resetKey={pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   );

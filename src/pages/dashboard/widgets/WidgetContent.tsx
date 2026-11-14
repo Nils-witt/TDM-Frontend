@@ -1,6 +1,6 @@
 import { memo, Suspense } from 'react';
 import { useIsAdmin } from '@/app/session';
-import WidgetErrorBoundary from './WidgetErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import Spinner from '@/components/Spinner';
 import { EmptyState } from './shared/WidgetStates';
 import type { Widget } from './widget';
@@ -13,11 +13,11 @@ function WidgetContent({ widget, options }: { widget: Widget; options?: WidgetOp
     return <EmptyState>Only administrators can use this widget.</EmptyState>;
   }
   return (
-    <WidgetErrorBoundary>
+    <ErrorBoundary what="widget">
       <Suspense fallback={<Spinner compact />}>
         <widget.Component options={resolveOptions(widget.options, options)} />
       </Suspense>
-    </WidgetErrorBoundary>
+    </ErrorBoundary>
   );
 }
 
