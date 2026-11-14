@@ -114,12 +114,25 @@ type RequestOptions = {
   anonymous?: boolean;
   // Overrides the session's choice, for probing the mTLS API.
   target?: ApiTarget;
+  // Milliseconds until the request is given up; 0 for none.
+  timeout?: number;
+};
+
+// An API that accepts the connection but never answers would otherwise leave
+// the app online with a spinner. Uploads and downloads take as long as they
+// take.
+export const requestTimeout = 30_000;
+
+const withTimeout = (signal: AbortSignal | null | undefined, ms: number) => {
+  if (ms <= 0) return signal ?? undefined;
+  const timeout = AbortSignal.timeout(ms);
+  return signal ? AbortSignal.any([signal, timeout]) : timeout;
 };
 
 async function send(
   path: string,
   init: RequestInit | undefined,
-  { anonymous = false, target: requestTarget }: RequestOptions,
+  { anonymous = false, target: requestTarget, timeout = 0 }: RequestOptions,
 ): Promise<Response> {
   // A FormData body sets its own multipart content type, with the boundary.
   const json = init?.body !== undefined && !(init.body instanceof FormData);
@@ -134,6 +147,7 @@ async function send(
   try {
     res = await fetch(apiUrl(path, requestTarget), {
       ...init,
+      signal: withTimeout(init?.signal, timeout),
       // Lets the browser present a TLS client certificate to the API's origin.
       credentials: 'include',
       headers: {
@@ -144,7 +158,8 @@ async function send(
       },
     });
   } catch (err) {
-    // fetch rejects without an answer: the API or the network is down.
+    // fetch rejects without an answer: the API or the network is down, or
+    // it did not answer in time (TimeoutError). AbortError is the caller's.
     if (!(err instanceof DOMException && err.name === 'AbortError')) reportNetworkError();
     throw err;
   }
@@ -163,7 +178,8 @@ export async function request<T>(
   init?: RequestInit,
   options: RequestOptions = {},
 ): Promise<T> {
-  const res = await send(path, init, options);
+  const timeout = options.timeout ?? (init?.body instanceof FormData ? 0 : requestTimeout);
+  const res = await send(path, init, { ...options, timeout });
   if (res.status === 204) {
     return undefined as T;
   }

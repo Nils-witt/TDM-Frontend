@@ -80,7 +80,9 @@ export const useOffline = () => useOfflineSince() !== null;
 
 export const offlineMessage = 'Offline: changes are disabled until the API can be reached again.';
 
-// fetch rejects with a TypeError when no answer arrives; oidc-client-ts turns
-// its own timeouts into ErrorTimeout.
+// fetch rejects with a TypeError when no answer arrives, and with a
+// TimeoutError when a request's timeout ran out (client.ts); oidc-client-ts
+// turns its own timeouts into ErrorTimeout.
 export const isNetworkError = (err: unknown) =>
-  err instanceof TypeError || (err instanceof Error && err.name === 'ErrorTimeout');
+  err instanceof TypeError ||
+  (err instanceof Error && (err.name === 'ErrorTimeout' || err.name === 'TimeoutError'));
