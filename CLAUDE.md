@@ -36,5 +36,6 @@ Vite + React 19 (TypeScript) single-page application. Its base structure is copi
 - `make dev`: Vite dev server on port 5173 (fixed, because the redirect URI and CORS depend on it). The API is at `VITE_API_BASE_URL` (`.env.development`: `http://localhost:8080`).
 - Authentik: register `http://localhost:5173/callback` (and the production `<origin>/callback`) as redirect URIs. Add the SPA origin to the API's `CORS_ALLOWED_ORIGINS`.
 - `make build`: `tsc -b && vite build` into `dist/`.
-- `make lint` (oxlint), `make fmt` / `make fmt-check` (Prettier, `.prettierrc.json`).
+- `make lint` (oxlint; warnings fail), `make fmt` / `make fmt-check` (Prettier, `.prettierrc.json`).
+- `make test`: Vitest (`vitest.config.ts`, node environment; IndexedDB from `fake-indexeddb`). Tests sit next to the module as `*.test.ts` and cover logic without React or the DOM.
 - `make docker API_BASE_URL=https://api.example.com`: nginx image that serves `dist/` and falls back to `index.html`. Set the API origin at runtime by mounting a `config.json` (`{"apiBaseUrl": "https://api.example.com", "mtlsApiBaseUrl": "https://mtls.api.example.com"}`) at `/usr/share/nginx/html/config.json`. `API_BASE_URL` is an optional build-time fallback.

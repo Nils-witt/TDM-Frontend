@@ -28,7 +28,7 @@ const params: [keyof ArchiveFilter, string][] = [
   ['createdTo', 'to'],
 ];
 
-function fromParams(p: URLSearchParams, initialStatus: string): ArchiveQuery {
+export function fromParams(p: URLSearchParams, initialStatus: string): ArchiveQuery {
   const filter = { ...emptyFilter, status: initialStatus };
   for (const [key, name] of params) {
     const v = p.get(name);
@@ -44,7 +44,7 @@ function fromParams(p: URLSearchParams, initialStatus: string): ArchiveQuery {
   return { filter, sort, page };
 }
 
-function toParams(q: ArchiveQuery, initialStatus: string): URLSearchParams {
+export function toParams(q: ArchiveQuery, initialStatus: string): URLSearchParams {
   const p = new URLSearchParams();
   for (const [key, name] of params) {
     const v = q.filter[key];

@@ -37,18 +37,21 @@ function detectDelimiter(s: string): Delimiter {
 }
 
 // RFC 4180 with quoted fields; the delimiter is detected from the header line.
-// A leading byte order mark is ignored; blank lines are dropped.
-function parseCsv(text: string): string[][] {
+// A leading byte order mark is ignored; blank lines are dropped. line is the
+// file line each row starts on, so errors name it even after blank lines.
+function parseCsv(text: string): { fields: string[]; line: number }[] {
   const s = text.startsWith('﻿') ? text.slice(1) : text;
   const sep = detectDelimiter(s);
-  const rows: string[][] = [];
+  const rows: { fields: string[]; line: number }[] = [];
   let row: string[] = [];
   let field = '';
   let quoted = false;
   let i = 0;
+  let line = 1;
+  let rowLine = 1;
   const endRow = () => {
     row.push(field);
-    if (row.length > 1 || row[0] !== '') rows.push(row);
+    if (row.length > 1 || row[0] !== '') rows.push({ fields: row, line: rowLine });
     row = [];
     field = '';
   };
@@ -62,6 +65,7 @@ function parseCsv(text: string): string[][] {
       }
       if (c === '"') quoted = false;
       else field += c;
+      if (c === '\n' || (c === '\r' && s[i + 1] !== '\n')) line++;
       i++;
       continue;
     }
@@ -72,6 +76,7 @@ function parseCsv(text: string): string[][] {
     } else if (c === '\n' || c === '\r') {
       endRow();
       if (c === '\r' && s[i + 1] === '\n') i++;
+      rowLine = ++line;
     } else field += c;
     i++;
   }
@@ -108,7 +113,7 @@ export function toCsv(
 export function readRows(text: string): CsvRow[] {
   const [header, ...body] = parseCsv(text);
   if (!header) throw new Error('The file is empty');
-  const col = (name: string) => header.findIndex((h) => fold(h) === name);
+  const col = (name: string) => header.fields.findIndex((h) => fold(h) === name);
   const groupCol = col('group');
   const typeCol = col('type');
   const descriptionCol = col('description');
@@ -117,8 +122,7 @@ export function readRows(text: string): CsvRow[] {
   const problems: string[] = [];
   const seen = new Set<string>();
   const rows: CsvRow[] = [];
-  body.forEach((fields, n) => {
-    const line = n + 2;
+  for (const { fields, line } of body) {
     const group = (fields[groupCol] ?? '').trim();
     const type = typeCol < 0 ? '' : (fields[typeCol] ?? '').trim();
     const description = descriptionCol < 0 ? null : (fields[descriptionCol] ?? '').trim();
@@ -129,7 +133,7 @@ export function readRows(text: string): CsvRow[] {
       seen.add(key);
       rows.push({ line, group, type, description });
     }
-  });
+  }
   if (problems.length > 0) throw new Error(`Invalid CSV: ${problems.join('; ')}`);
   return rows;
 }

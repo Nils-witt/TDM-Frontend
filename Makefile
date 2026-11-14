@@ -1,6 +1,6 @@
-.PHONY: all build dev preview lint fmt fmt-check docker clean help
+.PHONY: all build dev preview lint test fmt fmt-check docker clean help
 
-all: lint fmt-check build
+all: lint fmt-check test build
 
 node_modules: package.json package-lock.json
 	npm ci
@@ -21,6 +21,10 @@ preview: build
 ## lint: Lint with oxlint
 lint: node_modules
 	npm run lint
+
+## test: Run the unit tests (Vitest)
+test: node_modules
+	npm test
 
 ## fmt: Format with Prettier
 fmt: node_modules

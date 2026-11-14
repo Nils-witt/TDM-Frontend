@@ -9,6 +9,7 @@
     "prebuild": "node scripts/copy-ocr-assets.mjs",
     "build": "tsc -b && vite build",
     "lint": "oxlint --deny-warnings",
+    "test": "vitest run",
     "preview": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -41,12 +42,14 @@
     "@types/react-dom": "^19.3.0",
     "@vite-pwa/assets-generator": "^2.0.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "fake-indexeddb": "^6.2.7",
     "oxlint": "^1.93.0",
     "prettier": "3.10.0",
     "sass": "^1.108.2",
     "typescript": "~7.0.2",
     "vite": "^8.3.8",
     "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.0.5",
     "workbox-window": "^7.4.1"
   }
 }
