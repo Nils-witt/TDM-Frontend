@@ -8,7 +8,7 @@
     "dev": "vite",
     "prebuild": "node scripts/copy-ocr-assets.mjs",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "oxlint --deny-warnings",
     "preview": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

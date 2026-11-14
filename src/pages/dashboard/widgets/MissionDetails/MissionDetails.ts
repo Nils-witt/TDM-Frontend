@@ -102,15 +102,23 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
 
   // What the Map shows before the save. Coordinates only once both parse (or
   // both are blank), so a half-typed one doesn't move the pin.
+  // Computed from the state itself rather than the derived values above,
+  // which are new on every render.
   const draft = useMemo<MissionDraft | null>(() => {
     if (!mission || !dirty) return null;
     const d: Record<string, unknown> = {};
-    for (const k of changedText) d[k] = edits[k];
-    if (typeChanged) d.mission_type = typeEdit;
-    if (coordsChanged) {
+    for (const k of Object.keys(edits) as (TextKey | CoordKey)[]) {
+      if (k !== 'lat' && k !== 'lon' && edits[k] !== mission[k]) d[k] = edits[k];
+    }
+    if (typeEdit !== undefined && typeEdit !== mission.mission_type) d.mission_type = typeEdit;
+    const coord = (k: CoordKey) => edits[k] ?? coordText(mission.address_coordinates?.[k]);
+    const coordEdited = (['lat', 'lon'] as const).some(
+      (k) => edits[k] !== undefined && edits[k] !== coordText(mission.address_coordinates?.[k]),
+    );
+    if (coordEdited) {
       try {
-        const lat = parseCoord(coordValue('lat'), 'Latitude');
-        const lon = parseCoord(coordValue('lon'), 'Longitude');
+        const lat = parseCoord(coord('lat'), 'Latitude');
+        const lon = parseCoord(coord('lon'), 'Longitude');
         if (lat === null && lon === null) d.address_coordinates = null;
         else if (lat !== null && lon !== null) d.address_coordinates = { lat, lon };
       } catch {
@@ -118,9 +126,7 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
       }
     }
     return d as MissionDraft;
-    // changedText, coordValue and the flags derive from these.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mission, edits, typeEdit]);
+  }, [mission, dirty, edits, typeEdit]);
   useRegisterMissionDraft(mission?.id ?? null, draft);
 
   // Unless they changed again meanwhile.

@@ -94,14 +94,18 @@ function storeChannelChoice(
   }
 }
 
-function LayoutProvider({ children }: { children: ReactNode }) {
-  const windowName = useMemo(() => {
-    if (window.name == '') {
-      window.name = `window-${crypto.randomUUID()}`;
-    }
-    return window.name;
-  }, []);
+// Names this window's sessionStorage keys. The browser keeps window.name
+// across reloads, so a reloaded window finds its monitor and channels again.
+let windowNameValue: string | null = null;
+function windowName(): string {
+  if (windowNameValue === null) {
+    if (window.name === '') window.name = `window-${crypto.randomUUID()}`;
+    windowNameValue = window.name;
+  }
+  return windowNameValue;
+}
 
+function LayoutProvider({ children }: { children: ReactNode }) {
   const isAdmin = useIsAdmin();
   const { layouts, loaded: layoutsLoaded, reload } = useLayouts();
   const { preferences, loaded: preferencesLoaded, setDefaultLayout } = usePreferences();
@@ -155,7 +159,9 @@ function LayoutProvider({ children }: { children: ReactNode }) {
   const monitor = useMemo(() => {
     if (active.monitors.length === 1) return active.monitors[0];
     const id =
-      active.id in monitorChoices ? monitorChoices[active.id] : loadMonitor(active.id, windowName);
+      active.id in monitorChoices
+        ? monitorChoices[active.id]
+        : loadMonitor(active.id, windowName());
     return active.monitors.find((m) => m.id === id) ?? null;
   }, [active, monitorChoices]);
 
@@ -164,8 +170,8 @@ function LayoutProvider({ children }: { children: ReactNode }) {
     if (!monitor || !choiceKey) return {};
     return choiceKey in channelChoices
       ? channelChoices[choiceKey]
-      : loadChannelChoice(windowName, active.id, monitor.id);
-  }, [active.id, monitor, choiceKey, channelChoices, windowName]);
+      : loadChannelChoice(windowName(), active.id, monitor.id);
+  }, [active.id, monitor, choiceKey, channelChoices]);
 
   // A window is in the channels of its monitor, except those it
   // disconnected from, and in those it connected to.
@@ -178,10 +184,10 @@ function LayoutProvider({ children }: { children: ReactNode }) {
   const storeChoice = useCallback(
     (choice: ChannelChoice) => {
       if (!monitor || !choiceKey) return;
-      storeChannelChoice(windowName, active.id, monitor.id, choice);
+      storeChannelChoice(windowName(), active.id, monitor.id, choice);
       setChannelChoices((c) => ({ ...c, [choiceKey]: choice }));
     },
-    [active.id, monitor, choiceKey, windowName],
+    [active.id, monitor, choiceKey],
   );
 
   const setChannelConnected = useCallback(
@@ -203,7 +209,7 @@ function LayoutProvider({ children }: { children: ReactNode }) {
   const resetChannels = useCallback(() => storeChoice({}), [storeChoice]);
 
   const chooseMonitorOf = useCallback((layoutId: string, id: string | null) => {
-    storeMonitor(layoutId, id, windowName);
+    storeMonitor(layoutId, id, windowName());
     setMonitorChoices((c) => ({ ...c, [layoutId]: id }));
   }, []);
 
