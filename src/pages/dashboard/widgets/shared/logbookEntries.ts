@@ -63,8 +63,7 @@ const noFiles: readonly LogFile[] = [];
 // order they were attached.
 export function filesByEntry(files: readonly LogFile[]): (entryId: string) => readonly LogFile[] {
   const byEntry = new Map<string, LogFile[]>();
-  for (let i = files.length - 1; i >= 0; i--) {
-    const f = files[i];
+  for (const f of files.toReversed()) {
     const list = byEntry.get(f.entry);
     if (list) list.push(f);
     else byEntry.set(f.entry, [f]);

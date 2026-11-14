@@ -265,7 +265,7 @@ const updatedAt = (r: Row) => (typeof r.updated_at === 'string' ? r.updated_at :
 // later version counts.
 function join(snaps: readonly Snapshot[]): Snapshot {
   if (snaps.length === 0) return none;
-  if (snaps.length === 1) return snaps[0];
+  if (snaps.length === 1) return snaps[0]!;
   const byId = new Map<string, Row>();
   for (const s of snaps) {
     for (const r of s.items) {

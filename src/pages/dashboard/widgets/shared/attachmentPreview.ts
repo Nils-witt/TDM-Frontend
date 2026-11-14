@@ -47,7 +47,7 @@ const textExtensions = new Set([
 
 // null: the file is only downloaded.
 export function previewKind(f: Pick<LogFile, 'name' | 'media_type'>): PreviewKind | null {
-  const mt = f.media_type.split(';', 1)[0].trim().toLowerCase();
+  const mt = (f.media_type.split(';', 1)[0] ?? '').trim().toLowerCase();
   if (imageTypes.has(mt)) return 'image';
   if (mt === 'application/pdf') return 'pdf';
   if (mt.startsWith('text/') || textTypes.has(mt) || mt.endsWith('+json') || mt.endsWith('+xml')) {

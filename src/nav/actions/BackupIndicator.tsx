@@ -16,7 +16,7 @@ import { formatTime } from '@/pages/dashboard/widgets/shared/logbookEntries';
 import { backupLevelState, backupStateLabels, backupTitle } from './backupLabels';
 import styles from './BackupIndicator.module.scss';
 
-const levelClass: Record<BackupLevel, string> = {
+const levelClass: Record<BackupLevel, string | undefined> = {
   good: styles.good,
   degraded: styles.degraded,
   failed: styles.failed,

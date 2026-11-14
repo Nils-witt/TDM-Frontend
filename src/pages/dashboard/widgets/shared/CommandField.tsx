@@ -118,7 +118,8 @@ function CommandField({
       setActive((activeIndex + (e.key === 'ArrowDown' ? 1 : n - 1)) % n);
     } else if ((e.key === 'Enter' && !e.metaKey && !e.ctrlKey) || e.key === 'Tab') {
       e.preventDefault();
-      insert(completion.suggestions[activeIndex]);
+      const suggestion = completion.suggestions[activeIndex];
+      if (suggestion) insert(suggestion);
     } else if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();

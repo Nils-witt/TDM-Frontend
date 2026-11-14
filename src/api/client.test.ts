@@ -58,6 +58,6 @@ describe('request timeout', () => {
       { anonymous: true },
     );
     const calls = fetch.mock.calls as unknown as [string, RequestInit][];
-    expect(calls[0][1].signal).toBeUndefined();
+    expect(calls[0]![1].signal).toBeUndefined();
   });
 });

@@ -7,7 +7,7 @@ import styles from './BackupStatus.module.scss';
 // The dialog's MUI parts load only once it is opened.
 const BackupStatusDialogMUI = lazy(() => import('./BackupStatusDialogMUI'));
 
-const levelClass: Record<BackupLevel, string> = {
+const levelClass: Record<BackupLevel, string | undefined> = {
   good: styles.good,
   degraded: styles.degraded,
   failed: styles.failed,

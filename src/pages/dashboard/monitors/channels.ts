@@ -37,7 +37,7 @@ export function newChannel(channels: Channel[]): Channel {
   const used = new Set(channels.map((c) => c.color));
   const color =
     channelColors.find((c) => !used.has(c)) ??
-    channelColors[channels.length % channelColors.length];
+    channelColors[channels.length % channelColors.length]!;
   return {
     id: `c${n}`,
     name: `Channel ${n}`,

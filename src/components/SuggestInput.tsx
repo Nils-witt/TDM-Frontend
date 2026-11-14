@@ -30,7 +30,7 @@ export function SuggestInput({
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(-1);
   // An option equal to the text adds nothing, unless others share its value.
-  const shown = suggestions.length === 1 && suggestions[0].value === value ? [] : suggestions;
+  const shown = suggestions.length === 1 && suggestions[0]?.value === value ? [] : suggestions;
   const expanded = open && shown.length > 0 && !rest.disabled && !rest.readOnly;
   const active = expanded && highlight >= 0 && highlight < shown.length ? highlight : -1;
 
@@ -58,9 +58,10 @@ export function SuggestInput({
       }
       case 'Enter':
         // Enter picks the highlighted option instead of submitting.
-        if (active >= 0) {
+        const option = shown[active];
+        if (option) {
           e.preventDefault();
-          pick(shown[active]);
+          pick(option);
         }
         return;
       case 'Escape':

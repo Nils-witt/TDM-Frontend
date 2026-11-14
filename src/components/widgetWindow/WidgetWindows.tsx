@@ -29,8 +29,9 @@ function WidgetWindows({ children }: { children: ReactNode }) {
   const bringToFront = useCallback((key: number) => {
     setWindows((ws) => {
       const i = ws.findIndex((w) => w.key === key);
-      if (i < 0 || i === ws.length - 1) return ws;
-      return [...ws.slice(0, i), ...ws.slice(i + 1), ws[i]];
+      const w = ws[i];
+      if (!w || i === ws.length - 1) return ws;
+      return [...ws.slice(0, i), ...ws.slice(i + 1), w];
     });
   }, []);
 

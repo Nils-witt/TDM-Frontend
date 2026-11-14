@@ -198,7 +198,7 @@ export function useLogbookFormWidget(initialSender = '') {
       setError(errors.join(' '));
       return;
     }
-    const [sent, received, body] = expanded.map((x) => ('text' in x ? x.text : ''));
+    const [sent = '', received = '', body = ''] = expanded.map((x) => ('text' in x ? x.text : ''));
     setBusy(true);
     try {
       await createLogEntry(

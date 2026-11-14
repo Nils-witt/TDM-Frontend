@@ -14,8 +14,8 @@ function ActiveMissionsWidget({ options }: WidgetProps) {
   if (loading) return null;
   if (counts.length === 0) return <EmptyState>No time frame set.</EmptyState>;
 
-  if (counts.length === 1) {
-    const [{ count, period }] = counts;
+  if (counts.length === 1 && counts[0]) {
+    const { count, period } = counts[0];
     return (
       <div className={styles.stat}>
         <span className={styles.count}>{count}</span>

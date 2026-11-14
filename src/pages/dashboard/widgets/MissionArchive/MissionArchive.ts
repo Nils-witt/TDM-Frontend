@@ -101,7 +101,7 @@ const contains = (value: string, needle: string) => needle === '' || fold(value)
 
 // The start of the local day of a YYYY-MM-DD date, plus days.
 function dayStart(date: string, days = 0): number {
-  const [y, m, d] = date.split('-').map(Number);
+  const [y = NaN, m = NaN, d = NaN] = date.split('-').map(Number);
   return new Date(y, m - 1, d + days).getTime();
 }
 

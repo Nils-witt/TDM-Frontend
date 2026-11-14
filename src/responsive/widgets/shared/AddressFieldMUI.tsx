@@ -17,7 +17,7 @@ type Props = {
 // picking one also fills in what it knows (onPick).
 function AddressFieldMUI({ label, value, onChange, suggestions, onActive, disabled }: Props) {
   // An option equal to the text adds nothing, unless others share its value.
-  const shown = suggestions.length === 1 && suggestions[0].value === value ? [] : suggestions;
+  const shown = suggestions.length === 1 && suggestions[0]?.value === value ? [] : suggestions;
   return (
     <Autocomplete<Suggestion, false, false, true>
       freeSolo

@@ -29,7 +29,7 @@ export function CreateReportFields({
           <input
             id={`${id}-mission`}
             className="grow"
-            value={finished[0].occurred_event}
+            value={finished[0]?.occurred_event ?? ''}
             readOnly
           />
         </FieldRow>

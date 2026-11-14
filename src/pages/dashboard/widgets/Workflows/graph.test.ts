@@ -40,15 +40,15 @@ describe('toFlow / fromFlow', () => {
   it('round-trips a graph', () => {
     const { nodes, edges } = toFlow(graph);
     expect(edges[1]).toMatchObject({ id: 'check:true', sourceHandle: 'true', label: 'yes' });
-    expect(edges[0].label).toBeUndefined();
+    expect(edges[0]!.label).toBeUndefined();
     expect(fromFlow(nodes, edges)).toEqual(graph);
   });
 
   it('rounds positions and defaults the port', () => {
     const { nodes } = toFlow(graph);
-    nodes[0].position = { x: 1.6, y: 2.4 };
+    nodes[0]!.position = { x: 1.6, y: 2.4 };
     const g = fromFlow(nodes, [{ id: 'e', source: 'start', target: 'log' }]);
-    expect(g.nodes[0].position).toEqual({ x: 2, y: 2 });
+    expect(g.nodes[0]!.position).toEqual({ x: 2, y: 2 });
     expect(g.edges).toEqual([{ from: 'start', port: 'next', to: 'log' }]);
   });
 });

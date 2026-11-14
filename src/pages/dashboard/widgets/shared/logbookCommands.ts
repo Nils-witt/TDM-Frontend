@@ -81,7 +81,7 @@ export function expandCommands(
   let out = '';
   let last = 0;
   for (const m of text.matchAll(typedName)) {
-    const command = available.get(m[1]);
+    const command = m[1] === undefined ? undefined : available.get(m[1]);
     if (!command) continue;
     const result = command.expand(ctx);
     if ('error' in result) {

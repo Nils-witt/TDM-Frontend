@@ -57,23 +57,42 @@ const transformRequest: RequestTransformFunction = (url) =>
     ? { url, headers: authHeaders(), credentials: 'include' }
     : { url };
 
+// The markers are DOM elements built outside React, which need every class
+// as a string; these are in Map.module.scss.
+const markerStyles = styles as Readonly<
+  Record<
+    | 'marker'
+    | 'selected'
+    | 'unsaved'
+    | 'pin'
+    | 'dot'
+    | 'unit'
+    | 'unitStatus'
+    | 'unitLabel'
+    | 'withSymbol'
+    | 'unitSymbol'
+    | 'unitChip',
+    string
+  >
+>;
+
 function markerElement(m: MapMarker, onClick: () => void): HTMLElement {
   // MapLibre positions the element by its transform, so the pin's shape is
   // drawn by an element inside it.
   const el = document.createElement('button');
   el.type = 'button';
-  el.className = styles.marker;
+  el.className = markerStyles.marker;
   el.dataset.status = m.status;
   el.title = m.unsaved ? `${m.title}\n(unsaved)` : m.title;
   el.setAttribute('aria-label', el.title);
   el.setAttribute('aria-pressed', String(m.selected));
-  if (m.selected) el.classList.add(styles.selected);
-  if (m.unsaved) el.classList.add(styles.unsaved);
+  if (m.selected) el.classList.add(markerStyles.selected);
+  if (m.unsaved) el.classList.add(markerStyles.unsaved);
   const pin = document.createElement('span');
-  pin.className = styles.pin;
+  pin.className = markerStyles.pin;
   pin.setAttribute('aria-hidden', 'true');
   const dot = document.createElement('span');
-  dot.className = styles.dot;
+  dot.className = markerStyles.dot;
   pin.append(dot);
   el.append(pin);
   el.addEventListener('click', (e) => {
@@ -90,28 +109,28 @@ function markerElement(m: MapMarker, onClick: () => void): HTMLElement {
 function unitElement(u: UnitMarker, onClick: (() => void) | null): HTMLElement {
   const el = document.createElement(onClick ? 'button' : 'div');
   if (el instanceof HTMLButtonElement) el.type = 'button';
-  el.className = styles.unit;
+  el.className = markerStyles.unit;
   if (u.tone) el.dataset.tone = u.tone;
-  if (u.selected) el.classList.add(styles.selected);
+  if (u.selected) el.classList.add(markerStyles.selected);
   el.title = u.missionId ? u.title : `${u.title}\n(no mission)`;
   el.setAttribute('aria-label', el.title.replaceAll('\n', ', '));
   const status = document.createElement('span');
-  status.className = styles.unitStatus;
+  status.className = markerStyles.unitStatus;
   status.textContent = u.status === null ? '–' : String(u.status);
   const label = document.createElement('span');
-  label.className = styles.unitLabel;
+  label.className = markerStyles.unitLabel;
   label.textContent = u.label;
   if (u.symbol) {
-    el.classList.add(styles.withSymbol);
+    el.classList.add(markerStyles.withSymbol);
     const img = document.createElement('img');
-    img.className = styles.unitSymbol;
+    img.className = markerStyles.unitSymbol;
     img.src = u.symbol;
     img.alt = '';
     el.append(img, status);
     if (!u.symbolNamed) el.append(label);
   } else {
     const chip = document.createElement('span');
-    chip.className = styles.unitChip;
+    chip.className = markerStyles.unitChip;
     chip.append(status, label);
     el.append(chip);
   }
@@ -284,7 +303,7 @@ export function MissionMap({
       cancelPress();
       const touches = e.originalEvent.touches;
       if (!contextMenuRef.current || touches.length !== 1) return;
-      const { clientX: x, clientY: y } = touches[0];
+      const { clientX: x, clientY: y } = touches[0]!;
       const lngLat = e.lngLat.wrap();
       pressStart = { x, y };
       pressTimer = setTimeout(() => {
@@ -296,10 +315,10 @@ export function MissionMap({
     // A drag or a second finger is a pan or pinch, not a press.
     m.on('touchmove', (e) => {
       const t = e.originalEvent.touches;
+      const touch = t.length === 1 ? t[0] : undefined;
       if (
         pressStart &&
-        (t.length !== 1 ||
-          Math.hypot(t[0].clientX - pressStart.x, t[0].clientY - pressStart.y) > 10)
+        (!touch || Math.hypot(touch.clientX - pressStart.x, touch.clientY - pressStart.y) > 10)
       ) {
         cancelPress();
       }
@@ -405,7 +424,7 @@ export function MissionMap({
   useEffect(() => {
     const m = map.current;
     if (!m || target === '') return;
-    const [lng, lat] = target.split(',').map(Number);
+    const [lng = 0, lat = 0] = target.split(',').map(Number);
     m.flyTo({ center: [lng, lat], zoom: Math.max(m.getZoom(), selectedZoom) });
   }, [target]);
 

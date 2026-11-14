@@ -152,13 +152,15 @@ function WidgetDashboard({
       <div className={`${styles.dashboard}${editing ? ` ${styles.editing}` : ''}`} ref={ref}>
         {area &&
           boxes.map((box, i) => {
-            const item = items[i];
+            // boxes and ids are made from items, one per item.
+            const item = items[i]!;
+            const id = ids[i]!;
             return box ? (
               <MemoWidgetFrame
-                key={ids[i]}
+                key={id}
                 layoutId={layoutId}
                 monitorId={monitorId}
-                itemId={ids[i]}
+                itemId={id}
                 index={i}
                 item={item}
                 box={box}
@@ -166,7 +168,7 @@ function WidgetDashboard({
                 editing={editing}
               />
             ) : (
-              <Alert key={ids[i]} severity="warning">
+              <Alert key={id} severity="warning">
                 Invalid layout for widget “{item.widget}”
               </Alert>
             );

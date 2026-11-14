@@ -157,7 +157,7 @@ function LayoutProvider({ children }: { children: ReactNode }) {
   // A layout with one monitor needs no choice; a chosen monitor that is
   // gone asks again.
   const monitor = useMemo(() => {
-    if (active.monitors.length === 1) return active.monitors[0];
+    if (active.monitors.length === 1) return active.monitors[0] ?? null;
     const id =
       active.id in monitorChoices
         ? monitorChoices[active.id]
@@ -168,9 +168,7 @@ function LayoutProvider({ children }: { children: ReactNode }) {
   const choiceKey = monitor ? `${active.id}.${monitor.id}` : null;
   const channelChoice = useMemo(() => {
     if (!monitor || !choiceKey) return {};
-    return choiceKey in channelChoices
-      ? channelChoices[choiceKey]
-      : loadChannelChoice(windowName(), active.id, monitor.id);
+    return channelChoices[choiceKey] ?? loadChannelChoice(windowName(), active.id, monitor.id);
   }, [active.id, monitor, choiceKey, channelChoices]);
 
   // A window is in the channels of its monitor, except those it

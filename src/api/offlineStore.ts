@@ -273,7 +273,7 @@ async function contentKey(
   path: string,
 ): Promise<['blobs' | 'contents', string]> {
   const m = logFileContent.exec(path);
-  if (m) {
+  if (m?.[1]) {
     const file = await d.get('log_files', decodeURIComponent(m[1]));
     if (typeof file?.digest === 'string') return ['blobs', file.digest];
   }

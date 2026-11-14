@@ -3,7 +3,7 @@ import { MenuBarContext } from './menuBarContext';
 import styles from './MenuBar.module.scss';
 
 // className styles the bar on top of its text style.
-function MenuBar({ className, children }: { className: string; children: ReactNode }) {
+function MenuBar({ className = '', children }: { className?: string; children: ReactNode }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const ref = useRef<HTMLElement>(null);
 
