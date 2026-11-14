@@ -1,0 +1,26 @@
+version: 2
+updates:
+  # Minor and patch updates in one weekly PR; majors one PR each, as they
+  # need a look (MUI, React Router, Vite and TypeScript have moved fast).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      npm-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+
+  # The node build stage and the nginx image.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
