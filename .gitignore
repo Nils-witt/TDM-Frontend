@@ -26,3 +26,6 @@ dist-ssr
 
 # OCR assets, copied from node_modules by scripts/copy-ocr-assets.mjs
 public/ocr/
+
+# The icon font, subset from node_modules by scripts/subset-icon-font.mjs
+src/styles/generated/
