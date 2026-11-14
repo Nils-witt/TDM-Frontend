@@ -57,6 +57,34 @@ jobs:
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
+      # One platform, loaded into the runner's Docker, to check the image
+      # serves the app before anything is pushed. The cache makes the
+      # multi-platform build below reuse it.
+      - name: Build for smoke test
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: universam-frontend:smoke
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test
+        run: |
+          docker run -d --name smoke -p 8080:80 universam-frontend:smoke
+          for i in $(seq 1 20); do curl -fs http://localhost:8080/ >/dev/null && break; sleep 0.5; done
+          docker exec smoke nginx -t
+          # A client route falls back to index.html.
+          curl -fs http://localhost:8080/m/missions | grep -q '<div id="root">'
+          headers=$(curl -fsI http://localhost:8080/)
+          echo "$headers" | grep -qi '^x-content-type-options: nosniff'
+          echo "$headers" | grep -qi "^content-security-policy: frame-ancestors 'none'"
+          echo "$headers" | grep -qi '^cache-control: no-cache'
+          asset=$(curl -fs http://localhost:8080/ | grep -oE '/assets/index-[^"]+\.js' | head -1)
+          curl -fsI -H 'Accept-Encoding: gzip' "http://localhost:8080$asset" | grep -qi '^content-encoding: gzip'
+          curl -fsI http://localhost:8080/sw.js | grep -qi '^cache-control: no-cache'
+
       # The build stage runs on $BUILDPLATFORM, so the second platform only
       # adds the nginx layer; the SPA is built once.
       - name: Build and push
