@@ -79,6 +79,38 @@ export const overlayTilePath = (id: string) =>
 export const fetchOverlayBounds = (id: string) =>
   request<OverlayBounds>(`${overlaysPath}/${encodeURIComponent(id)}/bounds`);
 
+// Who may see an overlay besides admins, granted by them. An overlay without
+// an entry is seen by admins only; with one, also by everyone, or by the
+// users (user IDs) and members of the groups (names as in whoami's groups)
+// listed. The API leaves overlays the caller may not see out of useOverlays()
+// and answers their bounds and tiles 404.
+export type OverlayAccess = EntityMeta & {
+  overlay_id: string;
+  everyone: boolean;
+  users: string[];
+  groups: string[];
+};
+
+export const overlayAccessPath = '/api/v1/overlay-access';
+const overlayAccessEntryPath = (overlayId: string) =>
+  `${overlayAccessPath}/${encodeURIComponent(overlayId)}`;
+
+// Not paged; admins only.
+export const fetchOverlayAccess = (path: string) =>
+  request<{ overlay_access: OverlayAccess[] }>(path).then((r) => r.overlay_access);
+
+export const overlayAccessApi = {
+  // Replaces the overlay's grant; users and groups come back sorted.
+  grant: (overlayId: string, grant: { everyone: boolean; users: string[]; groups: string[] }) =>
+    request<OverlayAccess>(overlayAccessEntryPath(overlayId), {
+      method: 'PUT',
+      body: JSON.stringify(grant),
+    }),
+  // Leaves the overlay to admins again.
+  revoke: (overlayId: string) =>
+    request<void>(overlayAccessEntryPath(overlayId), { method: 'DELETE' }),
+};
+
 // The defaults every map starts with, set by admins: the overlays switched on
 // until a map (or /m's Settings) switches them itself. The metadata is absent
 // before the first change. The default basemap is the map style marked

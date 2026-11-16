@@ -31,6 +31,8 @@ const typePaths: Record<string, string[]> = {
   unit_scopes: ['/api/v1/unit-scopes'],
   map_styles: ['/api/v1/map-styles'],
   map_settings: ['/api/v1/map-settings'],
+  // A restriction changes which overlays a caller is listed.
+  overlay_access: ['/api/v1/overlay-access', '/api/v1/overlays'],
   dashboard_layouts: ['/api/v1/layouts'],
   user_preferences: ['/api/v1/me/preferences'],
   export_templates: ['/api/v1/export-templates'],

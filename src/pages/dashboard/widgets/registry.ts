@@ -27,6 +27,7 @@ const AuditLogWidget = lazy(() => import('./AuditLog/AuditLog.tsx'));
 const MapWidget = lazy(() => import('./Map/Map.tsx'));
 const MapStylesWidget = lazy(() => import('./MapStyles/MapStyles.tsx'));
 const MapAdminWidget = lazy(() => import('./MapAdmin/MapAdmin.tsx'));
+const OverlayAccessWidget = lazy(() => import('./OverlayAccess/OverlayAccess.tsx'));
 const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
 const WorkflowsWidget = lazy(() => import('./Workflows/Workflows.tsx'));
@@ -597,6 +598,16 @@ const MapAdmin: Widget = {
   Component: MapAdminWidget,
 };
 
+// Which users and groups see each tile server overlay.
+const OverlayAccess: Widget = {
+  ...adminWidget,
+  id: 'OverlayAccess',
+  name: 'Overlay access',
+  description: 'Restricts map overlays to some users and groups.',
+  defaultWidth: 70,
+  Component: OverlayAccessWidget,
+};
+
 // Every user's dashboard layouts: rename, share with everyone or make
 // personal, export, delete.
 const Layouts: Widget = {
@@ -697,6 +708,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     Scopes,
     MapStyles,
     MapAdmin,
+    OverlayAccess,
     ExportTemplates,
     Workflows,
     BackupInstances,

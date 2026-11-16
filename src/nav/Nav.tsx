@@ -81,6 +81,7 @@ function Nav() {
                   <NavMenuItem label="Scopes" widget="Scopes" />
                   <NavMenuItem label="Map Defaults" widget="MapAdmin" />
                   <NavMenuItem label="Map Styles" widget="MapStyles" />
+                  <NavMenuItem label="Overlay Access" widget="OverlayAccess" />
                   <NavMenuItem label="Export Templates" widget="ExportTemplates" />
                   <NavMenuItem label="Workflows" widget="Workflows" />
                   <NavMenuItem label="Backup Servers" widget="BackupInstances" />
