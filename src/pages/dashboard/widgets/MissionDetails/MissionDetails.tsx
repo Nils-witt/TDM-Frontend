@@ -12,7 +12,7 @@ import {
 import type { Mission } from '@/api/missions';
 import { formatTime } from '../shared/logbookEntries';
 import { StatusSelect } from '../shared/MissionStatus';
-import { MissionTypeDescription, MissionTypeInput } from '../shared/MissionType';
+import { MissionTypeInput } from '../shared/MissionType';
 import { type AddressField, useAddressSuggest } from '../shared/AddressSuggest';
 import NearbyPlacesButton from '../shared/NearbyPlacesButton';
 import { FormActionBar } from '../shared/WidgetActionBar';
@@ -131,7 +131,6 @@ export function MissionForm({
           <FieldRow id={id('type')} label="Type">
             <MissionTypeInput key={resetKey} id={id('type')} value={typeValue} onChange={setType} />
           </FieldRow>
-          <MissionTypeDescription typeId={typeValue} />
         </Section>
         <Section legend="Address" disabled={readOnly}>
           <FieldRow id={id('object')} label="Object">

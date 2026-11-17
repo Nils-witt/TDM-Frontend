@@ -12,6 +12,9 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 
   suggestions: Suggestion[];
   // So suggestions are looked up only for the field being edited.
   onActive?: (active: boolean) => void;
+  // Shown dimmed inside the field after the text, cut off where it runs out of
+  // room, so a hint takes no height of its own.
+  hint?: string;
 };
 
 // Any text can be typed in: suggestions never restrict the value.
@@ -20,6 +23,7 @@ export function SuggestInput({
   onChange,
   suggestions,
   onActive,
+  hint,
   className,
   onFocus,
   onBlur,
@@ -103,6 +107,13 @@ export function SuggestInput({
         }}
         onKeyDown={keyDown}
       />
+      {hint && (
+        // The hidden copy of the text pushes the hint past it.
+        <div className={styles.hint} aria-hidden>
+          <span className={styles.mirror}>{value}</span>
+          <span className={styles.hintText}>{hint}</span>
+        </div>
+      )}
       <ul id={listId} role="listbox" className={styles.list} hidden={!expanded}>
         {expanded &&
           shown.map((s, i) => (

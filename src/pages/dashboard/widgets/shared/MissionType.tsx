@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { SuggestInput } from '@/components/SuggestInput';
-import { useCatalogs } from '@/data/catalogContext';
-import styles from './MissionType.module.scss';
 import {
   firstLine,
   matchMissionTypes,
@@ -13,7 +11,8 @@ import {
 // and the type is set as soon as the text names one (see resolveMissionType);
 // emptying it clears the type. Text naming none is dropped on blur, showing
 // the stored type again. A type no longer in the catalog (deleted) shows as
-// "Unknown type" until another is picked.
+// "Unknown type" until another is picked. The type's description is shown in
+// the field, so the form keeps its height whichever type is set.
 export function MissionTypeInput({
   id,
   value,
@@ -29,6 +28,14 @@ export function MissionTypeInput({
   const [text, setText] = useState<string | null>(null);
   // Until something is typed, every type is offered.
   const matches = text === null ? options : matchMissionTypes(options, text);
+  // While typing, only the type the text names, not the stored one.
+  const shown =
+    text === null
+      ? value === null
+        ? undefined
+        : byId.get(value)
+      : resolveMissionType(options, text);
+  const description = shown?.description ?? '';
 
   return (
     <SuggestInput
@@ -47,6 +54,8 @@ export function MissionTypeInput({
         if (picked) onChange(picked.id);
       }}
       onBlur={() => setText(null)}
+      hint={firstLine(description) || undefined}
+      title={description || undefined}
       suggestions={matches.map((o) => ({
         key: o.id,
         value: o.label,
@@ -55,12 +64,4 @@ export function MissionTypeInput({
       }))}
     />
   );
-}
-
-// Shown below MissionTypeInput; nothing for a type without one.
-export function MissionTypeDescription({ typeId }: { typeId: string | null }) {
-  const { missionTypes } = useCatalogs();
-  const description = typeId === null ? '' : (missionTypes.byId.get(typeId)?.description ?? '');
-  if (description === '') return null;
-  return <p className={styles.description}>{description}</p>;
 }
