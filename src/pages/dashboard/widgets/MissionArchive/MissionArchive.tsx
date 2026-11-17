@@ -45,6 +45,30 @@ function MissionArchiveWidget({ options }: WidgetProps) {
       {archive.offline && (
         <p className={styles.note}>Offline: searching only the missions stored on this device.</p>
       )}
+      {!archive.searching ? (
+        <EmptyState className="">Enter a search or set a field to find missions.</EmptyState>
+      ) : (
+        <ArchiveResults
+          archive={archive}
+          selectedId={selectedId}
+          select={(id) => update({ selectedId: id })}
+        />
+      )}
+    </div>
+  );
+}
+
+function ArchiveResults({
+  archive,
+  selectedId,
+  select,
+}: {
+  archive: ReturnType<typeof useMissionArchive>;
+  selectedId: string | null;
+  select: (id: string) => void;
+}) {
+  return (
+    <>
       <SectionHeading>
         {archive.loading
           ? 'Missions'
@@ -62,7 +86,7 @@ function MissionArchiveWidget({ options }: WidgetProps) {
             sort={archive.sort}
             sortBy={archive.sortBy}
             selectedId={selectedId}
-            select={(id) => update({ selectedId: id })}
+            select={select}
             busy={archive.busy}
           />
           {archive.pages > 1 && (
@@ -70,7 +94,7 @@ function MissionArchiveWidget({ options }: WidgetProps) {
           )}
         </>
       )}
-    </div>
+    </>
   );
 }
 

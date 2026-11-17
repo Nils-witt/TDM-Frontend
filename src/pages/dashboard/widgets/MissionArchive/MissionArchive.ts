@@ -55,6 +55,10 @@ export const emptyFilter: ArchiveFilter = {
 export const isEmptyFilter = (f: ArchiveFilter) =>
   (Object.keys(f) as (keyof ArchiveFilter)[]).every((k) => f[k].trim() === '');
 
+// The archive lists nothing until a field other than status is set, so it does
+// not page through every mission (a status option alone presets the filter).
+export const hasSearch = (f: ArchiveFilter) => !isEmptyFilter({ ...f, status: '' });
+
 export type SortKey = MissionSortKey;
 export type Sort = { key: SortKey; descending: boolean };
 
@@ -240,6 +244,7 @@ export function searchPath(
 // the missions stored in the browser are searched, sorted and paged instead.
 // currentScopeOnly finds only the missions of the selected scope
 // (useSelectedScope); it is not part of the query, so it follows the scope.
+// Without a search (hasSearch) nothing is loaded and searching is false.
 export function useMissionArchive({
   initialStatus = '',
   state,
@@ -262,15 +267,16 @@ export function useMissionArchive({
   const [query, setQuery] = state ?? [ownQuery, setOwnQuery];
   const { filter, sort, page } = query;
   const setPage = (p: number) => setQuery({ ...query, page: p });
+  const searching = hasSearch(filter);
 
   const remote = useResource<MissionSearchPage>(
-    offline ? null : searchPath(filter, sort, page, scope),
+    offline || !searching ? null : searchPath(filter, sort, page, scope),
   );
-  const local = useMissions({ closed: offline });
+  const local = useMissions({ closed: offline && searching });
   // Offline, the unit filter reads the stored assignments of every stored
   // mission; only then, as each mission is a scope of its own.
   const unitScopes =
-    offline && filter.unit.trim() !== ''
+    offline && searching && filter.unit.trim() !== ''
       ? local.items.map((m) => scopeKey('mission_units', m.id))
       : [];
   const localUnits = useTables<MissionUnit>(unitScopes);
@@ -286,19 +292,19 @@ export function useMissionArchive({
   );
   const localMatches = useMemo(
     () =>
-      offline
+      offline && searching
         ? local.items
             .filter((m) => inScope(m, scope))
             .filter(matcher(filter, catalogs, unitTexts(localUnits.items)))
             .sort(comparator(sort, catalogs))
         : [],
-    [offline, local.items, localUnits.items, filter, sort, catalogs, scope],
+    [offline, searching, local.items, localUnits.items, filter, sort, catalogs, scope],
   );
 
-  const total = offline ? localMatches.length : (shown?.total ?? 0);
+  const total = !searching ? 0 : offline ? localMatches.length : (shown?.total ?? 0);
   const pages = Math.max(1, Math.ceil(total / pageSize));
   // Matches may vanish (a mission was deleted) and leave the page past the end.
-  const loaded = offline || remote.data !== undefined;
+  const loaded = offline || !searching || remote.data !== undefined;
   // In an effect, as the query may live in the URL, which is not to be
   // navigated during render.
   const pastEnd = loaded && page > pages;
@@ -306,9 +312,11 @@ export function useMissionArchive({
     if (pastEnd) setQuery({ ...query, page: pages }, true);
   }, [pastEnd, pages, query, setQuery]);
 
-  const results = offline
-    ? localMatches.slice((page - 1) * pageSize, page * pageSize)
-    : (shown?.missions ?? []);
+  const results = !searching
+    ? []
+    : offline
+      ? localMatches.slice((page - 1) * pageSize, page * pageSize)
+      : (shown?.missions ?? []);
 
   // A new filter or order starts on the first page.
   const setFilter = (f: ArchiveFilter) => setQuery({ ...query, filter: f, page: 1 });
@@ -334,11 +342,12 @@ export function useMissionArchive({
     pages,
     setPage,
     offline,
+    searching,
     // Nothing to show yet; a later page turn keeps the last page meanwhile.
-    loading: offline ? local.loading : shown === undefined && remote.error === null,
+    loading: searching && (offline ? local.loading : shown === undefined && remote.error === null),
     // Loading another page.
-    busy: !offline && remote.data === undefined && remote.error === null,
-    error: offline ? local.error : remote.error,
+    busy: searching && !offline && remote.data === undefined && remote.error === null,
+    error: !searching ? null : offline ? local.error : remote.error,
     catalogs,
   };
 }

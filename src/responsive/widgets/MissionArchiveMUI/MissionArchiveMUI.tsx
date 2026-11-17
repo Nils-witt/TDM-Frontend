@@ -60,6 +60,18 @@ function MissionArchiveMUI({ options }: WidgetProps) {
       {archive.offline && (
         <Alert severity="info">Offline: searching only the missions stored on this device.</Alert>
       )}
+      {archive.searching ? (
+        <ArchiveResultsMUI archive={archive} />
+      ) : (
+        <MutedMUI>Enter a search or set a field to find missions.</MutedMUI>
+      )}
+    </Stack>
+  );
+}
+
+function ArchiveResultsMUI({ archive }: { archive: ReturnType<typeof useMissionArchive> }) {
+  return (
+    <>
       <Stack direction="row" useFlexGap sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
         <Typography variant="overline" color="text.secondary" sx={{ flex: 1 }}>
           {archive.loading
@@ -121,7 +133,7 @@ function MissionArchiveMUI({ options }: WidgetProps) {
           )}
         </>
       )}
-    </Stack>
+    </>
   );
 }
 
