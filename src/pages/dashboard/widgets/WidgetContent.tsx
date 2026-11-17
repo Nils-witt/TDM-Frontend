@@ -14,7 +14,12 @@ function WidgetContent({ widget, options }: { widget: Widget; options?: WidgetOp
     return <EmptyState>Only administrators can use this widget.</EmptyState>;
   }
   if (widget.permission && !hasPermission(principal, widget.permission)) {
-    return <EmptyState>This widget needs the permission {widget.permission}.</EmptyState>;
+    return (
+      <EmptyState>
+        This widget needs the permission {widget.permission}. Switch to a user function that grants
+        it, or ask an administrator.
+      </EmptyState>
+    );
   }
   return (
     <ErrorBoundary what="widget">

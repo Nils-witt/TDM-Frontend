@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
 import { useOffline } from '@/api/connectivity';
 import { mobileBasePath, preferDesktop } from '@/app/mobileRoute';
-import { useSession } from '@/app/session';
+import { allowedViews, hasPermission, useSession } from '@/app/session';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
@@ -19,7 +19,8 @@ import { useMissionPrint } from './missionPrintContext';
 // printMission asks for the export template of an intermediate report of the
 // selected mission, in any status; createReport opens Create Report
 // for the selected mission, which must be done or closed; mobileView switches
-// to the responsive UI (/m) and stops preferring the desktop one.
+// to the responsive UI (/m) and stops preferring the desktop one, if the
+// session's user function allows it.
 export type NavAction =
   | 'about'
   | 'reload'
@@ -33,7 +34,8 @@ export type NavAction =
 
 export function useNavActions() {
   const about = useAbout();
-  const { logout } = useSession();
+  const { logout, principal } = useSession();
+  const may = (name: string) => hasPermission(principal, name);
   const { selectedId, update } = useDashboard();
   const { mission } = useSelectedMission();
   const close = useMissionClose();
@@ -82,15 +84,19 @@ export function useNavActions() {
   const disabled = (action: NavAction) => {
     switch (action) {
       case 'saveMission':
-        return !canSave;
+        return !canSave || !may('missions.edit');
       case 'clearMission':
         return selectedId === null;
       case 'closeMission':
-        return offline || mission === null || mission.status === 'closed';
+        return (
+          offline || mission === null || mission.status === 'closed' || !may('missions.manage')
+        );
       case 'printMission':
-        return offline || mission === null;
+        return offline || mission === null || !may('missions.view');
       case 'createReport':
-        return offline || mission === null || !isFinished(mission);
+        return offline || mission === null || !isFinished(mission) || !may('missions.edit');
+      case 'mobileView':
+        return !allowedViews(principal).responsive;
       default:
         return false;
     }

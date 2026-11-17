@@ -14,24 +14,15 @@ import FilterToggle from '../shared/FilterToggle';
 import { useUnitFunctionFilter } from '../shared/unitFunctionFilter';
 import UnitFunctionFilterSection from '../shared/UnitFunctionFilterSection';
 import type { WidgetProps } from '../widgetOptions';
-import { useWidgetState } from '../widgetState';
 import styles from './AddUnit.module.scss';
-
-const parseBool = (v: unknown) => (typeof v === 'boolean' ? v : undefined);
 
 // Assigns units of the units server to the selected mission. A unit is on
 // one mission at a time: one on another mission names it, and is released
 // there first.
 function AddUnit({ options }: WidgetProps) {
   const fns = useUnitFunctionFilter(options);
-  // The All Scopes action lists the units of every scope; the option
-  // currentScopeOnly is where it starts.
-  const [allScopes, setAllScopes] = useWidgetState(
-    'allScopes',
-    options.currentScopeOnly !== true,
-    parseBool,
-  );
-  const state = useAssignUnit(useSelectedMission(), fns.filter, !allScopes);
+  // The API lists only the units of the session's scope.
+  const state = useAssignUnit(useSelectedMission(), fns.filter, false);
   const { mission, readOnly, list, assigning, assign } = state;
   const { update } = useDashboard();
   const id = useId();
@@ -40,9 +31,6 @@ function AddUnit({ options }: WidgetProps) {
     <WidgetActionBar label="Add unit actions">
       <WidgetAction onClick={() => void state.reload()}>Refresh</WidgetAction>
       <FilterToggle open={fns.showFilters} onToggle={fns.toggleFilters} />
-      <WidgetAction pressed={allScopes} onClick={() => setAllScopes((v) => !v)}>
-        All Scopes
-      </WidgetAction>
     </WidgetActionBar>
   );
 
@@ -105,11 +93,7 @@ function AddUnit({ options }: WidgetProps) {
       )}
       {list.length === 0 ? (
         <EmptyState>
-          {state.query || fns.activeFilters > 0
-            ? 'No unit matches.'
-            : !allScopes
-              ? 'No unit is in the current scope.'
-              : 'The units server has no units.'}
+          {state.query || fns.activeFilters > 0 ? 'No unit matches.' : 'No unit is in your scope.'}
         </EmptyState>
       ) : (
         <div className={tableStyles.tableWrap}>

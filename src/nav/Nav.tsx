@@ -1,4 +1,4 @@
-import { useHasPermission, useIsAdmin } from '../app/session';
+import { hasPermission, useHasPermission, useIsAdmin, useSession } from '../app/session';
 import { InfoIcon, LocationIcon } from '../components/icons';
 import MenuBar from '../components/menu/MenuBar';
 import MenuSeparator from '../components/menu/MenuSeparator';
@@ -17,17 +17,34 @@ import BackupIndicator from './actions/BackupIndicator';
 import ConnectionsIndicator from './actions/ConnectionsIndicator';
 import UnitRequestIndicator from './actions/UnitRequestIndicator';
 import Fullscreen from './actions/Fullscreen';
-import ScopeMenu from './actions/ScopeMenu';
+import SessionMenu from './actions/SessionMenu';
 import UserMenu from './actions/UserMenu';
 import styles from './Nav.module.scss';
 
+const adminMenuPermissions = [
+  'catalogs.manage',
+  'scopes.manage',
+  'maps.manage',
+  'overlays.manage',
+  'export-templates.manage',
+  'workflows.view',
+  'backups.view',
+  'layouts.manage',
+  'audit.view',
+  'sessions.view',
+];
+
 // Styled like the macOS menu bar; each status indicator on the right keeps its
 // own state. The menus follow missioncontroller's, without what universalGoApi
-// lacks (units, nodes, roles, reopening). The Admin menu is shown to members of
-// the API's admin group only.
+// lacks (units, nodes, roles, reopening). Items the caller may not use (by
+// permission) are disabled.
 function Nav() {
   const admin = useIsAdmin();
+  const { principal } = useSession();
   const patients = useHasPermission('patients.view');
+  // The Admin menu shows for the admin group and for anyone holding one of
+  // the personal permissions of its widgets.
+  const adminMenu = admin || adminMenuPermissions.some((p) => hasPermission(principal, p));
   return (
     <MissionCloseProvider>
       <MissionPrintProvider>
@@ -82,7 +99,7 @@ function Nav() {
                 <NavMenuItem label="Logbook" widget="Logbook" />
                 <NavMenuItem label="Files" widget="FileList" />
               </TopLevelMenu>
-              {admin && (
+              {adminMenu && (
                 <TopLevelMenu label="Admin">
                   <NavMenuItem label="Mission Types" widget="MissionTypes" />
                   <NavMenuItem label="Logbook Types" widget="LogbookTypes" />
@@ -101,6 +118,8 @@ function Nav() {
                   <NavMenuItem label="Users" widget="Users" />
                   <NavMenuItem label="Groups" widget="Groups" />
                   <NavMenuItem label="Permissions" widget="Permissions" />
+                  <NavMenuItem label="User Functions" widget="UserFunctions" />
+                  <NavMenuItem label="Sessions" widget="Sessions" />
                   <NavMenuItem label="Audit Log" widget="AuditLog" />
                 </TopLevelMenu>
               )}
@@ -115,7 +134,7 @@ function Nav() {
               <UnitRequestIndicator />
               <BackupIndicator />
               <ChannelIndicator />
-              <ScopeMenu />
+              <SessionMenu />
               <UserMenu />
               <Clock />
               <Fullscreen />

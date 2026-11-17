@@ -1,35 +1,38 @@
-import { lazy, Suspense, useState } from 'react';
+import { useState } from 'react';
+import { useOffline } from '@/api/connectivity';
+import { sessionScopeName, useSession } from '@/app/session';
+import { SessionDialog } from '@/app/SessionPicker';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
-import { selectedScopeName, selectedScopeTitle, useSelectedScope } from '@/data/selectedScope';
 import styles from './ScopePicker.module.scss';
 
-// The menu's MUI parts load only once it is opened.
-const ScopeMenuMUI = lazy(() => import('./ScopeMenuMUI'));
-
-// The header's counterpart of the menu bar's ScopeMenu: the mission scope of
-// this tab, which new missions are created in.
+// The header's counterpart of the menu bar's SessionMenu: the user function
+// and mission scope of the session; tapping it switches them.
 function ScopePicker() {
-  const selected = useSelectedScope();
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const name = selectedScopeName(selected);
+  const { principal, session, switchSession } = useSession();
+  const offline = useOffline();
+  const [open, setOpen] = useState(false);
+  const scope = sessionScopeName(session);
 
   return (
     <>
       <button
         type="button"
         className={`icon-btn ${styles.button}`}
-        aria-label={`Scope: ${name}`}
-        aria-haspopup="menu"
-        title={selectedScopeTitle(selected)}
-        onClick={(e) => setAnchor(e.currentTarget)}
+        aria-label={`Function: ${session.function.name}, scope: ${scope}`}
+        title={`You work as ${session.function.name} in ${scope}`}
+        disabled={offline}
+        onClick={() => setOpen(true)}
       >
-        <span className={styles.name}>{name}</span>
+        <span className={styles.name}>{scope}</span>
         <SymbolIcon name="arrow_drop_down" />
       </button>
-      {anchor && (
-        <Suspense fallback={null}>
-          <ScopeMenuMUI anchor={anchor} onClose={() => setAnchor(null)} />
-        </Suspense>
+      {open && (
+        <SessionDialog
+          principal={principal}
+          current={{ function: session.function.id, scope: session.scope.id || null }}
+          onChoose={switchSession}
+          onClose={() => setOpen(false)}
+        />
       )}
     </>
   );

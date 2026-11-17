@@ -1,27 +1,20 @@
 import { NavLink, Outlet, useLocation } from 'react-router';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { useSession } from '@/app/session';
+import { useAllowedViews, useSession } from '@/app/session';
 import OfflineBanner from '@/components/OfflineBanner';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
 import LiveIndicator from '@/nav/actions/LiveIndicator';
 import BackupStatus from './BackupStatus';
 import ScopePicker from './ScopePicker';
-import { responsivePaths } from './paths';
+import { visibleSections } from './sections';
 import styles from './AppFrame.module.scss';
-
-const sections = [
-  { to: responsivePaths.missions, label: 'Missions', icon: 'list_alt' },
-  { to: responsivePaths.archive, label: 'Archive', icon: 'manage_search' },
-  { to: responsivePaths.map, label: 'Map', icon: 'map' },
-  { to: responsivePaths.reports, label: 'Reports', icon: 'description' },
-  { to: responsivePaths.settings, label: 'Settings', icon: 'settings' },
-];
 
 // One nav element that is a bottom tab bar on phones and a sidebar from
 // tablet width up; only the CSS differs.
 function AppFrame() {
   const { logout } = useSession();
   const { pathname } = useLocation();
+  const { pages } = useAllowedViews();
 
   const signOut = () => {
     logout().catch((err: unknown) =>
@@ -49,7 +42,7 @@ function AppFrame() {
         </span>
       </header>
       <nav className={styles.nav} aria-label="Main">
-        {sections.map((s) => (
+        {visibleSections(pages).map((s) => (
           <NavLink
             key={s.to}
             to={s.to}

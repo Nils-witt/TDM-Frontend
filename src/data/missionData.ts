@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { Collection } from '@/api/collection';
 import { useOffline } from '@/api/connectivity';
+import { useHasPermission } from '@/app/session';
 import type { LogEntry, LogFile } from '@/api/logbook';
 import type { MissionUnit } from '@/api/missionUnits';
 import type { Mission } from '@/api/missions';
@@ -12,7 +13,8 @@ import { useMission } from './missionsContext';
 export type MissionData = {
   mission: Mission | null;
   // Closed is final: the mission, its log and its tasks can no longer change.
-  // Offline nothing can be changed.
+  // Offline nothing can be changed, nor without missions.edit (the
+  // session's user function).
   readOnly: boolean;
   logEntries: Collection<LogEntry>;
   logFiles: Collection<LogFile>;
@@ -37,7 +39,8 @@ export function useMissionData(missionId: string | null): MissionData {
   const units = useTable<MissionUnit>(id && scopeKey('mission_units', id, opts));
 
   const offline = useOffline();
-  const readOnly = mission?.status === 'closed' || offline;
+  const canEdit = useHasPermission('missions.edit');
+  const readOnly = mission?.status === 'closed' || offline || !canEdit;
 
   return useMemo(
     () => ({ mission, readOnly, logEntries, logFiles, tasks, units }),

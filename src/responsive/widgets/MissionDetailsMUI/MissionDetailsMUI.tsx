@@ -53,6 +53,10 @@ export function MissionFormMUI({
     closing,
     confirmClose,
     cancelClose,
+    moving,
+    confirmMove,
+    cancelMove,
+    scopeLocked,
     resetKey,
     scopeValue,
     setScope,
@@ -97,14 +101,14 @@ export function MissionFormMUI({
             {mission ? `${formatTime(mission.created_at)} · ${mission.created_by}` : '-/-'}
           </Typography>
         </FormSectionMUI>
-        <FormSectionMUI legend="Scope" disabled={readOnly}>
+        <FormSectionMUI legend="Scope" disabled={readOnly || scopeLocked}>
           {/* Scope IDs are UUIDs, so '' stands for Default. */}
           <TextField
             select
             label="Scope"
             size="small"
             value={scopeValue ?? ''}
-            disabled={readOnly}
+            disabled={readOnly || scopeLocked}
             onChange={(e) => setScope(e.target.value || null)}
           >
             {scopeChoices.map((s) => (
@@ -196,6 +200,15 @@ export function MissionFormMUI({
         />
         <FormErrorMUI error={error} onClose={() => setError(null)} />
       </FormMUI>
+      {moving && (
+        <ConfirmDialogMUI
+          title="Move mission"
+          message="The mission moves to another scope. You work in this scope only, so it disappears from your view."
+          confirmLabel="Move mission"
+          onConfirm={confirmMove}
+          onCancel={cancelMove}
+        />
+      )}
       {closing && (
         <ConfirmDialogMUI
           title="Close mission"

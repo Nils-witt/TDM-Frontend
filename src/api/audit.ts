@@ -32,6 +32,10 @@ export type AuditEntry = {
   action: 'create' | 'update' | 'delete' | 'intermediate_report';
   // old is null on create, new on delete.
   changes: Record<string, { old: unknown; new: unknown }>;
+  // The user function and scope of the session the change was made in
+  // (names at the time); null without a session. Absent from older APIs.
+  function?: { id: string; name: string } | null;
+  scope?: { id: string; name: string } | null;
 };
 
 export type AuditLog = { entries: AuditEntry[]; next_before?: string };

@@ -2,10 +2,11 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 import EventsProvider from '@/api/EventsProvider';
 import ResourceProvider from '@/api/ResourceProvider';
-import { useSession } from '@/app/session';
+import { useAllowedViews, useSession } from '@/app/session';
 import DataProvider from '@/data/DataProvider';
 import Spinner from '@/components/Spinner';
 import AppFrame from './AppFrame';
+import { homePath } from './sections';
 import ArchivePage from './pages/ArchivePage';
 import MissionPage from './pages/MissionPage';
 import MissionsPage from './pages/MissionsPage';
@@ -25,6 +26,11 @@ const ThemeScope = lazy(() => import('./widgets/ThemeScope'));
 // already set the page up.
 function ResponsiveShell() {
   const { mode } = useSession();
+  // Only the pages of the session's user function are routed; a hidden one
+  // leads to the first shown section. A mission's page stays reachable, as
+  // the map and archive link to it.
+  const { pages } = useAllowedViews();
+  const home = homePath(pages);
   return (
     <Suspense fallback={<Spinner />}>
       <ThemeScope>
@@ -34,23 +40,29 @@ function ResponsiveShell() {
               <WidgetSheets>
                 <Routes>
                   <Route element={<AppFrame />}>
-                    <Route index element={<Navigate to="missions" replace />} />
-                    <Route path="missions" element={<MissionsPage />} />
-                    {/* Ranked above missions/:id, as a static segment wins. */}
-                    <Route path="missions/new" element={<NewMissionPage />} />
+                    <Route index element={<Navigate to={home} replace />} />
+                    {pages.has('missions') && (
+                      <>
+                        <Route path="missions" element={<MissionsPage />} />
+                        {/* Ranked above missions/:id, as a static segment wins. */}
+                        <Route path="missions/new" element={<NewMissionPage />} />
+                      </>
+                    )}
                     <Route path="missions/:id" element={<MissionPage />} />
-                    <Route path="archive" element={<ArchivePage />} />
-                    <Route path="reports" element={<ReportsPage />} />
-                    <Route
-                      path="map"
-                      element={
-                        <Suspense fallback={<Spinner />}>
-                          <MapPage />
-                        </Suspense>
-                      }
-                    />
+                    {pages.has('archive') && <Route path="archive" element={<ArchivePage />} />}
+                    {pages.has('reports') && <Route path="reports" element={<ReportsPage />} />}
+                    {pages.has('map') && (
+                      <Route
+                        path="map"
+                        element={
+                          <Suspense fallback={<Spinner />}>
+                            <MapPage />
+                          </Suspense>
+                        }
+                      />
+                    )}
                     <Route path="settings" element={<SettingsPage />} />
-                    <Route path="*" element={<Navigate to="missions" replace />} />
+                    <Route path="*" element={<Navigate to={home} replace />} />
                   </Route>
                 </Routes>
               </WidgetSheets>

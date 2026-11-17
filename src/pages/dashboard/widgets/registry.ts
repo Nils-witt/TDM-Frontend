@@ -4,10 +4,11 @@ import { maxUnitStatusChanges } from '@/api/units';
 import { frameCount, frameKeys, windowUnits } from './ActiveMissions/ActiveMissions.ts';
 import { logbookFilterOptions } from './shared/logbookFilterOptions';
 import { unitFunctionOption } from './shared/unitFunctionFilter';
-import { unitScopeOption } from './shared/unitScopeFilter';
 import type { Widget } from './widget';
 
 const ExampleWidget = lazy(() => import('./Example/Example.tsx'));
+const UserFunctionsWidget = lazy(() => import('./UserFunctions/UserFunctions.tsx'));
+const SessionsWidget = lazy(() => import('./Sessions/Sessions.tsx'));
 const MissionsListWidget = lazy(() => import('./MissionsList/MissionsList.tsx'));
 const MissionArchiveWidget = lazy(() => import('./MissionArchive/MissionArchive.tsx'));
 const MissionDetailsWidget = lazy(() => import('./MissionDetails/MissionDetails.tsx'));
@@ -69,6 +70,7 @@ const MissionsList: Widget = {
   id: 'MissionsList',
   name: 'Missions',
   category: 'missions',
+  permission: 'missions.view',
   description: 'The active missions, to pick the one to work on.',
   emits: ['selection'],
   consumes: ['selection'],
@@ -80,13 +82,6 @@ const MissionsList: Widget = {
   defaultHeight: 4,
   options: [
     { key: 'groupByStatus', label: 'Group by status', type: 'boolean', default: false },
-    // The scope selected in the menu bar (useSelectedScope).
-    {
-      key: 'currentScopeOnly',
-      label: 'Only the current scope',
-      type: 'boolean',
-      default: true,
-    },
     ...missionStatuses.map((s) => ({
       key: `collapse-${s.value}`,
       label: `Start "${s.label}" collapsed`,
@@ -110,6 +105,7 @@ const MissionArchive: Widget = {
   id: 'MissionArchive',
   name: 'Mission archive',
   category: 'missions',
+  permission: 'missions.view',
   description: 'Searches all missions by their fields and lists the matches in a table.',
   emits: ['selection'],
   consumes: ['selection'],
@@ -130,13 +126,6 @@ const MissionArchive: Widget = {
         ...missionStatuses.map((s) => ({ value: s.value, label: s.label })),
       ],
     },
-    // The scope selected in the menu bar (useSelectedScope), as in Missions.
-    {
-      key: 'currentScopeOnly',
-      label: 'Only the current scope',
-      type: 'boolean',
-      default: true,
-    },
   ],
   Component: MissionArchiveWidget,
 };
@@ -145,6 +134,7 @@ const MissionDetails: Widget = {
   id: 'MissionDetails',
   name: 'Mission',
   category: 'missions',
+  permission: 'missions.view',
   description: 'Shows and edits the selected mission, or creates a new one.',
   emits: ['selection'],
   consumes: ['selection'],
@@ -163,6 +153,7 @@ const ActiveMissions: Widget = {
   id: 'ActiveMissions',
   name: 'Active missions',
   category: 'missions',
+  permission: 'missions.view',
   description: 'How many missions were active within recent time frames.',
   minWidth: 10,
   maxWidth: 60,
@@ -191,13 +182,6 @@ const ActiveMissions: Widget = {
         },
       ];
     }).flat(),
-    // The scope selected in the menu bar (useSelectedScope), as in Missions.
-    {
-      key: 'currentScopeOnly',
-      label: 'Only the current scope',
-      type: 'boolean' as const,
-      default: true,
-    },
   ],
   Component: ActiveMissionsWidget,
 };
@@ -207,6 +191,7 @@ const Logbook: Widget = {
   id: 'Logbook',
   name: 'Logbook',
   category: 'logbook',
+  permission: 'missions.view',
   description: 'The logbook of the selected mission.',
   consumes: ['selection'],
   minWidth: 30,
@@ -227,6 +212,7 @@ const LogbookForm: Widget = {
   id: 'LogbookForm',
   name: 'New logbook entry',
   category: 'logbook',
+  permission: 'missions.view',
   description: 'Writes a new entry into the selected mission’s logbook.',
   consumes: ['selection'],
   minWidth: 25,
@@ -247,6 +233,7 @@ const FileList: Widget = {
   id: 'FileList',
   name: 'Files',
   category: 'files',
+  permission: 'missions.view',
   description: 'The files attached to the selected mission’s logbook.',
   consumes: ['selection'],
   minWidth: 20,
@@ -263,6 +250,7 @@ const AttachmentViewer: Widget = {
   id: 'AttachmentViewer',
   name: 'Attachment',
   category: 'files',
+  permission: 'missions.view',
   description: 'Shows one attached file.',
   minWidth: 20,
   maxWidth: 200,
@@ -286,6 +274,7 @@ const Reports: Widget = {
   id: 'Reports',
   name: 'Reports',
   category: 'files',
+  permission: 'missions.view',
   description: 'The mission reports, to create and upload signed.',
   consumes: ['selection'],
   minWidth: 30,
@@ -303,6 +292,7 @@ const CreateReport: Widget = {
   id: 'CreateReport',
   name: 'Create report',
   category: 'files',
+  permission: 'missions.edit',
   description: 'Creates a report of one done or closed mission.',
   minWidth: 25,
   maxWidth: 80,
@@ -343,7 +333,7 @@ const PdfViewer: Widget = {
 // longitude and zoom the start view; show-<status> which missions it shows;
 // only-selected shows just the selected one; show-unsaved whether Mission Details' unsaved edits move the pins.
 // show-units shows the units server's units at their last known position (only-selected: those
-// on the selected mission; currentScopeOnly: those in the tab's unit scope).
+// on the selected mission). The API answers only the session's scope.
 // The action bar's Options dialog sets the zoom on selection and, with a tile
 // server configured in the API, turns its overlays on and off.
 const MapView: Widget = {
@@ -390,13 +380,6 @@ const MapView: Widget = {
     })),
     // Overrides the show-<status> options.
     { key: 'only-selected', label: 'Only the selected mission', type: 'boolean', default: false },
-    // The scope selected in the menu bar (useSelectedScope), as in Missions.
-    {
-      key: 'currentScopeOnly',
-      label: 'Only the current scope',
-      type: 'boolean',
-      default: true,
-    },
     // A mission's unsaved edits in Mission Details (position, status, title).
     { key: 'show-unsaved', label: 'Show unsaved changes', type: 'boolean', default: true },
     { key: 'show-units', label: 'Show units', type: 'boolean', default: true },
@@ -424,6 +407,7 @@ const UnitStatus: Widget = {
   id: 'UnitStatus',
   name: 'Unit status',
   category: 'general',
+  permission: 'units.view',
   description: 'The latest FMS status changes of the units, live from the units server.',
   minWidth: 20,
   maxWidth: 160,
@@ -441,7 +425,6 @@ const UnitStatus: Widget = {
       max: maxUnitStatusChanges,
     },
     unitFunctionOption,
-    unitScopeOption,
   ],
   Component: UnitStatusWidget,
 };
@@ -450,6 +433,7 @@ const MissionUnits: Widget = {
   id: 'MissionUnits',
   name: 'Units in mission',
   category: 'missions',
+  permission: 'missions.view',
   description: 'The units assigned to the selected mission, with their live FMS status.',
   consumes: ['selection'],
   minWidth: 20,
@@ -534,8 +518,6 @@ const Patients: Widget = {
   defaultWidth: 45,
   defaultHeight: 35,
   options: [
-    // The scope selected in the menu bar (useSelectedScope), as in Missions.
-    { key: 'currentScopeOnly', label: 'Only the current scope', type: 'boolean', default: true },
     { key: 'includeClosed', label: 'Include closed missions', type: 'boolean', default: false },
   ],
   Component: PatientsWidget,
@@ -547,6 +529,7 @@ const UnitRequests: Widget = {
   id: 'UnitRequests',
   name: 'Unit requests',
   category: 'general',
+  permission: 'units.view',
   description: 'The units’ pending FMS 0, 5 and 9 requests, to acknowledge.',
   minWidth: 20,
   maxWidth: 160,
@@ -554,7 +537,7 @@ const UnitRequests: Widget = {
   maxHeight: 800,
   defaultWidth: 40,
   defaultHeight: 30,
-  options: [unitFunctionOption, unitScopeOption],
+  options: [unitFunctionOption],
   Component: UnitRequestsWidget,
 };
 
@@ -564,6 +547,7 @@ const AddUnit: Widget = {
   id: 'AddUnit',
   name: 'Add unit',
   category: 'missions',
+  permission: 'missions.edit',
   description: 'Assigns units of the units server to the selected mission.',
   consumes: ['selection'],
   minWidth: 20,
@@ -572,7 +556,7 @@ const AddUnit: Widget = {
   maxHeight: 800,
   defaultWidth: 30,
   defaultHeight: 30,
-  options: [unitFunctionOption, unitScopeOption],
+  options: [unitFunctionOption],
   Component: AddUnitWidget,
 };
 
@@ -582,6 +566,7 @@ const UnitScopes: Widget = {
   id: 'UnitScopes',
   name: 'Unit scopes',
   category: 'general',
+  permission: 'units.view',
   description: 'Puts the units of the units server into mission scopes.',
   minWidth: 20,
   maxWidth: 160,
@@ -593,8 +578,10 @@ const UnitScopes: Widget = {
   Component: UnitScopesWidget,
 };
 
-// The admin widgets open from the Admin menu only (shown to admins), so the
-// picker leaves them out; a layout holding one shows non-admins a notice.
+// The admin widgets open from the Admin menu only, so the picker leaves them
+// out; a layout holding one shows a notice to whoever may not use it. Most
+// need a personal permission (set per widget); access management stays with
+// the admin group.
 const adminWidget = {
   category: 'admin',
   adminOnly: true,
@@ -609,6 +596,8 @@ const adminWidget = {
 
 const MissionTypes: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'catalogs.manage',
   id: 'MissionTypes',
   name: 'Mission types',
   description: 'Manages the mission type groups and mission types, with CSV import and export.',
@@ -618,6 +607,8 @@ const MissionTypes: Widget = {
 
 const LogbookTypes: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'catalogs.manage',
   id: 'LogbookTypes',
   name: 'Logbook types',
   description: 'Manages the types of logbook entries.',
@@ -626,6 +617,8 @@ const LogbookTypes: Widget = {
 
 const FileTypes: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'catalogs.manage',
   id: 'FileTypes',
   name: 'File types',
   description: 'Manages the types of attached files.',
@@ -634,6 +627,8 @@ const FileTypes: Widget = {
 
 const Scopes: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'scopes.manage',
   id: 'Scopes',
   name: 'Scopes',
   description: 'Manages the mission scopes that users select to create missions in.',
@@ -666,14 +661,40 @@ const Permissions: Widget = {
   ...adminWidget,
   id: 'Permissions',
   name: 'Permissions',
-  description: 'The permissions granted to each group.',
+  description: 'The personal permissions granted to each group and user.',
   defaultWidth: 60,
   options: [{ key: 'groupId', label: 'Group ID', type: 'text', default: '' }],
   Component: PermissionsWidget,
 };
 
+// The user functions users choose at sign-in, with their functional
+// permissions and groups.
+const UserFunctions: Widget = {
+  ...adminWidget,
+  id: 'UserFunctions',
+  name: 'User functions',
+  description: 'The user functions users work as, their permissions and who may choose them.',
+  defaultWidth: 80,
+  defaultHeight: 60,
+  Component: UserFunctionsWidget,
+};
+
+// Every user's active sessions.
+const Sessions: Widget = {
+  ...adminWidget,
+  adminOnly: false,
+  permission: 'sessions.view',
+  id: 'Sessions',
+  name: 'Sessions',
+  description: 'Who works as which function in which scope, with End to end a session.',
+  defaultWidth: 80,
+  Component: SessionsWidget,
+};
+
 const MapStyles: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'maps.manage',
   id: 'MapStyles',
   name: 'Map styles',
   description: 'Manages the map styles the Map widget can show.',
@@ -684,6 +705,8 @@ const MapStyles: Widget = {
 // What every map starts with: the default style and the overlays switched on.
 const MapAdmin: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'maps.manage',
   id: 'MapAdmin',
   name: 'Map admin',
   description: 'Sets the default map style and which overlays every map starts with.',
@@ -694,6 +717,8 @@ const MapAdmin: Widget = {
 // Which users and groups see each tile server overlay.
 const OverlayAccess: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'overlays.manage',
   id: 'OverlayAccess',
   name: 'Overlay access',
   description: 'Restricts map overlays to some users and groups.',
@@ -705,6 +730,8 @@ const OverlayAccess: Widget = {
 // personal, export, delete.
 const Layouts: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'layouts.manage',
   id: 'Layouts',
   name: 'Layouts',
   description: 'Manages every user’s dashboard layouts and which are shared with everyone.',
@@ -716,6 +743,8 @@ const Layouts: Widget = {
 // as a graph.
 const Workflows: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'workflows.view',
   id: 'Workflows',
   name: 'Workflows',
   description: 'Manages the workflows the API runs when missions and tasks change.',
@@ -727,6 +756,8 @@ const Workflows: Widget = {
 
 const ExportTemplates: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'export-templates.manage',
   id: 'ExportTemplates',
   name: 'Export templates',
   description: 'The templates missions are printed and reports made with.',
@@ -742,6 +773,8 @@ const ExportTemplates: Widget = {
 // The go-backup-tool instances of the menu bar's backup status.
 const BackupInstances: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'backups.view',
   id: 'BackupInstances',
   name: 'Backup servers',
   description: 'Manages the backup servers whose jobs the menu bar shows.',
@@ -763,6 +796,8 @@ const ConfigTransfer: Widget = {
 // The options are the filter it starts with; the other admin widgets set them.
 const AuditLog: Widget = {
   ...adminWidget,
+  adminOnly: false,
+  permission: 'audit.view',
   id: 'AuditLog',
   name: 'Audit log',
   description: 'Every recorded change, newest first, filterable by entity and actor.',
@@ -810,6 +845,8 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     Users,
     Groups,
     Permissions,
+    UserFunctions,
+    Sessions,
     AuditLog,
     BackupStatus,
     UnitStatus,

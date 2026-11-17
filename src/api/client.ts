@@ -68,6 +68,25 @@ export function setAccessTokenSource(source: () => string | null) {
 
 export const currentAccessToken = () => accessToken();
 
+// The session (user function and scope) requests work in: sent in
+// sessionHeader on every request. Set by auth/session.ts.
+export const sessionHeader = 'X-Session-ID';
+
+let sessionId: () => string | null = () => null;
+
+export function setSessionIdSource(source: () => string | null) {
+  sessionId = source;
+}
+
+export const currentSessionId = () => sessionId();
+
+// Dispatched on window when the API refuses a request because its session
+// ended or none was named; detail is the reason (sessionProblem).
+export const sessionEndedEvent = 'universam:session-ended';
+
+export const sessionRequiredType = 'urn:universam:problem:session-required';
+export const sessionEndedType = 'urn:universam:problem:session-ended';
+
 // Set by the session: renews an expired token before a request is sent.
 let refreshToken: () => Promise<void> = () => Promise.resolve();
 
@@ -100,12 +119,26 @@ export function authHeaders(): Record<string, string> {
 
 export class ApiError extends Error {
   readonly status: number;
+  // The problem type (RFC 9457) and, for a session that ended, why.
+  readonly type?: string;
+  readonly reason?: string;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, type?: string, reason?: string) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.type = type;
+    this.reason = reason;
   }
+}
+
+// Why the session of a refused request is no longer usable: the end reason,
+// 'required' without a session, null for any other error.
+export function sessionProblem(err: unknown): string | null {
+  if (!(err instanceof ApiError) || err.status !== 403) return null;
+  if (err.type === sessionRequiredType) return 'required';
+  if (err.type === sessionEndedType) return err.reason ?? 'ended';
+  return null;
 }
 
 type RequestOptions = {
@@ -143,6 +176,7 @@ async function send(
   }
   if (!anonymous) await refreshToken();
   const token = anonymous ? null : accessToken();
+  const session = anonymous ? null : sessionId();
   let res: Response;
   try {
     res = await fetch(apiUrl(path, requestTarget), {
@@ -154,6 +188,7 @@ async function send(
         Accept: 'application/json, application/problem+json',
         ...(json && { 'Content-Type': 'application/json' }),
         ...(token && { Authorization: `Bearer ${token}` }),
+        ...(session && { [sessionHeader]: session }),
         ...init?.headers,
       },
     });
@@ -168,7 +203,12 @@ async function send(
     window.dispatchEvent(new Event(unauthorizedEvent));
   }
   if (!res.ok) {
-    throw new ApiError(res.status, await errorMessage(res, init?.method ?? 'GET', path));
+    const err = await apiError(res, init?.method ?? 'GET', path);
+    const problem = sessionProblem(err);
+    if (problem && !anonymous) {
+      window.dispatchEvent(new CustomEvent(sessionEndedEvent, { detail: problem }));
+    }
+    throw err;
   }
   return res;
 }
@@ -218,17 +258,28 @@ export async function requestCachedBlob(path: string, signal?: AbortSignal): Pro
   return blob;
 }
 
+type ProblemBody = {
+  detail?: string;
+  title?: string;
+  error?: string;
+  type?: string;
+  reason?: string;
+};
+
 // The API answers errors as RFC 9457 problem details.
-export async function errorMessage(res: Response, method: string, path: string): Promise<string> {
+async function apiError(res: Response, method: string, path: string): Promise<ApiError> {
   const text = await res.text();
+  let body: ProblemBody | null = null;
   try {
-    const body = JSON.parse(text) as { detail?: string; title?: string; error?: string };
-    const message = body.detail || body.error || body.title;
-    if (message) {
-      return message;
-    }
+    body = JSON.parse(text) as ProblemBody;
   } catch {
     // not JSON
   }
-  return `${method} ${path}: ${res.status} ${text}`;
+  const message =
+    body?.detail || body?.error || body?.title || `${method} ${path}: ${res.status} ${text}`;
+  return new ApiError(res.status, message, body?.type, body?.reason);
+}
+
+export async function errorMessage(res: Response, method: string, path: string): Promise<string> {
+  return (await apiError(res, method, path)).message;
 }

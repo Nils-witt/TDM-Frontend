@@ -1,6 +1,12 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import type { AuthMode } from '@/auth/session';
-import { currentAccessToken, onAccessTokenRenewed, websocketUrl } from './client';
+import {
+  currentAccessToken,
+  currentSessionId,
+  onAccessTokenRenewed,
+  sessionEndedEvent,
+  websocketUrl,
+} from './client';
 import { setSocketLive } from './connectivity';
 import { changedPaths, eventsPath, everything, LiveContext, type ServerEvent } from './events';
 import { useReplica } from './replica';
@@ -8,12 +14,15 @@ import { useResourceCache } from './resource';
 
 const minRetryDelay = 1000;
 const maxRetryDelay = 30_000;
+// The API closes the stream with it once its session ended (the reason).
+const sessionEndedCode = 4403;
 
 // Keeps a WebSocket to the API open while signed in and reloads the shown
 // resources and replica scopes (replica.ts) whose entity types changed. With a token, it authenticates with
 // its first message and again after each renewal, as a browser cannot send
 // the Authorization header on a WebSocket; behind the client certificate
-// proxy the upgrade request is authenticated itself.
+// proxy the upgrade request is authenticated itself. The stream names the
+// session (user function and scope), so an open stream keeps it from idling.
 function EventsProvider({ mode, children }: { mode: AuthMode; children: ReactNode }) {
   const cache = useResourceCache();
   const replica = useReplica();
@@ -30,11 +39,13 @@ function EventsProvider({ mode, children }: { mode: AuthMode; children: ReactNod
     const sendToken = () => {
       const token = currentAccessToken();
       if (mode !== 'oidc' || !token || ws?.readyState !== WebSocket.OPEN) return;
-      ws.send(JSON.stringify({ type: 'auth', token }));
+      ws.send(JSON.stringify({ type: 'auth', token, session: currentSessionId() ?? '' }));
     };
 
     const connect = () => {
-      const socket = new WebSocket(websocketUrl(eventsPath));
+      const session = currentSessionId();
+      const path = session ? `${eventsPath}?session=${encodeURIComponent(session)}` : eventsPath;
+      const socket = new WebSocket(websocketUrl(path));
       ws = socket;
       socket.onopen = sendToken;
       socket.onmessage = (msg) => {
@@ -65,8 +76,12 @@ function EventsProvider({ mode, children }: { mode: AuthMode; children: ReactNod
       };
       // Also after a rejected or expired token (4401): the session renews it
       // or a 401 of the next request shows the login page.
-      socket.onclose = () => {
+      socket.onclose = (e) => {
         if (ws !== socket || stopped) return;
+        if (e.code === sessionEndedCode) {
+          window.dispatchEvent(new CustomEvent(sessionEndedEvent, { detail: e.reason || 'ended' }));
+          return;
+        }
         closedBefore = true;
         setLive(false);
         setSocketLive(false);

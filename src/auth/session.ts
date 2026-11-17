@@ -1,12 +1,21 @@
 import { type User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
-import { type AuthConfig, getAuthConfig, type Principal, whoAmI } from '@/api/auth';
+import {
+  type AuthConfig,
+  getAuthConfig,
+  normalizePrincipal,
+  type Principal,
+  whoAmI,
+} from '@/api/auth';
 import {
   accessTokenRenewed,
   ApiError,
+  sessionProblem,
   setAccessTokenSource,
   setApiTarget,
+  setSessionIdSource,
   setTokenRefresh,
 } from '@/api/client';
+import { forgetSession, sessionApi, storedSessionId } from '@/api/sessions';
 import { isNetworkError } from '@/api/connectivity';
 import { clearOffline, loadSession, saveSession } from '@/api/offlineStore';
 
@@ -30,6 +39,19 @@ let manager: UserManager | null = null;
 let user: User | null = null;
 
 setAccessTokenSource(() => (user && !user.expired ? user.access_token : null));
+setSessionIdSource(() => storedSessionId());
+
+// The caller in the stored session; a session that can no longer be used is
+// forgotten, and the caller is then without one (App shows the picker).
+export async function identify(): Promise<Principal> {
+  try {
+    return normalizePrincipal(await whoAmI());
+  } catch (err) {
+    if (!sessionProblem(err)) throw err;
+    forgetSession();
+    return normalizePrincipal(await whoAmI());
+  }
+}
 
 // Seconds the current access token was valid for when this tab got it.
 let tokenLifetime = 0;
@@ -159,7 +181,7 @@ const message = (err: unknown) => (err instanceof Error ? err.message : String(e
 
 async function signInWithToken(m: UserManager): Promise<SessionStart> {
   try {
-    return { status: 'signedIn', principal: await whoAmI(), mode: 'oidc' };
+    return { status: 'signedIn', principal: await identify(), mode: 'oidc' };
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
       await m.removeUser();
@@ -194,10 +216,10 @@ function certificateRemembered(): boolean {
 // the proxy refuses the TLS handshake.
 async function probeClientCertificate(): Promise<Principal> {
   try {
-    const principal = await whoAmI(true, 'mtls');
+    await whoAmI(true, 'mtls');
     setApiTarget('mtls');
     rememberCertificate(true);
-    return principal;
+    return await identify();
   } catch (err) {
     setApiTarget('oidc');
     rememberCertificate(false);
@@ -315,6 +337,7 @@ export async function login() {
 // Ends the Authentik session too when the provider offers an end-session
 // endpoint; else only this tab's tokens are dropped.
 export async function logout(): Promise<'redirected' | 'local'> {
+  await endSession();
   if (certificateRemembered()) {
     rememberCertificate(false);
     setApiTarget('oidc');
@@ -327,6 +350,18 @@ export async function logout(): Promise<'redirected' | 'local'> {
   }
   await m.removeUser();
   return 'local';
+}
+
+// Ends the API session (Log Out) and forgets it; the API may be unreachable.
+export async function endSession() {
+  if (storedSessionId()) {
+    try {
+      await sessionApi.endCurrent();
+    } catch {
+      // ends by idling
+    }
+  }
+  forgetSession();
 }
 
 export async function dropTokens() {

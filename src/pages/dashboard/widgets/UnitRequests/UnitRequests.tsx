@@ -166,7 +166,13 @@ function Row({
       className={className || undefined}
       tabIndex={pending ? 0 : undefined}
       aria-disabled={pending && !clickable ? true : undefined}
-      title={pending ? (canAcknowledge ? 'Click to acknowledge' : undefined) : undefined}
+      title={
+        pending
+          ? canAcknowledge
+            ? 'Click to acknowledge'
+            : 'Acknowledging needs units.edit, a connected units server and the API'
+          : undefined
+      }
       onClick={clickable ? onAcknowledge : undefined}
       onKeyDown={
         clickable

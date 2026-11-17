@@ -19,8 +19,11 @@ export type Patient = EntityMeta & {
   birth_date: string | null;
   // Free text.
   event: string | null;
-  // The linked missions, oldest link first; never empty.
+  // The linked missions in the session's scope, oldest link first.
   missions: string[];
+  // The linked missions outside the session's scope: only their ID and
+  // occurred event. Absent from an API older than scopes in sessions.
+  other_missions?: { id: string; name: string }[];
   // When the last linked mission closed; null while one is open.
   closed_at: Timestamp | null;
 };
@@ -129,7 +132,9 @@ export function unlinkBlocker(
   p: Patient,
   mission: Pick<Mission, 'status'> | undefined,
 ): string | null {
-  if (p.missions.length <= 1) return 'A patient keeps at least one mission.';
+  if (p.missions.length + (p.other_missions?.length ?? 0) <= 1) {
+    return 'A patient keeps at least one mission.';
+  }
   if (mission?.status === 'closed') return 'The mission is closed: its patients are frozen.';
   return null;
 }

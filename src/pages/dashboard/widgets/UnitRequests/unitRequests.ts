@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useOffline } from '@/api/connectivity';
+import { useHasPermission } from '@/app/session';
 import {
   acknowledgeUnitRequest,
   isPendingRequest,
@@ -30,6 +31,7 @@ export function useUnitRequests(fns: ReadonlySet<string> = none, currentScopeOnl
   const units = useUnits();
   const inScope = useUnitScopeMatch(currentScopeOnly);
   const offline = useOffline();
+  const mayAcknowledge = useHasPermission('units.edit');
   const [acknowledging, setAcknowledging] = useState<string | null>(null);
   const [ownError, setError] = useState<string | null>(null);
 
@@ -84,7 +86,7 @@ export function useUnitRequests(fns: ReadonlySet<string> = none, currentScopeOnl
     connected: units.data?.connected ?? true,
     loading: units.data === undefined && units.error === null,
     // Acknowledging needs the API and its connection to the units server.
-    canAcknowledge: !offline && (units.data?.connected ?? false),
+    canAcknowledge: !offline && mayAcknowledge && (units.data?.connected ?? false),
     pending,
     acknowledged,
     functions,

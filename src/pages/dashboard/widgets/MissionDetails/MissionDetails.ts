@@ -7,6 +7,7 @@ import {
   patchMission,
 } from '@/api/missions';
 import { useOffline } from '@/api/connectivity';
+import { useHasPermission } from '@/app/session';
 import { useMissions } from '@/data/missionsContext';
 import { useSelectedMission } from '@/data/selectedMissionContext';
 import { useCatalogs } from '@/data/catalogContext';
@@ -69,6 +70,9 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   const [busy, setBusy] = useState(false);
   // The request waiting for the confirmation of closing.
   const [pendingClose, setPendingClose] = useState<MissionFields | null>(null);
+  // The request waiting for the confirmation of moving the mission to
+  // another scope, where this session no longer sees it.
+  const [pendingMove, setPendingMove] = useState<MissionFields | null>(null);
   // Changes whenever edits are discarded, so inputs holding state of their own,
   // as the mission type's group, drop it too.
   const [resetKey, setResetKey] = useState(0);
@@ -77,8 +81,14 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   const { scopeId } = useSelectedScope();
   const { scopes } = useCatalogs();
   const closed = mission?.status === 'closed';
-  // Offline nothing can be saved, a new mission neither.
-  const readOnly = closed || offline;
+  // Offline nothing can be saved, a new mission neither, nor without
+  // missions.edit.
+  const canEdit = useHasPermission('missions.edit');
+  // New missions are created in the session's scope; moving one needs
+  // missions.manage.
+  const canMove = useHasPermission('missions.manage');
+  const scopeLocked = creating || !canMove;
+  const readOnly = closed || offline || !canEdit;
   const base = mission ?? blank;
 
   const value = (k: TextKey) => edits[k] ?? base[k];
@@ -211,6 +221,10 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
     }
     if (typeChanged) body.mission_type = typeEdit;
     if (scopeChanged) body.scope = scopeEdit;
+    if (scopeChanged && !creating) {
+      setPendingMove(body as MissionFields);
+      return;
+    }
     if (body.status === 'closed') {
       setPendingClose(body as MissionFields);
       return;
@@ -220,6 +234,18 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
     } catch (err) {
       setError((err as Error).message);
     }
+  };
+
+  // Closing still asks on its own.
+  const confirmMove = async () => {
+    if (pendingMove === null) return;
+    const body = pendingMove;
+    setPendingMove(null);
+    if (body.status === 'closed') {
+      setPendingClose(body);
+      return;
+    }
+    await send(body);
   };
 
   // Rejects, so the dialog shows the error.
@@ -263,6 +289,10 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
     closing: pendingClose !== null,
     confirmClose,
     cancelClose: () => setPendingClose(null),
+    moving: pendingMove !== null,
+    confirmMove,
+    cancelMove: () => setPendingMove(null),
+    scopeLocked,
     resetKey,
     id,
     scopeValue,

@@ -163,7 +163,14 @@ function Entry({
           {actionLabels[e.action] ?? e.action} {e.entity_type}
         </p>
         <p className="secondary">
-          {formatTime(e.occurred_at)} · {e.actor} · <code>{e.entity_id}</code>
+          {formatTime(e.occurred_at)} · {e.actor}
+          {e.function && (
+            <>
+              {' '}
+              as {e.function.name} in {e.scope?.id === '' ? 'Default' : (e.scope?.name ?? '?')}
+            </>
+          )}{' '}
+          · <code>{e.entity_id}</code>
         </p>
         {fields.length > 0 && (
           <dl className={styles.changes}>

@@ -3,6 +3,7 @@ import Alert from '@/components/Alert';
 import { FormError } from '@/components/form';
 import Spinner from '@/components/Spinner';
 import { useOffline } from '@/api/connectivity';
+import { useCan } from '@/app/session';
 import { useErrorState } from '@/api/resource';
 import { unitScopeOf, useUnitScopes } from '@/api/unitScopes';
 import { type Unit, unitFunctions, unitLabel, useUnits } from '@/api/units';
@@ -33,6 +34,7 @@ function UnitScopes({ options }: WidgetProps) {
   const unitScopes = useUnitScopes();
   const scopes = useCatalogs().scopes;
   const offline = useOffline();
+  const move = useCan('units.manage');
   const fns = useUnitFunctionFilter(options);
   const [query, setQuery] = useState('');
   const [scopeFilter, setScopeFilter] = useWidgetState('scope', allScopes, parseString);
@@ -185,7 +187,8 @@ function UnitScopes({ options }: WidgetProps) {
                         aria-label={`Scope of ${label}`}
                         className={styles.scopeSelect}
                         value={scopeOf(u.id) ?? defaultScope}
-                        disabled={offline || saving === u.id}
+                        disabled={offline || !move.allowed || saving === u.id}
+                        title={move.hint}
                         onChange={(e) => change(u, e.target.value)}
                       >
                         {scopeChoices}

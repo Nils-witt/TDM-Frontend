@@ -1,3 +1,4 @@
+import { useCan } from '@/app/session';
 import { useState } from 'react';
 import { formatPatientName, type Patient, patientsApi } from '@/api/patients';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -19,6 +20,7 @@ type Props = {
 // closed missions are frozen (PatientMissionLinks). A change someone else
 // made in the meantime fails with 412 (If-Match), shown by the form.
 function PatientEditor({ patient, readOnly, onChange, onDeleted, onClose }: Props) {
+  const remove = useCan('patients.manage');
   const [deleting, setDeleting] = useState(false);
   return (
     <div className={sectionStack}>
@@ -35,7 +37,13 @@ function PatientEditor({ patient, readOnly, onChange, onDeleted, onClose }: Prop
             <button type="button" className="btn" onClick={onClose}>
               Close
             </button>
-            <button type="button" className="btn" onClick={() => setDeleting(true)}>
+            <button
+              type="button"
+              className="btn"
+              disabled={!remove.allowed}
+              title={remove.hint}
+              onClick={() => setDeleting(true)}
+            >
               Delete
             </button>
           </>

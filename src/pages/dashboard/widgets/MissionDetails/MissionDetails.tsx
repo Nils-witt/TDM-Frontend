@@ -50,6 +50,10 @@ export function MissionForm({
     closing,
     confirmClose,
     cancelClose,
+    moving,
+    confirmMove,
+    cancelMove,
+    scopeLocked,
     resetKey,
     scopeValue,
     setScope,
@@ -101,12 +105,19 @@ export function MissionForm({
             {mission ? `${formatTime(mission.created_at)} · ${mission.created_by}` : '-/-'}
           </SectionText>
         </Section>
-        <Section legend="Scope" disabled={readOnly}>
+        <Section legend="Scope" disabled={readOnly || scopeLocked}>
           <FieldRow id={id('scope')} label="Scope">
             {/* Scope IDs are UUIDs, so '' stands for Default. */}
             <select
               id={id('scope')}
               className="grow"
+              title={
+                scopeLocked
+                  ? mission
+                    ? 'Moving a mission to another scope needs the permission missions.manage'
+                    : "New missions are created in your session's scope"
+                  : undefined
+              }
               value={scopeValue ?? ''}
               onChange={(e) => setScope(e.target.value || null)}
             >
@@ -205,6 +216,15 @@ export function MissionForm({
         />
         <FormError error={error} onClose={() => setError(null)} />
       </WidgetForm>
+      {moving && (
+        <ConfirmDialog
+          title="Move mission"
+          message="The mission moves to another scope. You work in this scope only, so it disappears from your view."
+          confirmLabel="Move mission"
+          onConfirm={confirmMove}
+          onCancel={cancelMove}
+        />
+      )}
       {closing && (
         <ConfirmDialog
           title="Close mission"

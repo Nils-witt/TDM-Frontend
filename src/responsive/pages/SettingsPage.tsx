@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
 import { useDefaultOverlayStates, useOverlays } from '@/api/maps';
 import { preferDesktop } from '@/app/mobileRoute';
-import { displayName, isAdmin, useSession } from '@/app/session';
+import { allowedViews, displayName, isAdmin, useSession } from '@/app/session';
 import Alert from '@/components/Alert';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
 import { defaultOverlayState } from '@/pages/dashboard/widgets/Map/overlayState';
@@ -112,23 +112,26 @@ function SettingsPage() {
 
       <OverlaySettings />
 
-      <section className={styles.section} aria-labelledby="settings-view">
-        <h2 id="settings-view" className={styles.legend}>
-          View
-        </h2>
-        <div className={styles.list}>
-          <button type="button" className={styles.action} onClick={toDesktop}>
-            <SymbolIcon name="desktop_windows" />
-            <span className={styles.text}>
-              <span>Desktop view</span>
-              <span className={styles.secondary}>
-                Opens the dashboard and keeps it on this device
+      {/* Hidden for a user function without the desktop view. */}
+      {allowedViews(principal).desktop && (
+        <section className={styles.section} aria-labelledby="settings-view">
+          <h2 id="settings-view" className={styles.legend}>
+            View
+          </h2>
+          <div className={styles.list}>
+            <button type="button" className={styles.action} onClick={toDesktop}>
+              <SymbolIcon name="desktop_windows" />
+              <span className={styles.text}>
+                <span>Desktop view</span>
+                <span className={styles.secondary}>
+                  Opens the dashboard and keeps it on this device
+                </span>
               </span>
-            </span>
-            <SymbolIcon name="chevron_right" />
-          </button>
-        </div>
-      </section>
+              <SymbolIcon name="chevron_right" />
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className={styles.section} aria-labelledby="settings-session">
         <h2 id="settings-session" className={styles.legend}>

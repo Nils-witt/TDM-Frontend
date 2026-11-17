@@ -9,7 +9,7 @@ import {
   useLayouts,
   usePreferences,
 } from '@/api/layouts';
-import { useIsAdmin } from '@/app/session';
+import { useHasPermission } from '@/app/session';
 import Spinner from '@/components/Spinner';
 import { migrateLocalLayouts } from './localLayouts';
 import {
@@ -106,7 +106,8 @@ function windowName(): string {
 }
 
 function LayoutProvider({ children }: { children: ReactNode }) {
-  const isAdmin = useIsAdmin();
+  // layouts.manage writes the global and group layouts.
+  const isAdmin = useHasPermission('layouts.manage');
   const { layouts, loaded: layoutsLoaded, reload } = useLayouts();
   const { preferences, loaded: preferencesLoaded, setDefaultLayout } = usePreferences();
   const storedDefault = preferences?.default_layout_id ?? null;

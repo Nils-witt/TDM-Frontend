@@ -4,19 +4,18 @@ import type { MissionScope } from '@/api/catalogs';
 export const defaultScopeName = 'Default';
 export const globalScopeName = 'Global';
 
-// The mission scope this tab works in; new missions are created in it. null
-// is the implicit Default scope. Global shows every scope's missions and
-// units; it is not a scope of its own, so new missions then go to Default.
+// The mission scope of the session; new missions are created in it. null
+// is the implicit Default scope (the API's "Global": no scope).
 export type SelectedScope = {
-  // null for Default, and while global.
+  // null for Default.
   scopeId: string | null;
-  // null for Default, and while global.
+  // null for Default.
   scope: MissionScope | null;
+  // Always false: a session works in one scope. Kept for the filters that
+  // still ask.
   global: boolean;
   // Whether a mission or unit in this scope (null = Default) is shown.
   matches: (scope: string | null | undefined) => boolean;
-  setScope: (id: string | null) => void;
-  setGlobal: () => void;
 };
 
 export const SelectedScopeContext = createContext<SelectedScope | null>(null);
@@ -33,11 +32,9 @@ export function selectedScopeName({ global, scope }: SelectedScope): string {
   return scope?.name ?? defaultScopeName;
 }
 
-// The pickers' tooltip.
+// The tooltip of the session's scope.
 export function selectedScopeTitle(sel: SelectedScope): string {
-  return sel.global
-    ? `Showing every scope; new missions are created in ${defaultScopeName}`
-    : `New missions are created in ${selectedScopeName(sel)}`;
+  return `You work in ${selectedScopeName(sel)}; new missions are created there`;
 }
 
 // The name a mission's scope ID is shown by: Default for none, the ID of a

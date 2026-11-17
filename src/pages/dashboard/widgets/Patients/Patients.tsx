@@ -26,11 +26,6 @@ function Patients({ options }: WidgetProps) {
   const scope = useSelectedScope();
   const [q, setQ] = useState('');
   const [event, setEvent] = useState('');
-  const [allScopes, setAllScopes] = useWidgetState(
-    'allScopes',
-    options.currentScopeOnly !== true,
-    parseBool,
-  );
   const [closed, setClosed] = useWidgetState(
     'includeClosed',
     options.includeClosed === true,
@@ -41,7 +36,7 @@ function Patients({ options }: WidgetProps) {
     q: useDebounced(q, 300),
     event: useDebounced(event, 300),
     closed,
-    scope: patientScope(scope, !allScopes),
+    scope: patientScope(scope, true),
   };
   const list = usePatients(offline ? null : filter);
 
@@ -49,9 +44,6 @@ function Patients({ options }: WidgetProps) {
 
   const actions = (
     <WidgetActionBar label="Patient filters">
-      <WidgetAction pressed={allScopes} onClick={() => setAllScopes((v) => !v)}>
-        All Scopes
-      </WidgetAction>
       <WidgetAction pressed={closed} onClick={() => setClosed((v) => !v)}>
         Include Closed
       </WidgetAction>

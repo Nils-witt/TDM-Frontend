@@ -76,6 +76,17 @@ function PatientMissionLinks({ patient, readOnly, onChange }: Props) {
                 </tr>
               );
             })}
+            {(patient.other_missions ?? []).map((m) => (
+              <tr key={m.id} title="In another scope: you cannot open or unlink it">
+                <td>
+                  <span className="muted">{m.name}</span>
+                </td>
+                <td>
+                  <span className="muted">Other scope</span>
+                </td>
+                <td />
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

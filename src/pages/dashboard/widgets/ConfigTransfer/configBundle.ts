@@ -90,6 +90,13 @@ export type BundleTemplate = { name: string; source: string };
 export type BundleWorkflow = { name: string; enabled: boolean; graph: WorkflowGraph };
 export type BundlePermissions = { group: string; permissions: string[] };
 
+// Functional permissions (granted to user functions) and the names an older
+// API used (missions.closed.*, patients.archive.view).
+const notForGroups = (name: string) =>
+  /^(missions|patients|units)\.(view|edit|manage)$/.test(name) ||
+  name.startsWith('missions.closed.') ||
+  name === 'patients.archive.view';
+
 // A section left out is not part of the file and not touched by an import.
 export type ConfigBundle = {
   format: typeof bundleFormat;
@@ -715,7 +722,9 @@ export async function planImport(
         });
         continue;
       }
-      const want = [...new Set(p.permissions)].toSorted();
+      // Groups hold personal permissions only: functional ones belong to user
+      // functions, and files of older versions name retired ones.
+      const want = [...new Set(p.permissions)].filter((n) => !notForGroups(n)).toSorted();
       if (stableJson(want) === stableJson(group.permissions)) {
         same('permissions');
         continue;
