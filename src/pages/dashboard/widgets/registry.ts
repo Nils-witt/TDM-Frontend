@@ -344,8 +344,8 @@ const PdfViewer: Widget = {
 // only-selected shows just the selected one; show-unsaved whether Mission Details' unsaved edits move the pins.
 // show-units shows the units server's units at their last known position (only-selected: those
 // on the selected mission; currentScopeOnly: those in the tab's unit scope).
-// With a tile server configured in the API a switcher turns its overlays on
-// and off.
+// The action bar's Options… dialog sets the zoom on selection and, with a tile
+// server configured in the API, turns its overlays on and off.
 const MapView: Widget = {
   id: 'Map',
   name: 'Map',
@@ -371,6 +371,16 @@ const MapView: Widget = {
       max: 180,
     },
     { key: 'zoom', label: 'Start zoom', type: 'number', default: 5, min: 0, max: 22 },
+    // The least zoom the map flies to for the selected mission; the widget's
+    // Options… dialog changes it for that widget.
+    {
+      key: 'selection-zoom',
+      label: 'Zoom on selection',
+      type: 'number',
+      default: 15,
+      min: 0,
+      max: 22,
+    },
     // Closed missions are not shown, and so not loaded, unless asked for.
     ...missionStatuses.map((s) => ({
       key: `show-${s.value}`,

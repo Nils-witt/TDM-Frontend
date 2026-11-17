@@ -208,8 +208,6 @@
   background: #fff;
 }
 
-// The overlay switcher sits over the map's top-left corner; its labels are sized like those of a
-// widget form.
 .mapFrame {
   position: relative;
   flex: 1;
@@ -217,31 +215,34 @@
   display: flex;
 }
 
-.overlays {
-  position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
-  max-width: calc(100% - 4rem);
-  max-height: calc(100% - 1rem);
+// As ConfirmDialog's; its form is a WidgetForm.
+.optionsDialog {
+  width: min(420px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 1.25rem;
+  border: 0.5px solid var(--dropdown-border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+
+  // Light, so the map behind shows the changes.
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.125rem;
+  }
 }
 
 .overlayList {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  min-height: 0;
   margin: 0;
-  padding: 0.5rem;
-  overflow-y: auto;
-  border: 1px solid var(--divider);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow);
+  padding: 0;
   list-style: none;
 }
 

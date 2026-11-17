@@ -12,6 +12,7 @@ import { apiUrl, authHeaders } from '@/api/client';
 import type { Coordinates } from '@/api/missions';
 import {
   fetchOverlayBounds,
+  type Overlay,
   type OverlayBounds,
   overlayTilePath,
   resolveMapStyle,
@@ -32,7 +33,8 @@ import type { WidgetProps } from '../widgetOptions';
 import { type MapMarker, type UnitMarker, useMapMarkers, useMapUnits } from './Map.ts';
 import { formatPlace, useMapActions } from './mapActions';
 import styles from './Map.module.scss';
-import OverlaySwitcher from './OverlaySwitcher';
+import MapOptions from './MapOptions';
+import { parseZoom } from './selectionZoom';
 import { defaultOverlayState, parseOverlayStates, type OverlayState } from './overlayState';
 import { useWidgetState } from '../widgetState';
 
@@ -40,8 +42,9 @@ import { useWidgetState } from '../widgetState';
 // away; point it at the worker file Vite serves as an asset instead.
 setWorkerUrl(workerUrl);
 
-// The least zoom the map flies to for the selected mission.
-const selectedZoom = 15;
+// The least zoom the map flies to for the selected mission, unless the
+// layout's selection-zoom option or the Options… dialog sets another.
+const defaultSelectionZoom = 15;
 
 // As long as Android waits before its context menu.
 const longPressMs = 500;
@@ -157,7 +160,6 @@ function applyOverlays(
   for (const [id, s] of Object.entries(state)) {
     const key = overlaySourceId(id);
     const b = bounds[id];
-    console.log(overlayTilePath(id), apiUrl(overlayTilePath(id)));
     if (s.on && b) {
       if (!m.getSource(key)) {
         m.addSource(key, {
@@ -186,6 +188,7 @@ export type OverlayControl = {
 };
 
 const noOverlays: Record<string, OverlayState> = {};
+const noOverlayList: readonly Overlay[] = [];
 
 // The overlays admins switched on by default (Map Admin) start on, until the
 // map's own state switches them. Without overlayControl the map keeps that
@@ -224,6 +227,16 @@ export function MissionMap({
     noOverlays,
     parseOverlayStates,
   );
+  // Starts from the layout's option; the Options… dialog changes it per widget.
+  const [selectionZoom, setSelectionZoom] = useWidgetState(
+    'selectionZoom',
+    parseZoom(Number(options['selection-zoom'])) ?? defaultSelectionZoom,
+    parseZoom,
+  );
+  const selectionZoomRef = useRef(selectionZoom);
+  useEffect(() => {
+    selectionZoomRef.current = selectionZoom;
+  });
   const defaultOverlays = useDefaultOverlayStates();
   const ownOrControlled = overlayControl?.state ?? ownOverlayState;
   const overlayState = useMemo(
@@ -419,13 +432,14 @@ export function MissionMap({
     return () => placed.forEach((p) => p.remove());
   }, [units]);
 
-  // Fly again when the selected mission, or where it is, changes.
+  // Fly again when the selected mission, or where it is, changes; not when
+  // only the selection zoom does.
   const target = selected ? `${selected.longitude},${selected.latitude}` : '';
   useEffect(() => {
     const m = map.current;
     if (!m || target === '') return;
     const [lng = 0, lat = 0] = target.split(',').map(Number);
-    m.flyTo({ center: [lng, lat], zoom: Math.max(m.getZoom(), selectedZoom) });
+    m.flyTo({ center: [lng, lat], zoom: Math.max(m.getZoom(), selectionZoomRef.current) });
   }, [target]);
 
   return (
@@ -445,9 +459,13 @@ export function MissionMap({
       )}
       <div className={styles.mapFrame}>
         <div ref={container} className={styles.map} />
-        {!overlayControl && listed && listed.length > 0 && (
-          <OverlaySwitcher overlays={listed} state={overlayState} onChange={setOverlay} />
-        )}
+        <MapOptions
+          selectionZoom={selectionZoom}
+          onSelectionZoomChange={setSelectionZoom}
+          overlays={(!overlayControl && listed) || noOverlayList}
+          overlayState={overlayState}
+          onOverlayChange={setOverlay}
+        />
       </div>
     </div>
   );
