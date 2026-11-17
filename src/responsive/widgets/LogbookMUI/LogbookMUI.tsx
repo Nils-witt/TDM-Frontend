@@ -50,7 +50,6 @@ function MissionLogbookMUI({
     setTypeFilter,
     showFilters,
     toggleFilters,
-    activeFilters,
   } = useLogbookWidget(defaults);
 
   return (
@@ -68,7 +67,7 @@ function MissionLogbookMUI({
               title={showFilters ? 'Hide filters' : 'Show filters'}
               onClick={toggleFilters}
             >
-              Filters{activeFilters > 0 && ` (${activeFilters})`}
+              Filters
             </ActionMUI>
           )}
         </ActionsMUI>
@@ -149,7 +148,7 @@ const EntryItemMUI = memo(function EntryItemMUI({
             onClick={() => onRevoke(e)}
             sx={{ ml: 'auto' }}
           >
-            Revoke…
+            Revoke
           </Button>
         )}
       </Stack>

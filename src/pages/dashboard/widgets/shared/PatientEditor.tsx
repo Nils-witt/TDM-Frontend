@@ -36,7 +36,7 @@ function PatientEditor({ patient, readOnly, onChange, onDeleted, onClose }: Prop
               Close
             </button>
             <button type="button" className="btn" onClick={() => setDeleting(true)}>
-              Delete…
+              Delete
             </button>
           </>
         }

@@ -39,11 +39,7 @@ function AddUnit({ options }: WidgetProps) {
   const actions = (
     <WidgetActionBar label="Add unit actions">
       <WidgetAction onClick={() => void state.reload()}>Refresh</WidgetAction>
-      <FilterToggle
-        open={fns.showFilters}
-        active={fns.activeFilters}
-        onToggle={fns.toggleFilters}
-      />
+      <FilterToggle open={fns.showFilters} onToggle={fns.toggleFilters} />
       <WidgetAction pressed={allScopes} onClick={() => setAllScopes((v) => !v)}>
         All Scopes
       </WidgetAction>

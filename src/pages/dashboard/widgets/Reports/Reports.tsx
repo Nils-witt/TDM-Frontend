@@ -200,7 +200,7 @@ function ReportTable({
                   )}
                   {canShare(r) && (
                     <button type="button" className="btn" onClick={() => onShare(r)}>
-                      Share…
+                      Share
                     </button>
                   )}
                 </span>

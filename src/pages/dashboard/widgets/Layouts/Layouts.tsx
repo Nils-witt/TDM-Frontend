@@ -256,7 +256,7 @@ function LayoutRow({ entry, mine, rename, onShare, onDelete, onHistory }: Layout
               Rename
             </button>
             <button type="button" className="btn" disabled={offline} onClick={onShare}>
-              Share…
+              Share
             </button>
             <button type="button" className="btn" onClick={() => exportLayout(entry)}>
               Export

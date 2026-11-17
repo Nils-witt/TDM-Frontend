@@ -8,7 +8,7 @@ function UserMenu() {
   const name = displayName(principal);
   return (
     <Menu trigger={name} title={`Logged in as ${name}`} tourId="account">
-      <NavMenuItem label="Account Details…" action="about" />
+      <NavMenuItem label="Account Details" action="about" />
       <NavMenuItem label="Log Out" action="logout" />
     </Menu>
   );

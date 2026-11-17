@@ -90,7 +90,7 @@ function ViewMenu() {
           <>
             <MenuSeparator />
             <MenuItem disabled={editing || !monitor} onClick={() => chooseMonitor(null)}>
-              {monitor ? `Monitor: ${monitor.name}…` : 'Choose Monitor…'}
+              {monitor ? `Monitor: ${monitor.name}` : 'Choose Monitor'}
             </MenuItem>
           </>
         )}
@@ -105,25 +105,25 @@ function ViewMenu() {
           {multiMonitor ? 'Edit Monitor Layout' : 'Edit Layout'}
         </MenuItem>
         <MenuItem disabled={locked || !canEdit(active)} onClick={startArrangementEdit}>
-          Edit Monitors…
+          Edit Monitors
         </MenuItem>
         <MenuItem disabled={locked} onClick={() => startEdit(true)}>
-          New Layout…
+          New Layout
         </MenuItem>
         {canWrite('global') && (
           <MenuItem disabled={locked || !activeStored} onClick={() => setSharingOpen(true)}>
-            Share…
+            Share
           </MenuItem>
         )}
         <MenuItem disabled={locked || !canEdit(active)} onClick={removeActive}>
-          Delete Layout…
+          Delete Layout
         </MenuItem>
         <MenuSeparator />
         <MenuItem disabled={editing} onClick={() => exportLayout(active)}>
-          Export Layout…
+          Export Layout
         </MenuItem>
         <MenuItem disabled={locked} onClick={() => importInput.current?.click()}>
-          Import Layout…
+          Import Layout
         </MenuItem>
       </Menu>
       <input

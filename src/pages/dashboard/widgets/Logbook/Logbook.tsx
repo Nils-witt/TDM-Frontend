@@ -49,7 +49,6 @@ function MissionLogbook({
     setTypeFilter,
     showFilters,
     toggleFilters,
-    activeFilters,
   } = useLogbookWidget(defaults);
   const typeId = useId();
   const partyId = useId();
@@ -63,9 +62,7 @@ function MissionLogbook({
               Create
             </WidgetAction>
           )}
-          {mission !== null && (
-            <FilterToggle open={showFilters} active={activeFilters} onToggle={toggleFilters} />
-          )}
+          {mission !== null && <FilterToggle open={showFilters} onToggle={toggleFilters} />}
         </WidgetActionBar>
       )}
       {mission !== null && showFilters && (
@@ -146,7 +143,7 @@ const EntryItem = memo(function EntryItem({
       {canRevoke && (
         <ContextMenu at={menu.at} onClose={menu.close} label="Log entry">
           <MenuItem icon={<BlockIcon />} onClick={() => onRevoke(e)}>
-            Revoke…
+            Revoke
           </MenuItem>
         </ContextMenu>
       )}

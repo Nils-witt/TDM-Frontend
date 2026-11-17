@@ -53,13 +53,9 @@ function UnitRequests({ options }: WidgetProps) {
   const actions = (
     <WidgetActionBar label="Unit request actions">
       <WidgetAction onClick={() => void state.reload()}>Refresh</WidgetAction>
-      <FilterToggle
-        open={fns.showFilters}
-        active={fns.activeFilters}
-        onToggle={fns.toggleFilters}
-      />
+      <FilterToggle open={fns.showFilters} onToggle={fns.toggleFilters} />
       <WidgetAction pressed={showAcknowledged} onClick={() => setShowAcknowledged((v) => !v)}>
-        Acknowledged{acknowledged.length > 0 && ` (${acknowledged.length})`}
+        Acknowledged
       </WidgetAction>
     </WidgetActionBar>
   );

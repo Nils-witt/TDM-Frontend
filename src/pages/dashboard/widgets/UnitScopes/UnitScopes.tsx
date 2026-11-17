@@ -80,11 +80,7 @@ function UnitScopes({ options }: WidgetProps) {
       <WidgetAction onClick={() => void Promise.all([units.reload(), unitScopes.reload()])}>
         Refresh
       </WidgetAction>
-      <FilterToggle
-        open={fns.showFilters}
-        active={fns.activeFilters}
-        onToggle={fns.toggleFilters}
-      />
+      <FilterToggle open={fns.showFilters} onToggle={fns.toggleFilters} />
     </WidgetActionBar>
   );
 

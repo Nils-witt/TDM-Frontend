@@ -43,7 +43,7 @@ import { useWidgetState } from '../widgetState';
 setWorkerUrl(workerUrl);
 
 // The least zoom the map flies to for the selected mission, unless the
-// layout's selection-zoom option or the Options… dialog sets another.
+// layout's selection-zoom option or the Options dialog sets another.
 const defaultSelectionZoom = 15;
 
 // As long as Android waits before its context menu.
@@ -227,7 +227,7 @@ export function MissionMap({
     noOverlays,
     parseOverlayStates,
   );
-  // Starts from the layout's option; the Options… dialog changes it per widget.
+  // Starts from the layout's option; the Options dialog changes it per widget.
   const [selectionZoom, setSelectionZoom] = useWidgetState(
     'selectionZoom',
     parseZoom(Number(options['selection-zoom'])) ?? defaultSelectionZoom,
@@ -500,7 +500,7 @@ function MapWidget({ options }: WidgetProps) {
             actions.startCreate();
           }}
         >
-          Create New Mission Here…
+          Create New Mission Here
         </MenuItem>
         <MenuItem
           icon={<LocationIcon />}

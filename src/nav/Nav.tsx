@@ -40,7 +40,7 @@ function Nav() {
                 <NavMenuItem label="Reload" action="reload" keys="Mod+R" />
                 <NavMenuItem label="Responsive View" action="mobileView" />
                 <MenuSeparator />
-                <NavMenuItem label="Log Out…" action="logout" />
+                <NavMenuItem label="Log Out" action="logout" />
               </TopLevelMenu>
               <AppTitle />
               <TopLevelMenu label="Missions">
@@ -48,11 +48,11 @@ function Nav() {
                 <NavMenuItem label="Clear Mission" action="clearMission" shortcut="clearMission" />
                 <NavMenuItem label="Close Mission" action="closeMission" shortcut="closeMission" />
                 <NavMenuItem
-                  label="Intermediate Report…"
+                  label="Intermediate Report"
                   action="printMission"
                   shortcut="printMission"
                 />
-                <NavMenuItem label="Create Report…" action="createReport" />
+                <NavMenuItem label="Create Report" action="createReport" />
                 <NavMenuItem label="Reports" widget="Reports" />
                 <MenuSeparator />
                 <NavMenuItem label="Missions" widget="MissionsList" />
@@ -74,7 +74,7 @@ function Nav() {
                 <NavMenuItem label="Unit Scopes" widget="UnitScopes" />
                 <MenuSeparator />
                 <NavMenuItem label="Units in Mission" widget="MissionUnits" />
-                <NavMenuItem label="Add Unit…" widget="AddUnit" />
+                <NavMenuItem label="Add Unit" widget="AddUnit" />
               </TopLevelMenu>
               <TopLevelMenu label="Logbook">
                 <NavMenuItem label="New Entry" widget="LogbookForm" shortcut="newLogEntry" />
@@ -95,7 +95,7 @@ function Nav() {
                   <NavMenuItem label="Backup Servers" widget="BackupInstances" />
                   <NavMenuItem label="Backup Status" widget="BackupStatus" />
                   <NavMenuItem label="Layouts" widget="Layouts" />
-                  <NavMenuItem label="Import / Export…" widget="ConfigTransfer" />
+                  <NavMenuItem label="Import / Export" widget="ConfigTransfer" />
                   <MenuSeparator />
                   <NavMenuItem label="Users" widget="Users" />
                   <NavMenuItem label="Groups" widget="Groups" />

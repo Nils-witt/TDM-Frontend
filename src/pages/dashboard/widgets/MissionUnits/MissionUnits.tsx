@@ -34,17 +34,11 @@ function MissionUnits({ options }: WidgetProps) {
   const actions = (
     <WidgetActionBar label="Unit actions">
       <WidgetAction disabled={mission === null || readOnly} onClick={() => openWidget('AddUnit')}>
-        Add Unit…
+        Add Unit
       </WidgetAction>
-      {mission !== null && (
-        <FilterToggle
-          open={fns.showFilters}
-          active={fns.activeFilters}
-          onToggle={fns.toggleFilters}
-        />
-      )}
+      {mission !== null && <FilterToggle open={fns.showFilters} onToggle={fns.toggleFilters} />}
       <WidgetAction pressed={showReleased} onClick={() => setShowReleased((v) => !v)}>
-        Released{released.length > 0 && ` (${released.length})`}
+        Released
       </WidgetAction>
     </WidgetActionBar>
   );

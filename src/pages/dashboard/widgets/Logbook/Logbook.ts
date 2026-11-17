@@ -43,10 +43,6 @@ export function useLogbookWidget(defaults: DefaultFilters) {
     return logEntries.items.filter((e) => matchesType(e, typeFilter) && parties(e));
   }, [logEntries.items, typeFilter, filter]);
 
-  const activeFilters = [typeFilter.size > 0, filter.sender !== '', filter.receiver !== ''].filter(
-    Boolean,
-  ).length;
-
   return {
     mission,
     entries: logEntries.items,
@@ -67,6 +63,5 @@ export function useLogbookWidget(defaults: DefaultFilters) {
     setTypeFilter,
     showFilters,
     toggleFilters: () => setShowFilters((v) => !v),
-    activeFilters,
   };
 }

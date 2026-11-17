@@ -95,7 +95,7 @@ function DefaultStyle() {
       )}
       <div className="row">
         <button type="button" className="btn" onClick={() => openWidget('MapStyles')}>
-          Manage styles…
+          Manage styles
         </button>
       </div>
       <FormError error={error ?? styles.error} onClose={() => setError(null)} />

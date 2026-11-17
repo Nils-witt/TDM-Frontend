@@ -29,13 +29,13 @@ function MissionPatients() {
         disabled={!open || !canEdit}
         onClick={() => mission && openWidget('Patient', { missionId: mission.id })}
       >
-        New Patient…
+        New Patient
       </WidgetAction>
       <WidgetAction
         disabled={!open || !canEdit}
         onClick={() => mission && openWidget('LinkPatient', { missionId: mission.id })}
       >
-        Link Existing…
+        Link Existing
       </WidgetAction>
     </WidgetActionBar>
   );

@@ -229,7 +229,7 @@ function ImportSection() {
           disabled={busy || offline}
           onClick={() => fileInput.current?.click()}
         >
-          Choose file…
+          Choose file
         </button>
         {loaded && <span className="muted">{loaded.fileName}</span>}
         <input

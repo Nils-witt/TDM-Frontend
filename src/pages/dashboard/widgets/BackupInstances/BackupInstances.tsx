@@ -140,7 +140,7 @@ function BackupInstancesWidget() {
         !offline && (
           <div className="mt">
             <button type="button" className="btn" onClick={() => setEditing('new')}>
-              Add Backup Server…
+              Add Backup Server
             </button>
           </div>
         )

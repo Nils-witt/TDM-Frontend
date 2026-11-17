@@ -197,7 +197,7 @@ function ReportItemMUI({
         )}
         {canShare && (
           <Button size="small" variant="outlined" onClick={onShare}>
-            Share…
+            Share
           </Button>
         )}
       </Stack>

@@ -53,11 +53,7 @@ function UnitStatus({ options }: WidgetProps) {
   const actions = (
     <WidgetActionBar label="Unit status actions">
       <WidgetAction onClick={() => void reload()}>Refresh</WidgetAction>
-      <FilterToggle
-        open={fns.showFilters}
-        active={fns.activeFilters}
-        onToggle={fns.toggleFilters}
-      />
+      <FilterToggle open={fns.showFilters} onToggle={fns.toggleFilters} />
     </WidgetActionBar>
   );
 

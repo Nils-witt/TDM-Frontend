@@ -60,7 +60,7 @@ function LayoutEditBar() {
   };
 
   // Admins may share a layout with everyone, or make a shared one their own.
-  // Groups are chosen with View → Share…, so group is offered only to keep
+  // Groups are chosen with View → Share, so group is offered only to keep
   // a group layout's groups.
   const scopes = (
     draft.target?.scope === 'group'
@@ -104,7 +104,7 @@ function LayoutEditBar() {
             </select>
           )}
           <button type="button" className="btn" onClick={() => setPicking(true)}>
-            Add widget…
+            Add widget
           </button>
           <FormActions
             submitLabel="Save"
