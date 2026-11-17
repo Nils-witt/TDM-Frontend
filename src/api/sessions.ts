@@ -12,7 +12,11 @@ export type UserFunction = {
   groups: string[];
   // At least one view; absent from an API older than views.
   views?: View[];
-  responsive_pages?: ResponsivePage[];
+  responsive_pages?: FunctionPage[];
+  // The UHS of an UHS function (scope null for Default), null for others.
+  // Its sessions work in that scope only and see only the UHS's patients;
+  // its name, permissions (patients.view / .edit) and views are fixed.
+  uhs?: { id: string; name: string; scope: string | null } | null;
   created_at: string;
   created_by: string;
   updated_at: string;
@@ -23,9 +27,16 @@ export type View = 'desktop' | 'responsive';
 export const viewIds: readonly View[] = ['desktop', 'responsive'];
 
 // The configurable pages of the responsive view (/m); Settings is always
-// shown.
+// shown. uhs, the UHS view, is only for UHS functions (fixed by the API).
 export const responsivePageIds = ['missions', 'archive', 'map', 'reports'] as const;
 export type ResponsivePage = (typeof responsivePageIds)[number];
+export type FunctionPage = ResponsivePage | 'uhs';
+
+// The scope a session of fn must work in: its UHS's (null for Default), or
+// undefined when the user picks.
+export const fixedScopeOf = (
+  fn: Pick<UserFunction, 'uhs'> | undefined,
+): string | null | undefined => (fn?.uhs ? fn.uhs.scope : undefined);
 
 // A mission scope a session can work in; id '' is the Default scope
 // (missions and units without one).

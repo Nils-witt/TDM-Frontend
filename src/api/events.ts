@@ -32,6 +32,10 @@ const typePaths: Record<string, string[]> = {
   unit_scopes: ['/api/v1/unit-scopes'],
   patients: ['/api/v1/patients'],
   patient_missions: ['/api/v1/patients'],
+  // An UHS names its user function.
+  uhs: ['/api/v1/uhs', '/api/v1/user-functions', '/api/v1/me/functions'],
+  // A stay changes the patient and its UHS's patient count.
+  patient_uhs: ['/api/v1/patients', '/api/v1/uhs'],
   map_styles: ['/api/v1/map-styles'],
   map_settings: ['/api/v1/map-settings'],
   // A restriction changes which overlays a caller is listed.

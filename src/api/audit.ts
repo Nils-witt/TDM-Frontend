@@ -12,6 +12,8 @@ export const auditEntityTypes = [
   'logbook_types',
   'file_types',
   'scopes',
+  'uhs',
+  'patient_uhs',
   'log_entries',
   'log_files',
   'tasks',

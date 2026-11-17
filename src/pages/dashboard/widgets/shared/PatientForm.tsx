@@ -1,29 +1,7 @@
-import { type FormEvent, type ReactNode, useId, useState } from 'react';
-import {
-  blankToNull,
-  localDate,
-  type Patient,
-  type PatientFields,
-  patientTextMax,
-} from '@/api/patients';
-import { useNow } from '@/app/useNow';
+import { type ReactNode, useId } from 'react';
+import { type Patient, type PatientFields, patientTextMax } from '@/api/patients';
 import { FieldRow, FormActions, FormError, Section, WidgetForm } from '@/components/form';
-
-type Draft = { first_name: string; last_name: string; birth_date: string; event: string };
-
-const draftOf = (p: Patient | null): Draft => ({
-  first_name: p?.first_name ?? '',
-  last_name: p?.last_name ?? '',
-  birth_date: p?.birth_date ?? '',
-  event: p?.event ?? '',
-});
-
-const fieldsOf = (d: Draft): PatientFields => ({
-  first_name: blankToNull(d.first_name),
-  last_name: blankToNull(d.last_name),
-  birth_date: d.birth_date === '' ? null : d.birth_date,
-  event: blankToNull(d.event),
-});
+import { usePatientForm } from './usePatientForm';
 
 type Props = {
   // null for a new patient. Keyed by the caller, so another patient starts
@@ -50,28 +28,11 @@ function PatientForm({
   extra,
 }: Props) {
   const id = useId();
-  const [draft, setDraft] = useState(() => draftOf(patient));
-  const today = localDate(new Date(useNow(60_000)));
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const initial = draftOf(patient);
-  const dirty = (Object.keys(draft) as (keyof Draft)[]).some((k) => draft[k] !== initial[k]);
-  const set = (k: keyof Draft) => (value: string) => setDraft((d) => ({ ...d, [k]: value }));
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (busy || disabled) return;
-    setBusy(true);
-    try {
-      await onSubmit(fieldsOf(draft));
-      setError(null);
-      if (!patient) setDraft(draftOf(null));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const { draft, set, today, busy, error, setError, dirty, submit, reset } = usePatientForm(
+    patient,
+    onSubmit,
+    disabled,
+  );
 
   const text = (key: 'first_name' | 'last_name' | 'event', label: string) => (
     <FieldRow id={`${id}-${key}`} label={label}>
@@ -108,13 +69,7 @@ function PatientForm({
         hidden={disabled}
         canSubmit={!patient || dirty}
         dirty={onDiscard ? true : dirty}
-        onDiscard={
-          onDiscard ??
-          (() => {
-            setDraft(draftOf(patient));
-            setError(null);
-          })
-        }
+        onDiscard={onDiscard ?? reset}
         discardLabel={onDiscard ? 'Cancel' : 'Discard'}
         extra={extra}
       />

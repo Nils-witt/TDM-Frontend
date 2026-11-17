@@ -10,6 +10,10 @@ export const responsivePaths = {
   map: `${mobileBasePath}/map`,
   reports: `${mobileBasePath}/reports`,
   settings: `${mobileBasePath}/settings`,
+  // The UHS view of an UHS function's session.
+  uhs: `${mobileBasePath}/uhs`,
+  uhsNewPatient: `${mobileBasePath}/uhs/new`,
+  uhsPatient: (id: string) => `${mobileBasePath}/uhs/patients/${encodeURIComponent(id)}`,
   mission: (id: string) => `${mobileBasePath}/missions/${encodeURIComponent(id)}`,
   // The Map page selects the mission and flies to it.
   // The Reports page filtered by the mission.

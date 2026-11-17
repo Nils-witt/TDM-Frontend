@@ -24,6 +24,7 @@ import styles from './Nav.module.scss';
 const adminMenuPermissions = [
   'catalogs.manage',
   'scopes.manage',
+  'uhs.manage',
   'maps.manage',
   'overlays.manage',
   'export-templates.manage',
@@ -82,6 +83,7 @@ function Nav() {
                   <>
                     <MenuSeparator />
                     <NavMenuItem label="Patients in Mission" widget="MissionPatients" />
+                    <NavMenuItem label="Patients in UHS" widget="UhsPatients" />
                     <NavMenuItem label="Patients" widget="Patients" />
                   </>
                 )}
@@ -105,6 +107,7 @@ function Nav() {
                   <NavMenuItem label="Logbook Types" widget="LogbookTypes" />
                   <NavMenuItem label="File Types" widget="FileTypes" />
                   <NavMenuItem label="Scopes" widget="Scopes" />
+                  <NavMenuItem label="UHS" widget="Uhs" />
                   <NavMenuItem label="Map Defaults" widget="MapAdmin" />
                   <NavMenuItem label="Map Styles" widget="MapStyles" />
                   <NavMenuItem label="Overlay Access" widget="OverlayAccess" />

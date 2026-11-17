@@ -3,6 +3,7 @@ import type { Principal } from '@/api/auth';
 import {
   choicesPath,
   fetchChoices,
+  fixedScopeOf,
   lastChoice,
   type SessionChoice,
   type SessionChoices,
@@ -66,7 +67,9 @@ export function SessionChooser({ principal, onChoose, current, secondary, notice
     setBusy(true);
     setError(null);
     try {
-      await onChoose({ function: fn, scope: scope === '' ? null : scope });
+      const fixedScope = fixedScopeOf(choices?.functions.find((f) => f.id === fn));
+      const chosen = fixedScope === undefined ? scope : (fixedScope ?? '');
+      await onChoose({ function: fn, scope: chosen === '' ? null : chosen });
     } catch (err) {
       setError(message(err));
       setBusy(false);
@@ -76,6 +79,9 @@ export function SessionChooser({ principal, onChoose, current, secondary, notice
   if (loadError) return <Alert severity="error">{loadError}</Alert>;
   if (!choices) return <Spinner compact />;
   const selected = choices.functions.find((f) => f.id === fn);
+  // An UHS function works in its UHS's scope only.
+  const fixed = fixedScopeOf(selected);
+  const shownScope = fixed === undefined ? scope : (fixed ?? '');
 
   if (choices.functions.length === 0) {
     return (
@@ -105,6 +111,7 @@ export function SessionChooser({ principal, onChoose, current, secondary, notice
           {choices.functions.map((f) => (
             <option key={f.id} value={f.id}>
               {f.name}
+              {f.uhs ? ' (UHS)' : ''}
             </option>
           ))}
         </select>
@@ -112,7 +119,12 @@ export function SessionChooser({ principal, onChoose, current, secondary, notice
       {selected?.description && <p className={styles.description}>{selected.description}</p>}
       <label className={styles.field}>
         <span>Scope</span>
-        <select value={scope} onChange={(e) => setScope(e.target.value)} disabled={busy}>
+        <select
+          value={shownScope}
+          onChange={(e) => setScope(e.target.value)}
+          disabled={busy || fixed !== undefined}
+          title={fixed !== undefined ? 'An UHS function works in the scope of its UHS.' : undefined}
+        >
           {choices.scopes.map((s) => (
             <option key={s.id} value={s.id}>
               {scopeLabel(s)}
@@ -121,7 +133,9 @@ export function SessionChooser({ principal, onChoose, current, secondary, notice
         </select>
       </label>
       <p className={styles.description}>
-        You see and change only the missions, patients and units of this scope.
+        {selected?.uhs
+          ? `You see and change only the patients in the UHS ${selected.uhs.name}.`
+          : 'You see and change only the missions, patients and units of this scope.'}
       </p>
       {error && <Alert severity="error">{error}</Alert>}
       <div className={styles.actions}>

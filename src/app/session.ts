@@ -1,6 +1,6 @@
 import { createContext, use } from 'react';
 import type { ApiSession, Principal } from '@/api/auth';
-import { type ResponsivePage, responsivePageIds, type SessionChoice } from '@/api/sessions';
+import { type FunctionPage, responsivePageIds, type SessionChoice } from '@/api/sessions';
 import type { AuthMode } from '@/auth/session';
 
 export type Session = {
@@ -62,17 +62,19 @@ export const sessionScopeName = (s: ApiSession) => (s.scope.id === '' ? 'Default
 export type AllowedViews = {
   desktop: boolean;
   responsive: boolean;
-  pages: ReadonlySet<ResponsivePage>;
+  pages: ReadonlySet<FunctionPage>;
 };
 
-const allPages: ReadonlySet<ResponsivePage> = new Set(responsivePageIds);
+// Without views every configurable page; the UHS page needs an UHS function.
+const allPages: ReadonlySet<FunctionPage> = new Set(responsivePageIds);
+const functionPages: readonly FunctionPage[] = ['uhs', ...responsivePageIds];
 
 export function allowedViews(p: Principal): AllowedViews {
   const v = p.views;
   if (!v) return { desktop: true, responsive: true, pages: allPages };
-  const pages = new Set(
-    responsivePageIds.filter((id) => v.responsive_pages.includes(id)),
-  ) as ReadonlySet<ResponsivePage>;
+  const pages: ReadonlySet<FunctionPage> = new Set(
+    functionPages.filter((id) => v.responsive_pages.includes(id)),
+  );
   // The API keeps one view at least; should both be missing, the desktop
   // stays usable rather than redirecting back and forth.
   const desktop = v.desktop || !v.responsive;
@@ -80,3 +82,8 @@ export function allowedViews(p: Principal): AllowedViews {
 }
 
 export const useAllowedViews = () => allowedViews(useSession().principal);
+
+// The UHS of the session's user function, null for others: its sessions see
+// only the patients in it and work in the responsive UHS view.
+export const sessionUhs = (s: ApiSession | null | undefined) => s?.uhs ?? null;
+export const useSessionUhs = () => sessionUhs(useSession().session);

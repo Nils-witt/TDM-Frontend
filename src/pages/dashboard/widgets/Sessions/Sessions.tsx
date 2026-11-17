@@ -55,7 +55,10 @@ function SessionsWidget() {
                   {s.username}
                   {s.id === own.id && <span className="chip"> this session</span>}
                 </td>
-                <td>{s.function.name}</td>
+                <td>
+                  {s.function.name}
+                  {s.uhs && <span className="chip"> UHS</span>}
+                </td>
                 <td>{s.scope.id === '' ? 'Default' : s.scope.name}</td>
                 <td>{when(s.created_at)}</td>
                 <td>{when(s.last_seen)}</td>

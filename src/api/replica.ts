@@ -12,6 +12,7 @@ import { requestAll } from './list';
 import { fileContentPath } from './logbook';
 import { missionUnitsPath } from './missionUnits';
 import { missionsPath } from './missions';
+import { uhsListPath } from './uhs';
 import {
   deleteRow,
   keepContentOut,
@@ -41,6 +42,7 @@ const listOf: Record<ReplicaTable, { path: string; key: string }> = {
   logbook_types: { path: logbookTypesPath, key: 'logbook_types' },
   file_types: { path: fileTypesPath, key: 'file_types' },
   scopes: { path: scopesPath, key: 'scopes' },
+  uhs: { path: uhsListPath, key: 'uhs' },
   log_entries: { path: '/api/v1/log-entries', key: 'log_entries' },
   log_files: { path: '/api/v1/log-files', key: 'log_files' },
   tasks: { path: '/api/v1/tasks', key: 'tasks' },

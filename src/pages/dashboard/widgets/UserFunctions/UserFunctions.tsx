@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react';
+import type { WidgetProps } from '../widgetOptions';
 import { useOffline } from '@/api/connectivity';
 import { fetchGroups, type Group, groupsPath } from '@/api/directory';
 import { fetchPermissionCatalog, type PermissionInfo, permissionsPath } from '@/api/permissions';
@@ -49,15 +50,23 @@ const toggled = <T,>(set: Set<T>, value: T, on: boolean) => {
 };
 const noGroups: readonly Group[] = [];
 
+// What an UHS function may hold; its name, views and lifetime follow the UHS.
+const uhsFunctionPermissions = ['patients.view', 'patients.edit'] as const;
+const uhsHint = 'Set by its UHS (UHS widget).';
+
+const isResponsivePage = (p: string): p is ResponsivePage =>
+  (responsivePageIds as readonly string[]).includes(p);
+
 // The user functions a user chooses one of at sign-in: their functional
 // permissions (missions, patients, units) and the groups that may choose
-// them. Admins only.
-function UserFunctionsWidget() {
+// them. Admins only. The functionId option opens it on one function (the UHS
+// widget's Function button).
+function UserFunctionsWidget({ options }: WidgetProps) {
   const functions = useResource<UserFunction[]>(userFunctionsPath, fetchUserFunctions);
   const catalog = useResource<PermissionInfo[]>(permissionsPath, fetchPermissionCatalog);
   const groups = useResource<Group[]>(groupsPath, fetchGroups);
   const offline = useOffline();
-  const [selectedId, setSelectedId] = useState('');
+  const [selectedId, setSelectedId] = useState(String(options.functionId ?? ''));
   const [newName, setNewName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -105,6 +114,12 @@ function UserFunctionsWidget() {
                     onClick={() => setSelectedId(f.id)}
                   >
                     {f.name}
+                    {f.uhs && (
+                      <span className="badge" title="The function of this UHS">
+                        {' '}
+                        UHS
+                      </span>
+                    )}
                   </button>
                 </li>
               ))}
@@ -165,12 +180,13 @@ function FunctionEditor({ fn, catalog, groups, onChanged, onDeleted }: EditorPro
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const isUhs = !!fn.uhs;
   const dirty = name !== fn.name || description !== fn.description;
   const chosenGroups = groupDraft ?? new Set(fn.groups);
   // An API older than views allows every view and page.
   const chosenViews = viewsDraft ?? {
     views: new Set(fn.views ?? viewIds),
-    pages: new Set(fn.responsive_pages ?? responsivePageIds),
+    pages: new Set((fn.responsive_pages ?? responsivePageIds).filter(isResponsivePage)),
   };
 
   const run = async (action: () => Promise<unknown>) => {
@@ -225,7 +241,8 @@ function FunctionEditor({ fn, catalog, groups, onChanged, onDeleted }: EditorPro
               id="user-function-name"
               value={name}
               maxLength={100}
-              disabled={offline || busy}
+              disabled={offline || busy || isUhs}
+              title={isUhs ? 'Named after its UHS: rename the UHS.' : undefined}
               onChange={(e) => setName(e.target.value)}
             />
           </FieldRow>
@@ -263,7 +280,8 @@ function FunctionEditor({ fn, catalog, groups, onChanged, onDeleted }: EditorPro
               <button
                 type="button"
                 className="btn danger"
-                disabled={offline || busy}
+                disabled={offline || busy || isUhs}
+                title={isUhs ? 'Deleted with its UHS.' : undefined}
                 onClick={() => setConfirmDelete(true)}
               >
                 Delete
@@ -273,12 +291,21 @@ function FunctionEditor({ fn, catalog, groups, onChanged, onDeleted }: EditorPro
         />
       </WidgetForm>
       <FormError error={error} onClose={() => setError(null)} />
+      {fn.uhs && (
+        <SectionText>
+          <span className="muted">
+            The function of the UHS {fn.uhs.name}: its sessions work in that UHS's scope, see only
+            the patients currently in it and open the responsive UHS view.
+          </span>
+        </SectionText>
+      )}
 
       <SectionHeading>Functional permissions</SectionHeading>
       <PermissionChecklist
         catalog={catalog}
         kind="functional"
         granted={fn.permissions}
+        only={isUhs ? uhsFunctionPermissions : undefined}
         onSave={async (permissions) => {
           const saved = await userFunctionApi.setPermissions(fn.id, permissions);
           onChanged();
@@ -287,58 +314,70 @@ function FunctionEditor({ fn, catalog, groups, onChanged, onDeleted }: EditorPro
       />
 
       <SectionHeading>Views</SectionHeading>
-      <SectionText>
-        <span className="muted">
-          Where a session of the function works, and which pages the responsive view shows (Settings
-          always). Permissions still decide what it may see and change.
-        </span>
-      </SectionText>
-      <WidgetForm onSubmit={saveViews}>
-        <Section legend="Views">
-          {viewIds.map((v) => (
-            <label key={v} className="row">
-              <input
-                type="checkbox"
-                checked={chosenViews.views.has(v)}
-                disabled={offline || busy}
-                onChange={(e) =>
-                  setViewsDraft({
-                    ...chosenViews,
-                    views: toggled(chosenViews.views, v, e.target.checked),
-                  })
-                }
-              />
-              <span>{viewLabels[v]}</span>
-            </label>
-          ))}
-          {chosenViews.views.size === 0 && <span className="muted">Choose at least one view.</span>}
-        </Section>
-        <Section legend="Responsive pages">
-          {responsivePageIds.map((p) => (
-            <label key={p} className="row">
-              <input
-                type="checkbox"
-                checked={chosenViews.pages.has(p)}
-                disabled={offline || busy || !chosenViews.views.has('responsive')}
-                onChange={(e) =>
-                  setViewsDraft({
-                    ...chosenViews,
-                    pages: toggled(chosenViews.pages, p, e.target.checked),
-                  })
-                }
-              />
-              <span>{pageLabels[p]}</span>
-            </label>
-          ))}
-        </Section>
-        <FormActions
-          submitLabel="Save"
-          busy={busy}
-          canSubmit={viewsDraft !== null && viewsDraft.views.size > 0 && !offline}
-          dirty={viewsDraft !== null}
-          onDiscard={() => setViewsDraft(null)}
-        />
-      </WidgetForm>
+      {isUhs ? (
+        <SectionText>
+          <span className="muted" title={uhsHint}>
+            Responsive only, with the UHS page (fixed).
+          </span>
+        </SectionText>
+      ) : (
+        <>
+          <SectionText>
+            <span className="muted">
+              Where a session of the function works, and which pages the responsive view shows
+              (Settings always). Permissions still decide what it may see and change.
+            </span>
+          </SectionText>
+          <WidgetForm onSubmit={saveViews}>
+            <Section legend="Views">
+              {viewIds.map((v) => (
+                <label key={v} className="row">
+                  <input
+                    type="checkbox"
+                    checked={chosenViews.views.has(v)}
+                    disabled={offline || busy}
+                    onChange={(e) =>
+                      setViewsDraft({
+                        ...chosenViews,
+                        views: toggled(chosenViews.views, v, e.target.checked),
+                      })
+                    }
+                  />
+                  <span>{viewLabels[v]}</span>
+                </label>
+              ))}
+              {chosenViews.views.size === 0 && (
+                <span className="muted">Choose at least one view.</span>
+              )}
+            </Section>
+            <Section legend="Responsive pages">
+              {responsivePageIds.map((p) => (
+                <label key={p} className="row">
+                  <input
+                    type="checkbox"
+                    checked={chosenViews.pages.has(p)}
+                    disabled={offline || busy || !chosenViews.views.has('responsive')}
+                    onChange={(e) =>
+                      setViewsDraft({
+                        ...chosenViews,
+                        pages: toggled(chosenViews.pages, p, e.target.checked),
+                      })
+                    }
+                  />
+                  <span>{pageLabels[p]}</span>
+                </label>
+              ))}
+            </Section>
+            <FormActions
+              submitLabel="Save"
+              busy={busy}
+              canSubmit={viewsDraft !== null && viewsDraft.views.size > 0 && !offline}
+              dirty={viewsDraft !== null}
+              onDiscard={() => setViewsDraft(null)}
+            />
+          </WidgetForm>
+        </>
+      )}
 
       <SectionHeading>Groups that may choose it</SectionHeading>
       <WidgetForm onSubmit={saveGroups}>

@@ -7,6 +7,7 @@ import type {
   MissionTypeGroup,
 } from '@/api/catalogs';
 import type { Collection } from '@/api/collection';
+import type { Uhs } from '@/api/uhs';
 
 // The catalogs that missions, log entries and files refer to by ID.
 export type Catalogs = {
@@ -15,6 +16,8 @@ export type Catalogs = {
   logbookTypes: Collection<LogbookType>;
   fileTypes: Collection<FileType>;
   scopes: Collection<MissionScope>;
+  // The session scope's UHS, inactive ones included.
+  uhs: Collection<Uhs>;
 };
 
 export const CatalogContext = createContext<Catalogs | null>(null);

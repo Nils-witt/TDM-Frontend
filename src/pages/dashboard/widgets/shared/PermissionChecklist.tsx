@@ -10,6 +10,8 @@ type Props = {
   kind: PermissionKind;
   // What is granted now.
   granted: readonly string[];
+  // If set, only these permissions are offered (an UHS function's).
+  only?: readonly string[];
   // Saves the grants and returns them as stored.
   onSave: (permissions: string[]) => Promise<string[]>;
   aside?: ReactNode;
@@ -19,14 +21,14 @@ const areaLabel = (area: string) => area.charAt(0).toUpperCase() + area.slice(1)
 
 // A checkbox per grantable permission of kind, by area. Implied permissions
 // are ticked and disabled, and are not stored on their own.
-function PermissionChecklist({ catalog, kind, granted, onSave, aside }: Props) {
+function PermissionChecklist({ catalog, kind, granted, only, onSave, aside }: Props) {
   const offline = useOffline();
   // null: unchanged, showing what is stored.
   const [draft, setDraft] = useState<Set<string> | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const shown = catalog.filter((p) => p.kind === kind);
+  const shown = catalog.filter((p) => p.kind === kind && (!only || only.includes(p.name)));
   const byName = new Map(catalog.map((p) => [p.name, p]));
   const current = draft ?? new Set(granted);
   const implied = impliedBy(catalog, current);

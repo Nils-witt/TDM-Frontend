@@ -45,6 +45,14 @@ describe('allowedViews', () => {
     expect([...v.pages]).toEqual(['missions', 'map']);
   });
 
+  it('lets the UHS page through only when the function has it', () => {
+    const v = allowedViews({
+      ...principal([]),
+      views: { desktop: false, responsive: true, responsive_pages: ['uhs'] },
+    });
+    expect([...v.pages]).toEqual(['uhs']);
+  });
+
   it('keeps the desktop when no view is allowed', () => {
     const v = allowedViews({
       ...principal([]),

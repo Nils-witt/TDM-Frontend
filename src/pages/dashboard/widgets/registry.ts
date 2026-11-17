@@ -21,6 +21,9 @@ const MissionTypesWidget = lazy(() => import('./MissionTypes/MissionTypes.tsx'))
 const LogbookTypesWidget = lazy(() => import('./LogbookTypes/LogbookTypes.tsx'));
 const FileTypesWidget = lazy(() => import('./FileTypes/FileTypes.tsx'));
 const ScopesWidget = lazy(() => import('./Scopes/Scopes.tsx'));
+const UhsWidget = lazy(() => import('./Uhs/Uhs.tsx'));
+const AssignUhsWidget = lazy(() => import('./AssignUhs/AssignUhs.tsx'));
+const UhsPatientsWidget = lazy(() => import('./UhsPatients/UhsPatients.tsx'));
 const UsersWidget = lazy(() => import('./Users/Users.tsx'));
 const GroupsWidget = lazy(() => import('./Groups/Groups.tsx'));
 const PermissionsWidget = lazy(() => import('./Permissions/Permissions.tsx'));
@@ -481,6 +484,8 @@ const Patient: Widget = {
   options: [
     { key: 'patientId', label: 'Patient ID', type: 'text', default: '' },
     { key: 'missionId', label: 'Mission ID', type: 'text', default: '' },
+    // Creates a walk-in in this UHS instead (Patients in UHS).
+    { key: 'uhsId', label: 'UHS ID', type: 'text', default: '' },
   ],
   title: (o) => (o.patientId === '' ? 'New patient' : 'Patient'),
   Component: PatientWidget,
@@ -502,6 +507,41 @@ const LinkPatient: Widget = {
   windowOnly: true,
   options: [{ key: 'missionId', label: 'Mission ID', type: 'text', default: '' }],
   Component: LinkPatientWidget,
+};
+
+// A patient row's menu opens it to move patientId into an UHS.
+const AssignUhs: Widget = {
+  id: 'AssignUhs',
+  name: 'Assign to UHS',
+  category: 'missions',
+  description: 'Assigns one patient to an UHS of the scope, or removes it from its UHS.',
+  permission: 'patients.view',
+  minWidth: 25,
+  maxWidth: 100,
+  minHeight: 10,
+  maxHeight: 200,
+  defaultWidth: 35,
+  defaultHeight: 30,
+  windowOnly: true,
+  options: [{ key: 'patientId', label: 'Patient ID', type: 'text', default: '' }],
+  Component: AssignUhsWidget,
+};
+
+// The patients currently in one UHS (uhsId, switchable in the widget).
+const UhsPatients: Widget = {
+  id: 'UhsPatients',
+  name: 'Patients in UHS',
+  category: 'missions',
+  description: 'The patients currently in one UHS of the scope, by arrival.',
+  permission: 'patients.view',
+  minWidth: 20,
+  maxWidth: 120,
+  minHeight: 8,
+  maxHeight: 800,
+  defaultWidth: 35,
+  defaultHeight: 30,
+  options: [{ key: 'uhsId', label: 'UHS ID', type: 'text', default: '' }],
+  Component: UhsPatientsWidget,
 };
 
 // Every patient across missions; the dashboard's selection stays.
@@ -669,6 +709,18 @@ const Permissions: Widget = {
 
 // The user functions users choose at sign-in, with their functional
 // permissions and groups.
+const Uhs: Widget = {
+  ...adminWidget,
+  adminOnly: false,
+  permission: 'uhs.manage',
+  id: 'Uhs',
+  name: 'UHS',
+  description: 'Manages the UHS (Unfallhilfsstellen) of every scope and their user functions.',
+  defaultWidth: 60,
+  defaultHeight: 50,
+  Component: UhsWidget,
+};
+
 const UserFunctions: Widget = {
   ...adminWidget,
   id: 'UserFunctions',
@@ -676,6 +728,8 @@ const UserFunctions: Widget = {
   description: 'The user functions users work as, their permissions and who may choose them.',
   defaultWidth: 80,
   defaultHeight: 60,
+  // The function it opens on (from the UHS widget).
+  options: [{ key: 'functionId', label: 'Function ID', type: 'text', default: '' }],
   Component: UserFunctionsWidget,
 };
 
@@ -834,6 +888,9 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     LogbookTypes,
     FileTypes,
     Scopes,
+    Uhs,
+    AssignUhs,
+    UhsPatients,
     MapStyles,
     MapAdmin,
     OverlayAccess,

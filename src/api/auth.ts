@@ -22,6 +22,9 @@ export type ApiSession = {
   username: string;
   function: Attribution;
   scope: Attribution;
+  // The UHS of an UHS function's session (named like the function); null
+  // for others, absent from an API older than UHS.
+  uhs?: Attribution | null;
   user_agent: string;
   created_at: string;
   last_seen: string;

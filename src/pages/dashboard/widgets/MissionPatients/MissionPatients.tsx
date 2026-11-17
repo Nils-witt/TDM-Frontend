@@ -5,6 +5,7 @@ import { FormError, sectionStack } from '@/components/form';
 import Spinner from '@/components/Spinner';
 import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
 import { useSelectedMission } from '@/data/selectedMissionContext';
+import { usePatientRowMenu } from '../shared/PatientRowMenu';
 import PatientTable from '../shared/PatientTable';
 import WidgetActionBar, { WidgetAction } from '../shared/WidgetActionBar';
 import { EmptyState, NoMission } from '../shared/WidgetStates';
@@ -13,7 +14,8 @@ import { EmptyState, NoMission } from '../shared/WidgetStates';
 // other mission widget, a closed mission's patients stay editable; only their
 // links to it are frozen, so a closed mission offers no New or Link. New
 // Patient and a row open the Patient widget in a window, Link Existing the
-// LinkPatient widget.
+// LinkPatient widget. A row's context menu assigns the patient to an UHS of
+// the session's scope or removes it from its UHS.
 // Online only: offline there is no local copy.
 function MissionPatients() {
   const { mission } = useSelectedMission();
@@ -22,6 +24,7 @@ function MissionPatients() {
   const open = mission !== null && mission.status !== 'closed';
   const list = usePatients(mission && !offline ? { mission: mission.id, closed: true } : null);
   const { openWidget } = useWidgetWindows();
+  const menu = usePatientRowMenu();
 
   const actions = (
     <WidgetActionBar label="Patient actions">
@@ -64,11 +67,14 @@ function MissionPatients() {
         ) : (
           <PatientTable
             patients={patients}
+            showUhs
+            rowMenu={menu.rowMenu}
             onPick={(p) => openWidget('Patient', { patientId: p.id })}
           />
         )}
       </div>
       <FormError error={list.error} onClose={() => void list.reload()} />
+      <FormError error={menu.error} onClose={menu.clearError} />
     </div>
   );
 }
