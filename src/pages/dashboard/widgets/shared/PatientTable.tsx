@@ -96,9 +96,14 @@ function Row({ patient: p, today, selected, onPick, action, menu, showUhs, showS
     <tr
       className={selected ? tableStyles.highlight : undefined}
       tabIndex={0}
-      onClick={() => onPick(p)}
+      // The context menu is portaled out of the row, but its events still
+      // bubble here through the React tree: a menu item must not pick the row.
+      onClick={(e) => {
+        if (e.currentTarget.contains(e.target as Node)) onPick(p);
+      }}
       onContextMenu={menu ? ctx.onContextMenu : undefined}
       onKeyDown={(e) => {
+        if (!e.currentTarget.contains(e.target as Node)) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onPick(p);

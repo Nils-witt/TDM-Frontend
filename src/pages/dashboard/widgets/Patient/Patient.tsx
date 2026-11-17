@@ -17,7 +17,8 @@ import type { WidgetProps } from '../widgetOptions';
 
 // Window only, opened by Patients in Mission: patientId edits that patient,
 // else a new one is created in missionId, or with uhsId a walk-in in that UHS
-// (Patients in UHS). Once created, the patient opens in
+// (Patients in UHS). The editor shows the fields only: the lists that open it
+// show the UHS, and its row menu assigns one. Once created, the patient opens in
 // its own window and this one closes, so the title names what is shown.
 function PatientWidget({ options }: WidgetProps) {
   const patientId = String(options.patientId);
@@ -108,6 +109,7 @@ function EditPatient({ id }: { id: string }) {
     <PatientEditor
       patient={patient.data}
       readOnly={!canEdit}
+      fieldsOnly
       // The answer shows at once; the lists follow on the patients event.
       onChange={(p) => cache.put(patientPath(p.id), p)}
       onDeleted={close}

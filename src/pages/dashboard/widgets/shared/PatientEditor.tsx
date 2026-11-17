@@ -15,12 +15,22 @@ type Props = {
   onChange: (p: Patient) => void;
   onDeleted: () => void;
   onClose: () => void;
+  // Only the fields, without the UHS stays and mission links (the Patient
+  // window, opened from a list that already shows them).
+  fieldsOnly?: boolean;
 };
 
 // The fields stay editable while every mission is closed; only the links to
 // closed missions are frozen (PatientMissionLinks). A change someone else
 // made in the meantime fails with 412 (If-Match), shown by the form.
-function PatientEditor({ patient, readOnly, onChange, onDeleted, onClose }: Props) {
+function PatientEditor({
+  patient,
+  readOnly,
+  onChange,
+  onDeleted,
+  onClose,
+  fieldsOnly = false,
+}: Props) {
   const remove = useCan('patients.manage');
   // An UHS function sees missions by name only and cannot change the links.
   const uhsSession = useSessionUhs() !== null;
@@ -57,12 +67,16 @@ function PatientEditor({ patient, readOnly, onChange, onDeleted, onClose }: Prop
           Close
         </button>
       )}
-      <PatientStays patient={patient} onChange={onChange} />
-      {isWalkIn(patient) && (
-        <SectionText className="muted">Walk-in: linked to no mission.</SectionText>
-      )}
-      {!uhsSession && (
-        <PatientMissionLinks patient={patient} readOnly={readOnly} onChange={onChange} />
+      {!fieldsOnly && (
+        <>
+          <PatientStays patient={patient} onChange={onChange} />
+          {isWalkIn(patient) && (
+            <SectionText className="muted">Walk-in: linked to no mission.</SectionText>
+          )}
+          {!uhsSession && (
+            <PatientMissionLinks patient={patient} readOnly={readOnly} onChange={onChange} />
+          )}
+        </>
       )}
       <SectionText className="muted">
         Created {formatTime(patient.created_at)} by {patient.created_by}, changed{' '}
