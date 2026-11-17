@@ -6,7 +6,7 @@ const variables: { name: string; fields: string }[] = [
   {
     name: 'mission',
     fields:
-      'id, event, status, status_label, tags, type and type_group (id, name; empty for none), address (street, house_number, city, district, object_name, latitude, longitude, text), callee, callee_phone, created_by, created_at, updated_by, updated_at',
+      'id, event, status, status_label, tags, type and type_group (id, name; empty for none), address (street, house_number, city, district, object_name, latitude, longitude, text), destination (as address), callee, callee_phone, created_by, created_at, updated_by, updated_at',
   },
   {
     name: 'entries',

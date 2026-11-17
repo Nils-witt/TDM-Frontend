@@ -17,8 +17,96 @@ import { type AddressField, useAddressSuggest } from '../shared/AddressSuggest';
 import NearbyPlacesButton from '../shared/NearbyPlacesButton';
 import { FormActionBar } from '../shared/WidgetActionBar';
 import { SuggestInput } from '@/components/SuggestInput';
-import { type TextKey, useMissionDetailsWidget, useMissionForm } from './MissionDetails.ts';
+import {
+  type AddressKind,
+  type CoordKey,
+  type TextKey,
+  addressKey,
+  addressSetter,
+  coordKey,
+  useMissionDetailsWidget,
+  useMissionForm,
+} from './MissionDetails.ts';
 import { useRegisterMissionSave } from './missionSave';
+
+// The fields of the mission's address or its destination. The values suggest
+// from the API's address directory, if it has one.
+function AddressSection({
+  kind,
+  value,
+  set,
+  coordValue,
+  readOnly,
+  id: formId,
+}: {
+  kind: AddressKind;
+  value: (k: TextKey) => string;
+  set: (k: TextKey | CoordKey, v: string) => void;
+  coordValue: (k: CoordKey) => string;
+  readOnly: boolean;
+  id: (k: string) => string;
+}) {
+  const lat = coordKey(kind, 'lat');
+  const lon = coordKey(kind, 'lon');
+  const suggest = useAddressSuggest(
+    (k) => value(addressKey(kind, k)),
+    (k, v) => set(addressKey(kind, k), v),
+    (la, lo) => {
+      set(lat, la);
+      set(lon, lo);
+    },
+  );
+  const id = (k: string) => formId(`${kind}-${k}`);
+  const address = (k: AddressField, label: string, className = 'grow', inputId?: string) => (
+    <SuggestInput
+      {...suggest[k]}
+      id={inputId}
+      className={className}
+      aria-label={inputId ? undefined : label}
+    />
+  );
+
+  return (
+    <Section legend={kind === 'address' ? 'Address' : 'Destination'} disabled={readOnly}>
+      <FieldRow id={id('object')} label="Object">
+        {address('object_name', 'Object', 'grow', id('object'))}
+      </FieldRow>
+      <FieldRow id={id('street')} label="Street / No.">
+        {address('street', 'Street', 'grow', id('street'))}
+        {address('house_number', 'No.', fieldWidth.narrow)}
+      </FieldRow>
+      <FieldRow id={id('city')} label="City / District">
+        {address('city', 'City', 'grow', id('city'))}
+        {address('district', 'District')}
+      </FieldRow>
+      <FieldRow id={id('lat')} label="Lat / Lon">
+        {(
+          [
+            [lat, 'Latitude', '50.7374'],
+            [lon, 'Longitude', '7.0982'],
+          ] as const
+        ).map(([k, label, example]) => (
+          <input
+            key={k}
+            id={k === lat ? id('lat') : undefined}
+            className="grow"
+            aria-label={k === lat ? undefined : label}
+            inputMode="decimal"
+            placeholder={example}
+            value={coordValue(k)}
+            onChange={(e) => set(k, e.target.value)}
+          />
+        ))}
+        <NearbyPlacesButton
+          lat={coordValue(lat)}
+          lon={coordValue(lon)}
+          set={addressSetter(kind, set)}
+          disabled={readOnly}
+        />
+      </FieldRow>
+    </Section>
+  );
+}
 
 // Without a mission it creates one, with the same layout. A closed mission is
 // shown read-only.
@@ -64,15 +152,6 @@ export function MissionForm({
   const [form, setForm] = useState<HTMLFormElement | null>(null);
   const formId = useId();
   useRegisterMissionSave(form, !readOnly && canSubmit && !busy);
-  const suggest = useAddressSuggest(
-    (k) => value(`address_${k}`),
-    (k, v) => set(`address_${k}`, v),
-    (lat, lon) => {
-      set('lat', lat);
-      set('lon', lon);
-    },
-  );
-
   const text = (k: TextKey, label: string, className = 'grow', inputId?: string) => (
     <input
       id={inputId}
@@ -80,16 +159,6 @@ export function MissionForm({
       aria-label={inputId ? undefined : label}
       value={value(k)}
       onChange={(e) => set(k, e.target.value)}
-    />
-  );
-
-  // Suggests values from the API's address directory, if it has one.
-  const address = (k: AddressField, label: string, className = 'grow', inputId?: string) => (
-    <SuggestInput
-      {...suggest[k]}
-      id={inputId}
-      className={className}
-      aria-label={inputId ? undefined : label}
     />
   );
 
@@ -143,44 +212,17 @@ export function MissionForm({
             <MissionTypeInput key={resetKey} id={id('type')} value={typeValue} onChange={setType} />
           </FieldRow>
         </Section>
-        <Section legend="Address" disabled={readOnly}>
-          <FieldRow id={id('object')} label="Object">
-            {address('object_name', 'Object', 'grow', id('object'))}
-          </FieldRow>
-          <FieldRow id={id('street')} label="Street / No.">
-            {address('street', 'Street', 'grow', id('street'))}
-            {address('house_number', 'No.', fieldWidth.narrow)}
-          </FieldRow>
-          <FieldRow id={id('city')} label="City / District">
-            {address('city', 'City', 'grow', id('city'))}
-            {address('district', 'District')}
-          </FieldRow>
-          <FieldRow id={id('lat')} label="Lat / Lon">
-            {(
-              [
-                ['lat', 'Latitude', '50.7374'],
-                ['lon', 'Longitude', '7.0982'],
-              ] as const
-            ).map(([k, label, example]) => (
-              <input
-                key={k}
-                id={k === 'lat' ? id(k) : undefined}
-                className="grow"
-                aria-label={k === 'lat' ? undefined : label}
-                inputMode="decimal"
-                placeholder={example}
-                value={coordValue(k)}
-                onChange={(e) => set(k, e.target.value)}
-              />
-            ))}
-            <NearbyPlacesButton
-              lat={coordValue('lat')}
-              lon={coordValue('lon')}
-              set={set}
-              disabled={readOnly}
-            />
-          </FieldRow>
-        </Section>
+        {(['address', 'destination'] as const).map((kind) => (
+          <AddressSection
+            key={kind}
+            kind={kind}
+            value={value}
+            set={set}
+            coordValue={coordValue}
+            readOnly={readOnly}
+            id={id}
+          />
+        ))}
         <Section legend="Callee" disabled={readOnly}>
           <FieldRow id={id('callee')} label="Name / Phone">
             {text('callee', 'Name', 'grow', id('callee'))}

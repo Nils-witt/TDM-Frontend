@@ -167,6 +167,12 @@ function matcher(f: ArchiveFilter, c: TypeCatalogs, units: UnitTexts): (m: Missi
         m.address_object_name,
         m.callee,
         m.callee_phone,
+        // As the API's search does.
+        m.destination_street,
+        m.destination_house_number,
+        m.destination_city,
+        m.destination_district,
+        m.destination_object_name,
         ...m.tags,
       ].join('\n');
       if (!fold(all).includes(text)) return false;

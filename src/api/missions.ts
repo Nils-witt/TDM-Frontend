@@ -34,6 +34,15 @@ export type Mission = EntityMeta & {
   // A building or site name.
   address_object_name: string;
   address_coordinates: Coordinates | null;
+  // Where the mission leads to, e.g. a patient's hospital; the fields mean
+  // what the address ones do. Rows replicated before the API had them lack
+  // them.
+  destination_street?: string;
+  destination_house_number?: string;
+  destination_city?: string;
+  destination_district?: string;
+  destination_object_name?: string;
+  destination_coordinates?: Coordinates | null;
   // Who called the mission in.
   callee: string;
   callee_phone: string;
@@ -121,6 +130,12 @@ export type MissionFields = Partial<
     | 'address_district'
     | 'address_object_name'
     | 'address_coordinates'
+    | 'destination_street'
+    | 'destination_house_number'
+    | 'destination_city'
+    | 'destination_district'
+    | 'destination_object_name'
+    | 'destination_coordinates'
     | 'callee'
     | 'callee_phone'
     | 'scope'

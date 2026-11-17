@@ -10,7 +10,12 @@ import {
 } from '@/pages/dashboard/widgets/shared/AddressSuggest';
 import { formatTime } from '@/pages/dashboard/widgets/shared/logbookEntries';
 import {
+  type AddressKind,
+  type CoordKey,
   type TextKey,
+  addressKey,
+  addressSetter,
+  coordKey,
   useMissionForm,
 } from '@/pages/dashboard/widgets/MissionDetails/MissionDetails.ts';
 import { useRegisterMissionSave } from '@/pages/dashboard/widgets/MissionDetails/missionSave';
@@ -20,6 +25,74 @@ import { ConfirmDialogMUI } from '../shared/DialogsMUI';
 import NearbyPlacesButtonMUI from '../shared/NearbyPlacesButtonMUI';
 import { FieldRowMUI, FormErrorMUI, FormMUI, FormSectionMUI } from '../shared/FormMUI';
 import { MissionTypeInputMUI, StatusSelectMUI } from '../shared/MissionInputsMUI';
+
+// The fields of the mission's address or its destination, as on the desktop.
+function AddressSectionMUI({
+  kind,
+  value,
+  set,
+  coordValue,
+  readOnly,
+}: {
+  kind: AddressKind;
+  value: (k: TextKey) => string;
+  set: (k: TextKey | CoordKey, v: string) => void;
+  coordValue: (k: CoordKey) => string;
+  readOnly: boolean;
+}) {
+  const lat = coordKey(kind, 'lat');
+  const lon = coordKey(kind, 'lon');
+  const suggest = useAddressSuggest(
+    (k) => value(addressKey(kind, k)),
+    (k, v) => set(addressKey(kind, k), v),
+    (la, lo) => {
+      set(lat, la);
+      set(lon, lo);
+    },
+  );
+  const address = (k: AddressField, label: string) => (
+    <AddressFieldMUI {...suggest[k]} label={label} disabled={readOnly} />
+  );
+
+  return (
+    <FormSectionMUI legend={kind === 'address' ? 'Address' : 'Destination'} disabled={readOnly}>
+      {address('object_name', 'Object')}
+      <FieldRowMUI>
+        {address('street', 'Street')}
+        {address('house_number', 'No.')}
+      </FieldRowMUI>
+      <FieldRowMUI>
+        {address('city', 'City')}
+        {address('district', 'District')}
+      </FieldRowMUI>
+      <FieldRowMUI>
+        {(
+          [
+            [lat, 'Latitude', '50.7374'],
+            [lon, 'Longitude', '7.0982'],
+          ] as const
+        ).map(([k, label, example]) => (
+          <TextField
+            key={k}
+            label={label}
+            size="small"
+            placeholder={example}
+            value={coordValue(k)}
+            disabled={readOnly}
+            onChange={(e) => set(k, e.target.value)}
+            slotProps={{ htmlInput: { inputMode: 'decimal' } }}
+          />
+        ))}
+        <NearbyPlacesButtonMUI
+          lat={coordValue(lat)}
+          lon={coordValue(lon)}
+          set={addressSetter(kind, set)}
+          disabled={readOnly}
+        />
+      </FieldRowMUI>
+    </FormSectionMUI>
+  );
+}
 
 // The Mission Details form in MUI, with useMissionForm's rules: without a
 // mission it creates one, a closed mission is read-only, and saving a close
@@ -66,15 +139,6 @@ export function MissionFormMUI({
   const [form, setForm] = useState<HTMLFormElement | null>(null);
   const formId = useId();
   useRegisterMissionSave(form, !readOnly && canSubmit && !busy);
-  const suggest = useAddressSuggest(
-    (k) => value(`address_${k}`),
-    (k, v) => set(`address_${k}`, v),
-    (lat, lon) => {
-      set('lat', lat);
-      set('lon', lon);
-    },
-  );
-
   const text = (k: TextKey, label: string, type?: string) => (
     <TextField
       label={label}
@@ -84,10 +148,6 @@ export function MissionFormMUI({
       disabled={readOnly}
       onChange={(e) => set(k, e.target.value)}
     />
-  );
-
-  const address = (k: AddressField, label: string) => (
-    <AddressFieldMUI {...suggest[k]} label={label} disabled={readOnly} />
   );
 
   return (
@@ -136,42 +196,16 @@ export function MissionFormMUI({
             />
           </FieldRowMUI>
         </FormSectionMUI>
-        <FormSectionMUI legend="Address" disabled={readOnly}>
-          {address('object_name', 'Object')}
-          <FieldRowMUI>
-            {address('street', 'Street')}
-            {address('house_number', 'No.')}
-          </FieldRowMUI>
-          <FieldRowMUI>
-            {address('city', 'City')}
-            {address('district', 'District')}
-          </FieldRowMUI>
-          <FieldRowMUI>
-            {(
-              [
-                ['lat', 'Latitude', '50.7374'],
-                ['lon', 'Longitude', '7.0982'],
-              ] as const
-            ).map(([k, label, example]) => (
-              <TextField
-                key={k}
-                label={label}
-                size="small"
-                placeholder={example}
-                value={coordValue(k)}
-                disabled={readOnly}
-                onChange={(e) => set(k, e.target.value)}
-                slotProps={{ htmlInput: { inputMode: 'decimal' } }}
-              />
-            ))}
-            <NearbyPlacesButtonMUI
-              lat={coordValue('lat')}
-              lon={coordValue('lon')}
-              set={set}
-              disabled={readOnly}
-            />
-          </FieldRowMUI>
-        </FormSectionMUI>
+        {(['address', 'destination'] as const).map((kind) => (
+          <AddressSectionMUI
+            key={kind}
+            kind={kind}
+            value={value}
+            set={set}
+            coordValue={coordValue}
+            readOnly={readOnly}
+          />
+        ))}
         <FormSectionMUI legend="Callee" disabled={readOnly}>
           <FieldRowMUI>
             {text('callee', 'Name')}

@@ -14,6 +14,7 @@ import { useCatalogs } from '@/data/catalogContext';
 import type { MissionScope } from '@/api/catalogs';
 import { defaultScopeName, scopeOptions, useSelectedScope } from '@/data/selectedScope';
 import { useDashboard } from '@/pages/dashboard/dashboardContext';
+import type { AddressField } from '../shared/AddressSuggest';
 import { type MissionDraft, useRegisterMissionDraft } from './missionDrafts';
 
 export type TextKey =
@@ -24,9 +25,45 @@ export type TextKey =
   | 'address_city'
   | 'address_district'
   | 'address_object_name'
+  | 'destination_street'
+  | 'destination_house_number'
+  | 'destination_city'
+  | 'destination_district'
+  | 'destination_object_name'
   | 'callee'
   | 'callee_phone';
-export type CoordKey = 'lat' | 'lon';
+
+// The mission's address and its destination share their fields.
+export type AddressKind = 'address' | 'destination';
+export type CoordKey = 'lat' | 'lon' | 'destination_lat' | 'destination_lon';
+
+const coordFields = {
+  address: { lat: 'lat', lon: 'lon', field: 'address_coordinates' },
+  destination: { lat: 'destination_lat', lon: 'destination_lon', field: 'destination_coordinates' },
+} as const satisfies Record<
+  AddressKind,
+  { lat: CoordKey; lon: CoordKey; field: 'address_coordinates' | 'destination_coordinates' }
+>;
+const addressKinds = Object.keys(coordFields) as AddressKind[];
+// Each coordinate key's stored field and axis.
+const coordSource = Object.fromEntries(
+  addressKinds.flatMap((a) =>
+    (['lat', 'lon'] as const).map((axis) => [coordFields[a][axis], [coordFields[a].field, axis]]),
+  ),
+) as Record<CoordKey, ['address_coordinates' | 'destination_coordinates', 'lat' | 'lon']>;
+const isCoordKey = (k: string): k is CoordKey => k in coordSource;
+
+// The coordinate key of kind a for lat or lon.
+export const coordKey = (a: AddressKind, k: 'lat' | 'lon'): CoordKey => coordFields[a][k];
+
+// The text key of kind a's field f.
+export const addressKey = (a: AddressKind, f: AddressField): TextKey => `${a}_${f}`;
+
+// set for kind a of something that writes the address keys (address_*), as
+// the nearby places do.
+export const addressSetter =
+  (a: AddressKind, set: (k: TextKey, v: string) => void) => (k: TextKey, v: string) =>
+    set(k.startsWith('address_') ? addressKey(a, k.slice(8) as AddressField) : k, v);
 
 // What is typed but not saved; every other field shows the mission's current
 // value, so changes others save show up on reload. Coordinates are edited as
@@ -43,7 +80,11 @@ function parseCoord(text: string, label: string): number | null {
   return v;
 }
 
-const blank: Pick<Mission, TextKey | 'mission_type' | 'address_coordinates'> = {
+type FormBase = Required<
+  Pick<Mission, TextKey | 'mission_type' | 'address_coordinates' | 'destination_coordinates'>
+>;
+
+const blank: FormBase = {
   occurred_event: '',
   status: 'draft',
   mission_type: null,
@@ -53,6 +94,12 @@ const blank: Pick<Mission, TextKey | 'mission_type' | 'address_coordinates'> = {
   address_district: '',
   address_object_name: '',
   address_coordinates: null,
+  destination_street: '',
+  destination_house_number: '',
+  destination_city: '',
+  destination_district: '',
+  destination_object_name: '',
+  destination_coordinates: null,
   callee: '',
   callee_phone: '',
 };
@@ -89,10 +136,15 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   const canMove = useHasPermission('missions.manage');
   const scopeLocked = creating || !canMove;
   const readOnly = closed || offline || !canEdit;
-  const base = mission ?? blank;
+  // Missions replicated before the API had a destination lack it.
+  const base: FormBase = mission ? { ...blank, ...mission } : blank;
 
   const value = (k: TextKey) => edits[k] ?? base[k];
-  const coordValue = (k: CoordKey) => edits[k] ?? coordText(base.address_coordinates?.[k]);
+  const storedCoord = (m: FormBase, k: CoordKey) => {
+    const [field, axis] = coordSource[k];
+    return coordText(m[field]?.[axis]);
+  };
+  const coordValue = (k: CoordKey) => edits[k] ?? storedCoord(base, k);
   const set = (k: TextKey | CoordKey, v: string) => setEdits((e) => ({ ...e, [k]: v }));
   const typeValue = typeEdit === undefined ? base.mission_type : typeEdit;
   const typeChanged = typeEdit !== undefined && typeEdit !== base.mission_type;
@@ -102,12 +154,14 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
   const scopeChanged = scopeEdit !== undefined && scopeEdit !== baseScope;
 
   const changedText = (Object.keys(edits) as (TextKey | CoordKey)[]).filter(
-    (k): k is TextKey => k !== 'lat' && k !== 'lon' && edits[k] !== base[k],
+    (k): k is TextKey => !isCoordKey(k) && edits[k] !== base[k],
   );
-  const coordsChanged = (['lat', 'lon'] as const).some(
-    (k) => edits[k] !== undefined && edits[k] !== coordText(base.address_coordinates?.[k]),
+  const changedCoords = addressKinds.filter((a) =>
+    [coordFields[a].lat, coordFields[a].lon].some(
+      (k) => edits[k] !== undefined && edits[k] !== storedCoord(base, k),
+    ),
   );
-  const dirty = changedText.length > 0 || coordsChanged || typeChanged || scopeChanged;
+  const dirty = changedText.length > 0 || changedCoords.length > 0 || typeChanged || scopeChanged;
   const canSubmit = dirty && value('occurred_event').trim() !== '';
 
   // What the Map shows before the save. Coordinates only once both parse (or
@@ -118,10 +172,10 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
     if (!mission || !dirty) return null;
     const d: Record<string, unknown> = {};
     for (const k of Object.keys(edits) as (TextKey | CoordKey)[]) {
-      if (k !== 'lat' && k !== 'lon' && edits[k] !== mission[k]) d[k] = edits[k];
+      if (!isCoordKey(k) && edits[k] !== mission[k]) d[k] = edits[k];
     }
     if (typeEdit !== undefined && typeEdit !== mission.mission_type) d.mission_type = typeEdit;
-    const coord = (k: CoordKey) => edits[k] ?? coordText(mission.address_coordinates?.[k]);
+    const coord = (k: 'lat' | 'lon') => edits[k] ?? coordText(mission.address_coordinates?.[k]);
     const coordEdited = (['lat', 'lon'] as const).some(
       (k) => edits[k] !== undefined && edits[k] !== coordText(mission.address_coordinates?.[k]),
     );
@@ -203,21 +257,25 @@ export function useMissionForm(mission: Mission | null, onSaved: (m: Mission) =>
     if (!canSubmit || busy) return;
     const body: Record<string, unknown> = {};
     for (const k of changedText) body[k] = edits[k];
-    if (coordsChanged) {
+    for (const a of changedCoords) {
+      const [latLabel, lonLabel] =
+        a === 'destination'
+          ? ['Destination latitude', 'Destination longitude']
+          : ['Latitude', 'Longitude'];
       let lat: number | null;
       let lon: number | null;
       try {
-        lat = parseCoord(coordValue('lat'), 'Latitude');
-        lon = parseCoord(coordValue('lon'), 'Longitude');
+        lat = parseCoord(coordValue(coordFields[a].lat), latLabel);
+        lon = parseCoord(coordValue(coordFields[a].lon), lonLabel);
       } catch (err) {
         setError((err as Error).message);
         return;
       }
       if ((lat === null) !== (lon === null)) {
-        setError('Latitude and longitude must be set together');
+        setError(`${latLabel} and longitude must be set together`);
         return;
       }
-      body.address_coordinates = lat === null || lon === null ? null : { lat, lon };
+      body[coordFields[a].field] = lat === null || lon === null ? null : { lat, lon };
     }
     if (typeChanged) body.mission_type = typeEdit;
     if (scopeChanged) body.scope = scopeEdit;
