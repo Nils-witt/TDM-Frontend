@@ -14,6 +14,7 @@ import ChannelIndicator from './actions/ChannelIndicator';
 import Clock from './actions/Clock';
 import LiveIndicator from './actions/LiveIndicator';
 import BackupIndicator from './actions/BackupIndicator';
+import ConnectionsIndicator from './actions/ConnectionsIndicator';
 import UnitRequestIndicator from './actions/UnitRequestIndicator';
 import Fullscreen from './actions/Fullscreen';
 import ScopeMenu from './actions/ScopeMenu';
@@ -110,6 +111,7 @@ function Nav() {
             </nav>
             <div className={styles.right}>
               <LiveIndicator />
+              <ConnectionsIndicator />
               <UnitRequestIndicator />
               <BackupIndicator />
               <ChannelIndicator />

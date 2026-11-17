@@ -18,6 +18,8 @@ describe('changedPaths', () => {
     expect(changedPaths(['patients'])('/api/v1/patients?mission=m1')).toBe(true);
     expect(changedPaths(['patient_missions'])('/api/v1/patients')).toBe(true);
     expect(changedPaths(['missions'])('/api/v1/patients?closed=true')).toBe(true);
+    expect(changedPaths(['units'])('/api/v1/connections')).toBe(true);
+    expect(changedPaths(['connections'])('/api/v1/connections')).toBe(true);
   });
 
   it('reloads everything for an unknown type', () => {

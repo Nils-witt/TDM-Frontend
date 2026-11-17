@@ -1,0 +1,81 @@
+// An icon, with less padding than a text item.
+.indicator {
+  padding: 0 6px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+
+  &.good {
+    color: var(--success);
+  }
+  &.pending {
+    opacity: 0.6;
+  }
+  &.degraded {
+    color: var(--warning);
+  }
+  &.failed {
+    color: var(--error);
+  }
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  padding: 4px 10px 6px;
+}
+
+.heading {
+  font-weight: 600;
+}
+
+.services {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0;
+}
+
+.service {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.name {
+  flex-grow: 1;
+  padding-right: 16px;
+}
+
+.muted {
+  opacity: 0.6;
+}
+
+.error {
+  color: var(--error);
+  font-size: 0.9em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-disabled);
+
+  &.connected {
+    background: var(--success);
+  }
+  &.disconnected {
+    background: var(--error);
+  }
+}
