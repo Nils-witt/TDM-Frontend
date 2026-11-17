@@ -1,5 +1,6 @@
 import { createContext, use } from 'react';
 import type { Principal } from '@/api/auth';
+import { impliedPermissions } from '@/api/permissions';
 import type { AuthMode } from '@/auth/session';
 
 export type Session = {
@@ -23,3 +24,13 @@ export const displayName = (p: Principal) => p.name || p.username || p.sub;
 export const isAdmin = (p: Principal) => p.permissions?.includes('admin') ?? false;
 
 export const useIsAdmin = () => isAdmin(useSession().principal);
+
+// Admins hold every permission; a grant also grants what it implies.
+export function hasPermission(p: Principal, name: string): boolean {
+  if (isAdmin(p)) return true;
+  return (p.permissions ?? []).some(
+    (granted) => granted === name || (impliedPermissions[granted]?.includes(name) ?? false),
+  );
+}
+
+export const useHasPermission = (name: string) => hasPermission(useSession().principal, name);

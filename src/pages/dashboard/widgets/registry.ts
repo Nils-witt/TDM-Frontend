@@ -42,6 +42,10 @@ const ConfigTransferWidget = lazy(() => import('./ConfigTransfer/ConfigTransfer.
 const ReportsWidget = lazy(() => import('./Reports/Reports.tsx'));
 const CreateReportWidget = lazy(() => import('./CreateReport/CreateReport.tsx'));
 const PdfViewerWidget = lazy(() => import('./PdfViewer/PdfViewer.tsx'));
+const MissionPatientsWidget = lazy(() => import('./MissionPatients/MissionPatients.tsx'));
+const PatientWidget = lazy(() => import('./Patient/Patient.tsx'));
+const LinkPatientWidget = lazy(() => import('./LinkPatient/LinkPatient.tsx'));
+const PatientsWidget = lazy(() => import('./Patients/Patients.tsx'));
 
 const Example: Widget = {
   id: 'Example',
@@ -448,6 +452,85 @@ const MissionUnits: Widget = {
   Component: MissionUnitsWidget,
 };
 
+// Patients need their own permissions; the API keeps them online only.
+const MissionPatients: Widget = {
+  id: 'MissionPatients',
+  name: 'Patients in mission',
+  category: 'missions',
+  description: 'The patients of the selected mission: create, link, edit and delete them.',
+  consumes: ['selection'],
+  permission: 'patients.view',
+  minWidth: 20,
+  maxWidth: 120,
+  minHeight: 8,
+  maxHeight: 800,
+  defaultWidth: 35,
+  defaultHeight: 30,
+  Component: MissionPatientsWidget,
+};
+
+// Patients in Mission opens it to create a patient in missionId, or to edit
+// patientId.
+const Patient: Widget = {
+  id: 'Patient',
+  name: 'Patient',
+  category: 'missions',
+  description: 'Creates or edits one patient.',
+  permission: 'patients.view',
+  minWidth: 25,
+  maxWidth: 100,
+  minHeight: 10,
+  maxHeight: 200,
+  defaultWidth: 40,
+  defaultHeight: 36,
+  windowOnly: true,
+  options: [
+    { key: 'patientId', label: 'Patient ID', type: 'text', default: '' },
+    { key: 'missionId', label: 'Mission ID', type: 'text', default: '' },
+  ],
+  title: (o) => (o.patientId === '' ? 'New patient' : 'Patient'),
+  Component: PatientWidget,
+};
+
+// Patients in Mission opens it to link existing patients to missionId.
+const LinkPatient: Widget = {
+  id: 'LinkPatient',
+  name: 'Link patient',
+  category: 'missions',
+  description: 'Finds patients by name and links them to one mission.',
+  permission: 'patients.view',
+  minWidth: 25,
+  maxWidth: 100,
+  minHeight: 10,
+  maxHeight: 200,
+  defaultWidth: 45,
+  defaultHeight: 30,
+  windowOnly: true,
+  options: [{ key: 'missionId', label: 'Mission ID', type: 'text', default: '' }],
+  Component: LinkPatientWidget,
+};
+
+// Every patient across missions; the dashboard's selection stays.
+const Patients: Widget = {
+  id: 'Patients',
+  name: 'Patients',
+  category: 'missions',
+  description: 'Searches every patient by name and event and edits them with their missions.',
+  permission: 'patients.view',
+  minWidth: 25,
+  maxWidth: 160,
+  minHeight: 10,
+  maxHeight: 800,
+  defaultWidth: 45,
+  defaultHeight: 35,
+  options: [
+    // The scope selected in the menu bar (useSelectedScope), as in Missions.
+    { key: 'currentScopeOnly', label: 'Only the current scope', type: 'boolean', default: true },
+    { key: 'includeClosed', label: 'Include closed missions', type: 'boolean', default: false },
+  ],
+  Component: PatientsWidget,
+};
+
 // FMS 0, 5 and 9 leave a unit's status alone and wait here to be
 // acknowledged.
 const UnitRequests: Widget = {
@@ -724,6 +807,10 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     UnitScopes,
     MissionUnits,
     AddUnit,
+    MissionPatients,
+    Patient,
+    LinkPatient,
+    Patients,
     Example,
   ].map((w) => [w.id, w]),
 );

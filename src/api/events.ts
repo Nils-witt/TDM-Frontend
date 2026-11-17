@@ -23,12 +23,15 @@ const typePaths: Record<string, string[]> = {
   logbook_types: ['/api/v1/logbook-types'],
   file_types: ['/api/v1/file-types'],
   scopes: ['/api/v1/scopes'],
-  missions: ['/api/v1/missions'],
+  // A patient's closed_at follows its missions.
+  missions: ['/api/v1/missions', '/api/v1/patients'],
   log_entries: ['/api/v1/log-entries'],
   log_files: ['/api/v1/log-files'],
   tasks: ['/api/v1/tasks'],
   mission_units: ['/api/v1/mission-units'],
   unit_scopes: ['/api/v1/unit-scopes'],
+  patients: ['/api/v1/patients'],
+  patient_missions: ['/api/v1/patients'],
   map_styles: ['/api/v1/map-styles'],
   map_settings: ['/api/v1/map-settings'],
   // A restriction changes which overlays a caller is listed.

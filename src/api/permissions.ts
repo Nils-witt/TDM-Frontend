@@ -13,7 +13,10 @@ export const groupPermissionsPath = (groupId: string) =>
 
 // Mirrors the API's domain.NewPermissionSet: granting the key grants these too.
 export const impliedPermissions: Record<string, string[]> = {
-  'missions.closed.view': ['missions.closed.search'],
+  'missions.closed.view': ['missions.closed.details', 'missions.closed.search'],
+  'missions.closed.details': ['missions.closed.search'],
+  'patients.edit': ['patients.view'],
+  'patients.archive.view': ['patients.view'],
 };
 
 export const fetchPermissionCatalog = (path: string) =>

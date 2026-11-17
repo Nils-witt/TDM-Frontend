@@ -1,4 +1,4 @@
-import { useIsAdmin } from '../app/session';
+import { useHasPermission, useIsAdmin } from '../app/session';
 import { InfoIcon, LocationIcon } from '../components/icons';
 import MenuBar from '../components/menu/MenuBar';
 import MenuSeparator from '../components/menu/MenuSeparator';
@@ -26,6 +26,7 @@ import styles from './Nav.module.scss';
 // the API's admin group only.
 function Nav() {
   const admin = useIsAdmin();
+  const patients = useHasPermission('patients.view');
   return (
     <MissionCloseProvider>
       <MissionPrintProvider>
@@ -59,6 +60,13 @@ function Nav() {
                 <NavMenuItem label="Mission Details" widget="MissionDetails" />
                 <NavMenuItem label="Active Missions" widget="ActiveMissions" />
                 <NavMenuItem label="Map" widget="Map" />
+                {patients && (
+                  <>
+                    <MenuSeparator />
+                    <NavMenuItem label="Patients in Mission" widget="MissionPatients" />
+                    <NavMenuItem label="Patients" widget="Patients" />
+                  </>
+                )}
               </TopLevelMenu>
               <TopLevelMenu label="Units">
                 <NavMenuItem label="Unit Status" widget="UnitStatus" />

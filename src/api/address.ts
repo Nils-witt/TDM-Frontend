@@ -82,7 +82,8 @@ async function lookup<T>(path: string, params: Record<string, string>, signal: A
   }
 }
 
-function useDebounced<T>(value: T, ms: number): T {
+// value, once it stayed unchanged for ms.
+export function useDebounced<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
     const t = setTimeout(() => setDebounced(value), ms);

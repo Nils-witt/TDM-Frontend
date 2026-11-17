@@ -15,6 +15,9 @@ describe('changedPaths', () => {
   it('reloads related paths', () => {
     expect(changedPaths(['users'])('/api/v1/groups')).toBe(true);
     expect(changedPaths(['backup_instances'])('/api/v1/backup-status')).toBe(true);
+    expect(changedPaths(['patients'])('/api/v1/patients?mission=m1')).toBe(true);
+    expect(changedPaths(['patient_missions'])('/api/v1/patients')).toBe(true);
+    expect(changedPaths(['missions'])('/api/v1/patients?closed=true')).toBe(true);
   });
 
   it('reloads everything for an unknown type', () => {

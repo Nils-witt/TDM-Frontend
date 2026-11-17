@@ -28,6 +28,9 @@ interface BaseWidget {
   hiddenInPicker?: boolean;
   // Non-admins see a notice instead, so the widget never calls the API.
   adminOnly?: boolean;
+  // Callers without this API permission (session.ts hasPermission) see a
+  // notice instead, so the widget never calls the API.
+  permission?: string;
   // A window's title for the options it was opened with; else name.
   title?: (options: ResolvedOptions) => string;
 }
