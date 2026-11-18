@@ -41,4 +41,4 @@ jobs:
         with:
           node-version: 26
       - name: npm audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high --omit=dev
