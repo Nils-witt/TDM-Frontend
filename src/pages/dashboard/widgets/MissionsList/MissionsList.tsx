@@ -18,7 +18,7 @@ function MissionItem({
   select: (id: string) => void;
   showStatusChip: boolean;
 }) {
-  const type = useMissionTypeName(m.mission_type);
+  const type = useMissionTypeName(m.mission_type, true);
   const location = shortLocation(m);
   return (
     <li className={selected ? 'selected' : undefined}>
