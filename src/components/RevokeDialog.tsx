@@ -9,11 +9,27 @@ type Props = {
   // stays open; the parent unmounts the dialog on success.
   onRevoke: (reason: string) => Promise<void>;
   onCancel: () => void;
+  // The texts default to revoking a log entry.
+  title?: string;
+  note?: string;
+  submitLabel?: string;
+  placeholder?: string;
+  maxLength?: number;
 };
 
 // The reason is required. Opens when mounted; Escape, the backdrop and Cancel
-// close it, except while the revoke is in flight.
-function RevokeDialog({ subject, onRevoke, onCancel }: Props) {
+// close it, except while the revoke is in flight. Also asks the reason of
+// other removals that are kept, such as deleting a patient.
+function RevokeDialog({
+  subject,
+  onRevoke,
+  onCancel,
+  title = 'Revoke entry',
+  note = 'It stays in the logbook, crossed out. This cannot be undone.',
+  submitLabel = 'Revoke',
+  placeholder = 'Why is this entry revoked?',
+  maxLength,
+}: Props) {
   const id = useId();
   const ref = useRef<HTMLDialogElement>(null);
   const [reason, setReason] = useState('');
@@ -61,12 +77,10 @@ function RevokeDialog({ subject, onRevoke, onCancel }: Props) {
       }}
     >
       <WidgetForm onSubmit={(e) => void submit(e)}>
-        <h2 id={`${id}-title`}>Revoke entry</h2>
+        <h2 id={`${id}-title`}>{title}</h2>
         <SectionText className={styles.subject}>{subject}</SectionText>
         <SectionText>
-          <span className="muted">
-            It stays in the logbook, crossed out. This cannot be undone.
-          </span>
+          <span className="muted">{note}</span>
         </SectionText>
         <FieldRow id={`${id}-reason`} label="Reason" marked>
           <textarea
@@ -78,11 +92,12 @@ function RevokeDialog({ subject, onRevoke, onCancel }: Props) {
             required
             autoFocus
             disabled={busy}
-            placeholder="Why is this entry revoked?"
+            placeholder={placeholder}
+            maxLength={maxLength}
           />
         </FieldRow>
         <FormActions
-          submitLabel="Revoke"
+          submitLabel={submitLabel}
           canSubmit={trimmed !== ''}
           busy={busy}
           onDiscard={cancel}

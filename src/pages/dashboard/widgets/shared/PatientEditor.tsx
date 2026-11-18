@@ -1,7 +1,13 @@
 import { useCan, useSessionUhs } from '@/app/session';
 import { useState } from 'react';
-import { formatPatientName, isWalkIn, type Patient, patientsApi } from '@/api/patients';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import {
+  formatPatientName,
+  isWalkIn,
+  type Patient,
+  patientRemovalTexts,
+  patientsApi,
+} from '@/api/patients';
+import RevokeDialog from '@/components/RevokeDialog';
 import { SectionText, sectionStack } from '@/components/form';
 import { formatTime } from './logbookEntries';
 import PatientForm from './PatientForm';
@@ -83,16 +89,11 @@ function PatientEditor({
         {formatTime(patient.updated_at)} by {patient.updated_by}
       </SectionText>
       {deleting && (
-        <ConfirmDialog
-          title="Delete patient"
-          message={
-            <SectionText>
-              Delete the patient “{formatPatientName(patient)}” and its links to every mission?
-            </SectionText>
-          }
-          confirmLabel="Delete"
-          onConfirm={async () => {
-            await patientsApi.remove(patient);
+        <RevokeDialog
+          {...patientRemovalTexts.delete}
+          subject={formatPatientName(patient)}
+          onRevoke={async (reason) => {
+            await patientsApi.remove(patient, reason);
             setDeleting(false);
             onDeleted();
           }}

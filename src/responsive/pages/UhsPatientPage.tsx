@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ApiError } from '@/api/client';
 import { useOffline } from '@/api/connectivity';
 import {
+  checkoutBlocker,
   formatPatientName,
   isWalkIn,
   patientPath,
@@ -21,9 +22,9 @@ import styles from './MissionPage.module.scss';
 const PatientFormMUI = lazy(() => import('../widgets/UhsPatientsMUI/PatientFormMUI'));
 const UhsPatientDetailsMUI = lazy(() => import('../widgets/UhsPatientsMUI/UhsPatientDetailsMUI'));
 
-// One patient of the session's UHS: its fields, its stays and Remove from
-// UHS, after which it is out of the session's sight, so the page returns to
-// the list. So does a patient removed elsewhere (404).
+// One patient of the session's UHS: its fields, its stays, Check out and
+// Remove from UHS, after either of which it is out of the session's sight,
+// so the page returns to the list. So does a patient removed elsewhere (404).
 function UhsPatientPage() {
   const { id = '' } = useParams();
   const uhs = useSessionUhs();
@@ -93,10 +94,25 @@ function UhsPatientPage() {
             patient={p}
             stays={stays.data ?? []}
             canRemove={canEdit && !!p.uhs}
-            onRemove={async () => {
+            checkoutBlocked={checkoutBlocker(p, { canEdit, offline })}
+            onArrive={async () => {
+              const saved = await patientsApi.arriveUhs(p.id);
+              cache.put(patientPath(saved.id), saved);
+              void stays.reload();
+            }}
+            onRemove={async (reason) => {
               try {
-                await patientsApi.releaseUhs(p.id);
+                await patientsApi.releaseUhs(p.id, reason);
               } catch (err) {
+                if (!(err instanceof ApiError && err.status === 404)) throw err;
+              }
+              void navigate(responsivePaths.uhs, { replace: true });
+            }}
+            onCheckout={async () => {
+              try {
+                await patientsApi.checkoutUhs(p.id);
+              } catch (err) {
+                // Already out of the UHS (removed or checked out elsewhere).
                 if (!(err instanceof ApiError && err.status === 404)) throw err;
               }
               void navigate(responsivePaths.uhs, { replace: true });

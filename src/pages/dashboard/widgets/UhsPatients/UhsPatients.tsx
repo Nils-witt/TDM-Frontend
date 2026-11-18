@@ -83,6 +83,7 @@ function UhsPatients({ options }: WidgetProps) {
         )}
       </div>
       <FormError error={list.error ?? menu.error} onClose={() => void list.reload()} />
+      {menu.dialog}
     </div>
   );
 }

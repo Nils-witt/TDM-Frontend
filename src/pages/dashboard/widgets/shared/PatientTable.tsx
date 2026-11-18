@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react';
-import { formatPatientName, isWalkIn, localDate, type Patient, patientAge } from '@/api/patients';
+import {
+  formatPatientName,
+  isInbound,
+  isWalkIn,
+  localDate,
+  type Patient,
+  patientAge,
+  uhsArrival,
+} from '@/api/patients';
 import { useNow } from '@/app/useNow';
 import ContextMenu from '@/components/menu/ContextMenu';
 import { useContextMenu } from '@/components/menu/useContextMenu';
@@ -21,7 +29,8 @@ type Props = {
   rowMenu?: (p: Patient) => ReactNode;
   // A column with the patient's current UHS.
   showUhs?: boolean;
-  // Instead of the UHS column's name, when it arrived there (the UHS's own list).
+  // Instead of the UHS column's name, when it arrived there, or Inbound (the
+  // UHS's own list).
   showSince?: boolean;
 };
 
@@ -46,7 +55,7 @@ function PatientTable({
             <th>Born</th>
             <th>Event</th>
             {showUhs && <th>UHS</th>}
-            {showSince && <th>Since</th>}
+            {showSince && <th>Arrived</th>}
             {action && (
               <th>
                 <span className={tableStyles.hidden}>Actions</span>
@@ -92,6 +101,7 @@ function Row({ patient: p, today, selected, onPick, action, menu, showUhs, showS
   const ctx = useContextMenu();
   const age = patientAge(p.birth_date, today);
   const blocked = action?.disabled?.(p) ?? null;
+  const arrival = uhsArrival(p);
   return (
     <tr
       className={selected ? tableStyles.highlight : undefined}
@@ -123,7 +133,14 @@ function Row({ patient: p, today, selected, onPick, action, menu, showUhs, showS
           {p.uhs ? `${p.uhs.name}${p.uhs.active ? '' : ' (inactive)'}` : ''}
         </td>
       )}
-      {showSince && <td className={tableStyles.meta}>{p.uhs ? sinceTime(p.uhs.since) : ''}</td>}
+      {showSince && (
+        <td
+          className={tableStyles.meta}
+          title={p.uhs ? `Assigned ${sinceTime(p.uhs.since)}` : undefined}
+        >
+          {isInbound(p) ? <strong>Inbound</strong> : arrival ? sinceTime(arrival) : ''}
+        </td>
+      )}
       {action && (
         <td>
           <button

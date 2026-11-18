@@ -1,6 +1,14 @@
 import { useId, useState } from 'react';
-import { linkBlocker, type Patient, patientsApi, unlinkBlocker } from '@/api/patients';
+import {
+  formatPatientName,
+  linkBlocker,
+  type Patient,
+  patientRemovalTexts,
+  patientsApi,
+  unlinkBlocker,
+} from '@/api/patients';
 import { compactControls, FormError, SectionHeading } from '@/components/form';
+import RevokeDialog from '@/components/RevokeDialog';
 import { useMissions } from '@/data/missionsContext';
 import tableStyles from './CatalogManager.module.scss';
 import { StatusChip } from './MissionStatus';
@@ -20,6 +28,8 @@ function PatientMissionLinks({ patient, readOnly, onChange }: Props) {
   const id = useId();
   const missions = useMissions({ closed: true });
   const [pick, setPick] = useState('');
+  // The mission being unlinked, while its reason dialog is open.
+  const [unlinking, setUnlinking] = useState<{ id: string; name: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,7 +77,9 @@ function PatientMissionLinks({ patient, readOnly, onChange }: Props) {
                         className="btn small"
                         disabled={busy || blocker !== null}
                         title={blocker ?? 'Unlink the patient from this mission'}
-                        onClick={() => void run(() => patientsApi.unlink(patient.id, missionId))}
+                        onClick={() =>
+                          setUnlinking({ id: missionId, name: m?.occurred_event ?? missionId })
+                        }
                       >
                         Unlink
                       </button>
@@ -119,6 +131,17 @@ function PatientMissionLinks({ patient, readOnly, onChange }: Props) {
         </div>
       )}
       <FormError error={error} onClose={() => setError(null)} />
+      {unlinking && (
+        <RevokeDialog
+          {...patientRemovalTexts.unlink}
+          subject={`${formatPatientName(patient)} from ${unlinking.name}`}
+          onRevoke={async (reason) => {
+            onChange(await patientsApi.unlink(patient.id, unlinking.id, reason));
+            setUnlinking(null);
+          }}
+          onCancel={() => setUnlinking(null)}
+        />
+      )}
     </div>
   );
 }

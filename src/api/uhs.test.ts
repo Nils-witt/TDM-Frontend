@@ -1,11 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { changedPaths } from './events';
 import {
+  arriveBlocker,
+  checkoutBlocker,
   isHistoricPatient,
+  isInbound,
   isWalkIn,
   type Patient,
   patientsApi,
   patientsListPath,
+  stayArrivalLabel,
+  stayEndLabel,
+  uhsArrival,
   uhsBlocker,
   unlinkBlocker,
 } from './patients';
@@ -68,6 +74,79 @@ describe('uhsBlocker', () => {
   });
 });
 
+describe('arrivals', () => {
+  const inbound = patient({ uhs: { ...inTent, arrived_at: null } });
+  const arrived = patient({ uhs: { ...inTent, arrived_at: '2026-01-01T10:30:00.000Z' } });
+
+  it('tells inbound patients, counting an older API as arrived', () => {
+    expect(isInbound(inbound)).toBe(true);
+    expect(isInbound(arrived)).toBe(false);
+    expect(isInbound(patient({ uhs: inTent }))).toBe(false);
+    expect(isInbound(patient())).toBe(false);
+    expect(uhsArrival(inbound)).toBeNull();
+    expect(uhsArrival(arrived)).toBe('2026-01-01T10:30:00.000Z');
+    expect(uhsArrival(patient({ uhs: inTent }))).toBe(inTent.since);
+  });
+
+  it('marks only an inbound patient, also in an UHS session', () => {
+    expect(arriveBlocker(inbound, { ...ctx, uhsSession: true })).toBeNull();
+    expect(arriveBlocker(arrived, ctx)).toMatch(/already/);
+    expect(arriveBlocker(patient(), ctx)).toMatch(/no UHS/);
+    expect(arriveBlocker(inbound, { ...ctx, offline: true })).toMatch(/offline/);
+    expect(arriveBlocker(inbound, { ...ctx, canEdit: false })).toMatch(/patients\.edit/);
+  });
+
+  it('labels the arrival of a stay', () => {
+    const stay = {
+      id: 's',
+      uhs: 'u1',
+      uhs_name: 'Tent',
+      assigned_at: 'A',
+      released_at: null,
+      release_reason: null,
+      created_by: 'd',
+    };
+    const fmt = (ts: string) => `<${ts}>`;
+    expect(stayArrivalLabel({ ...stay, arrived_at: 'B', arrived_by: 'medic' }, fmt)).toBe(
+      '<B> (medic)',
+    );
+    expect(stayArrivalLabel({ ...stay, arrived_at: null, arrived_by: null }, fmt)).toBe('Inbound');
+    expect(
+      stayArrivalLabel({ ...stay, released_at: 'C', arrived_at: null, arrived_by: null }, fmt),
+    ).toBe('Not arrived');
+    expect(stayArrivalLabel(stay, fmt)).toBe('<A>');
+  });
+});
+
+describe('checkouts', () => {
+  const inbound = patient({ uhs: { ...inTent, arrived_at: null } });
+  const arrived = patient({ uhs: { ...inTent, arrived_at: '2026-01-01T10:30:00.000Z' } });
+
+  it('checks out only a patient that arrived, also in an UHS session', () => {
+    expect(checkoutBlocker(arrived, ctx)).toBeNull();
+    expect(checkoutBlocker(patient({ uhs: inTent }), ctx)).toBeNull();
+    expect(checkoutBlocker(inbound, ctx)).toMatch(/not arrived/);
+    expect(checkoutBlocker(patient(), ctx)).toMatch(/no UHS/);
+    expect(checkoutBlocker(arrived, { ...ctx, offline: true })).toMatch(/offline/);
+    expect(checkoutBlocker(arrived, { ...ctx, canEdit: false })).toMatch(/patients\.edit/);
+  });
+
+  it('labels how a stay ended', () => {
+    const stay = {
+      id: 's',
+      uhs: 'u1',
+      uhs_name: 'Tent',
+      assigned_at: 'A',
+      released_at: 'B',
+      release_reason: null,
+      created_by: 'd',
+    };
+    expect(stayEndLabel({ ...stay, checked_out_by: 'medic' })).toBe('Checked out (medic)');
+    expect(stayEndLabel({ ...stay, release_reason: 'Never came' })).toBe('Removed: Never came');
+    expect(stayEndLabel(stay)).toBe('');
+  });
+});
+
 describe('walk-ins', () => {
   it('have no missions, and the last mission may go while in an UHS', () => {
     expect(isWalkIn(patient({ missions: [] }))).toBe(true);
@@ -96,12 +175,17 @@ describe('patientsApi UHS', () => {
       }),
     );
     await patientsApi.assignUhs('p1', 'u1');
-    await patientsApi.releaseUhs('p1');
+    await patientsApi.releaseUhs('p1', 'Went home');
+    await patientsApi.arriveUhs('p1');
+    await patientsApi.checkoutUhs('p1');
     expect(calls.map((c) => [c.url.replace(/^.*\/api/, '/api'), c.method])).toEqual([
       ['/api/v1/patients/p1/uhs', 'PUT'],
       ['/api/v1/patients/p1/uhs', 'DELETE'],
+      ['/api/v1/patients/p1/uhs/arrival', 'POST'],
+      ['/api/v1/patients/p1/uhs/checkout', 'POST'],
     ]);
     expect(JSON.parse(String(calls[0]?.body))).toEqual({ uhs: 'u1' });
+    expect(JSON.parse(String(calls[1]?.body))).toEqual({ reason: 'Went home' });
   });
 });
 

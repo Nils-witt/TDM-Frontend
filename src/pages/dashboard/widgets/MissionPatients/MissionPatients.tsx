@@ -75,6 +75,7 @@ function MissionPatients() {
       </div>
       <FormError error={list.error} onClose={() => void list.reload()} />
       <FormError error={menu.error} onClose={menu.clearError} />
+      {menu.dialog}
     </div>
   );
 }

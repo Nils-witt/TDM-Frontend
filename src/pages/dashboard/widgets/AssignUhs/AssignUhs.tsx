@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import { useOffline } from '@/api/connectivity';
-import { formatPatientName, patientsApi, uhsBlocker, usePatient } from '@/api/patients';
+import {
+  formatPatientName,
+  patientRemovalTexts,
+  patientsApi,
+  uhsBlocker,
+  usePatient,
+} from '@/api/patients';
 import { useHasPermission, useSessionUhs } from '@/app/session';
 import { useNow } from '@/app/useNow';
 import { FormError, SectionHeading, SectionText, sectionStack } from '@/components/form';
+import RevokeDialog from '@/components/RevokeDialog';
 import Spinner from '@/components/Spinner';
 import { useCloseWidgetWindow } from '@/components/widgetWindow/widgetWindowContext';
 import { useCatalogs } from '@/data/catalogContext';
@@ -26,6 +33,7 @@ function AssignUhs({ options }: WidgetProps) {
   const [q, setQ] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   if (offline) return <EmptyState>Patients are not available offline.</EmptyState>;
   const p = patient.data;
@@ -38,13 +46,17 @@ function AssignUhs({ options }: WidgetProps) {
   }
   const ctx = { canEdit, offline, now, uhsSession };
 
+  const done = () => {
+    setError(null);
+    if (close) close();
+    else void patient.reload();
+  };
+
   const run = async (action: () => Promise<unknown>) => {
     setBusy(true);
     try {
       await action();
-      setError(null);
-      if (close) close();
-      else void patient.reload();
+      done();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -73,7 +85,7 @@ function AssignUhs({ options }: WidgetProps) {
                 className="btn small"
                 disabled={busy || release !== null}
                 title={release ?? undefined}
-                onClick={() => void run(() => patientsApi.releaseUhs(p.id))}
+                onClick={() => setRemoving(true)}
               >
                 Remove from UHS
               </button>
@@ -125,6 +137,18 @@ function AssignUhs({ options }: WidgetProps) {
         </div>
       )}
       <FormError error={error ?? patient.error} onClose={() => setError(null)} />
+      {removing && p.uhs && (
+        <RevokeDialog
+          {...patientRemovalTexts.release}
+          subject={`${formatPatientName(p)} from ${p.uhs.name}`}
+          onRevoke={async (reason) => {
+            await patientsApi.releaseUhs(p.id, reason);
+            setRemoving(false);
+            done();
+          }}
+          onCancel={() => setRemoving(false)}
+        />
+      )}
     </div>
   );
 }

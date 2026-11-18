@@ -1,9 +1,21 @@
 import { useState } from 'react';
 import { useOffline } from '@/api/connectivity';
-import { type Patient, patientsApi, uhsBlocker, usePatientStays } from '@/api/patients';
+import {
+  arriveBlocker,
+  formatPatientName,
+  isInbound,
+  type Patient,
+  patientRemovalTexts,
+  patientsApi,
+  stayArrivalLabel,
+  stayEndLabel,
+  uhsBlocker,
+  usePatientStays,
+} from '@/api/patients';
 import { useHasPermission, useSessionUhs } from '@/app/session';
 import { useNow } from '@/app/useNow';
 import { FormError, SectionHeading, SectionText } from '@/components/form';
+import RevokeDialog from '@/components/RevokeDialog';
 import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
 import tableStyles from './CatalogManager.module.scss';
 import { formatTime } from './logbookEntries';
@@ -14,8 +26,8 @@ type Props = {
   onChange: (p: Patient) => void;
 };
 
-// The patient's current UHS with Assign / Remove, and every stay below it
-// (from, to, by whom).
+// The patient's current UHS with Arrived (while inbound), Assign / Remove,
+// and every stay below it (from, arrived, to, by whom).
 function PatientStays({ patient, onChange }: Props) {
   const stays = usePatientStays(patient.id);
   const { openWidget } = useWidgetWindows();
@@ -23,23 +35,28 @@ function PatientStays({ patient, onChange }: Props) {
   const canEdit = useHasPermission('patients.edit');
   const uhsSession = useSessionUhs() !== null;
   const now = useNow(60_000);
-  const [busy, setBusy] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ctx = { canEdit, offline, now, uhsSession };
   const assign = uhsBlocker(patient, ctx, 'assign');
   const release = uhsBlocker(patient, ctx, 'release');
+  const arrive = arriveBlocker(patient, ctx);
 
-  const remove = async () => {
-    setBusy(true);
+  const markArrived = async () => {
     try {
-      onChange(await patientsApi.releaseUhs(patient.id));
+      onChange(await patientsApi.arriveUhs(patient.id));
       setError(null);
       void stays.reload();
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setBusy(false);
+      setError(err instanceof Error ? err.message : String(err));
     }
+  };
+
+  const remove = async (reason: string) => {
+    onChange(await patientsApi.releaseUhs(patient.id, reason));
+    setRemoving(false);
+    setError(null);
+    void stays.reload();
   };
 
   const list = stays.data ?? [];
@@ -49,11 +66,23 @@ function PatientStays({ patient, onChange }: Props) {
       <SectionText>
         {patient.uhs ? (
           <>
-            In {patient.uhs.name}
-            {patient.uhs.active ? '' : ' (inactive)'} since {formatTime(patient.uhs.since)}.
+            {isInbound(patient) ? 'Inbound to' : 'In'} {patient.uhs.name}
+            {patient.uhs.active ? '' : ' (inactive)'} since {formatTime(patient.uhs.since)}
+            {patient.uhs.arrived_at ? `, arrived ${formatTime(patient.uhs.arrived_at)}` : ''}.
           </>
         ) : (
           <span className="muted">In no UHS.</span>
+        )}{' '}
+        {isInbound(patient) && (
+          <button
+            type="button"
+            className="btn small"
+            disabled={arrive !== null}
+            title={arrive ?? undefined}
+            onClick={() => void markArrived()}
+          >
+            Arrived
+          </button>
         )}{' '}
         {!uhsSession && (
           <button
@@ -70,9 +99,9 @@ function PatientStays({ patient, onChange }: Props) {
           <button
             type="button"
             className="btn small"
-            disabled={busy || release !== null}
+            disabled={release !== null}
             title={release ?? undefined}
-            onClick={() => void remove()}
+            onClick={() => setRemoving(true)}
           >
             Remove from UHS
           </button>
@@ -85,8 +114,10 @@ function PatientStays({ patient, onChange }: Props) {
               <tr>
                 <th>UHS</th>
                 <th>From</th>
+                <th>Arrived</th>
                 <th>To</th>
                 <th>By</th>
+                <th>Ended</th>
               </tr>
             </thead>
             <tbody>
@@ -94,10 +125,12 @@ function PatientStays({ patient, onChange }: Props) {
                 <tr key={s.id}>
                   <td>{s.uhs_name}</td>
                   <td className={tableStyles.meta}>{formatTime(s.assigned_at)}</td>
+                  <td className={tableStyles.meta}>{stayArrivalLabel(s, formatTime)}</td>
                   <td className={tableStyles.meta}>
                     {s.released_at ? formatTime(s.released_at) : 'now'}
                   </td>
                   <td className={tableStyles.meta}>{s.created_by}</td>
+                  <td className={tableStyles.meta}>{stayEndLabel(s)}</td>
                 </tr>
               ))}
             </tbody>
@@ -105,6 +138,14 @@ function PatientStays({ patient, onChange }: Props) {
         </div>
       )}
       <FormError error={error ?? stays.error} onClose={() => setError(null)} />
+      {removing && patient.uhs && (
+        <RevokeDialog
+          {...patientRemovalTexts.release}
+          subject={`${formatPatientName(patient)} from ${patient.uhs.name}`}
+          onRevoke={remove}
+          onCancel={() => setRemoving(false)}
+        />
+      )}
     </div>
   );
 }

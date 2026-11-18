@@ -114,17 +114,28 @@ export function RevokeDialogMUI({
   subject,
   onRevoke,
   onCancel,
+  title = 'Revoke entry',
+  note = 'It stays in the logbook, crossed out. This cannot be undone.',
+  submitLabel = 'Revoke',
+  placeholder = 'Why is this entry revoked?',
+  maxLength,
 }: {
   subject: string;
   onRevoke: (reason: string) => Promise<void>;
   onCancel: () => void;
+  // As RevokeDialog's.
+  title?: string;
+  note?: string;
+  submitLabel?: string;
+  placeholder?: string;
+  maxLength?: number;
 }) {
   const [reason, setReason] = useState('');
   const trimmed = reason.trim();
   const { busy, error, setError, run, cancel } = useDialogAction(onCancel);
   return (
     <DialogShell
-      title="Revoke entry"
+      title={title}
       onCancel={cancel}
       onSubmit={(e) => {
         e.preventDefault();
@@ -135,9 +146,7 @@ export function RevokeDialogMUI({
         <DialogContentText sx={{ whiteSpace: 'pre-wrap', color: 'text.primary', mb: 1 }}>
           {subject}
         </DialogContentText>
-        <DialogContentText variant="body2">
-          It stays in the logbook, crossed out. This cannot be undone.
-        </DialogContentText>
+        <DialogContentText variant="body2">{note}</DialogContentText>
         <TextField
           label="Reason"
           value={reason}
@@ -148,7 +157,8 @@ export function RevokeDialogMUI({
           autoFocus
           fullWidth
           disabled={busy}
-          placeholder="Why is this entry revoked?"
+          placeholder={placeholder}
+          slotProps={{ htmlInput: { maxLength } }}
           margin="normal"
         />
         {error && (
@@ -162,7 +172,7 @@ export function RevokeDialogMUI({
           Cancel
         </Button>
         <Button type="submit" variant="contained" disabled={busy || trimmed === ''}>
-          Revoke
+          {submitLabel}
         </Button>
       </DialogActions>
     </DialogShell>

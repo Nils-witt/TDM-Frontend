@@ -38,7 +38,12 @@ export type PatientUhs = {
   id: string;
   name: string;
   active: boolean;
+  // When the stay began (the patient was assigned there).
   since: Timestamp;
+  // When the UHS marked the patient as arrived; null while it is inbound
+  // (assigned from a mission, on its way). A walk-in arrives with its stay.
+  // Absent from an API older than arrivals: counted as arrived.
+  arrived_at?: Timestamp | null;
   in_scope: boolean;
 };
 
@@ -49,11 +54,51 @@ export type PatientStay = {
   uhs_name: string;
   assigned_at: Timestamp;
   released_at: Timestamp | null;
+  // Why the patient was removed; null for the current stay or one ended by
+  // a move to another UHS or a checkout.
+  release_reason: string | null;
+  // Who checked the patient out: it was there and left. Null for a stay that
+  // is current, removed or ended by a move; absent from an older API.
+  checked_out_by?: string | null;
+  // When the patient arrived and who marked it; null while inbound, or if it
+  // was released before it arrived. Absent from an API older than arrivals.
+  arrived_at?: Timestamp | null;
+  arrived_by?: string | null;
   created_by: string;
 };
 
 // The API's limit on the names and the event.
 export const patientTextMax = 200;
+
+// The API's limit on the reason of deleting, unlinking or removing from an
+// UHS.
+export const removalReasonMax = 500;
+
+// The reason dialog of each way a patient is removed (RevokeDialog,
+// RevokeDialogMUI). The API keeps the row and the reason.
+export const patientRemovalTexts = {
+  delete: {
+    title: 'Delete patient',
+    note: 'The patient and its links are kept with the reason, but hidden everywhere. This cannot be undone.',
+    submitLabel: 'Delete',
+    placeholder: 'Why is the patient deleted?',
+    maxLength: removalReasonMax,
+  },
+  unlink: {
+    title: 'Unlink patient',
+    note: 'The link is kept with the reason.',
+    submitLabel: 'Unlink',
+    placeholder: 'Why is the patient unlinked from this mission?',
+    maxLength: removalReasonMax,
+  },
+  release: {
+    title: 'Remove from UHS',
+    note: 'The stay ends and keeps the reason.',
+    submitLabel: 'Remove',
+    placeholder: 'Why does the patient leave the UHS?',
+    maxLength: removalReasonMax,
+  },
+} as const;
 
 export type PatientFields = {
   first_name: string | null;
@@ -127,22 +172,61 @@ export const patientsApi = {
       headers: ifMatch(p),
       body: JSON.stringify(fields),
     }),
-  remove: (p: Patient) =>
-    request<void>(patientPath(p.id), { method: 'DELETE', headers: ifMatch(p) }),
+  // Patients, links and stays are never removed: the API soft-deletes them
+  // (or ends the stay) and keeps the reason, which it requires.
+  remove: (p: Patient, reason: string) =>
+    request<void>(patientPath(p.id), {
+      method: 'DELETE',
+      headers: ifMatch(p),
+      body: JSON.stringify({ reason }),
+    }),
   link: (id: string, mission: string) =>
     request<Patient>(patientMissionsPath(id), {
       method: 'POST',
       body: JSON.stringify({ mission }),
     }),
-  unlink: (id: string, mission: string) =>
+  unlink: (id: string, mission: string, reason: string) =>
     request<Patient>(`${patientMissionsPath(id)}/${encodeURIComponent(mission)}`, {
       method: 'DELETE',
+      body: JSON.stringify({ reason }),
     }),
   // Moves the patient into the UHS, ending its current stay.
   assignUhs: (id: string, uhs: string) =>
     request<Patient>(patientUhsPath(id), { method: 'PUT', body: JSON.stringify({ uhs }) }),
-  releaseUhs: (id: string) => request<Patient>(patientUhsPath(id), { method: 'DELETE' }),
+  // Marks the patient as arrived in its current UHS (a no-op once it has).
+  arriveUhs: (id: string) => request<Patient>(`${patientUhsPath(id)}/arrival`, { method: 'POST' }),
+  // For a patient assigned in error or that never came; the reason is kept.
+  releaseUhs: (id: string, reason: string) =>
+    request<Patient>(patientUhsPath(id), { method: 'DELETE', body: JSON.stringify({ reason }) }),
+  // Ends the stay of a patient that was there and leaves now (409 while
+  // inbound).
+  checkoutUhs: (id: string) =>
+    request<Patient>(`${patientUhsPath(id)}/checkout`, { method: 'POST' }),
 };
+
+// Whether the patient is on its way to its UHS: assigned, not yet arrived.
+export const isInbound = (p: Patient): boolean => p.uhs?.arrived_at === null;
+
+// When the patient arrived in its current UHS: arrived_at, or for an older
+// API the start of the stay. Null while inbound or outside an UHS.
+export const uhsArrival = (p: Patient): Timestamp | null =>
+  p.uhs ? (p.uhs.arrived_at === undefined ? p.uhs.since : p.uhs.arrived_at) : null;
+
+// When the patient arrived in the stay's UHS and who marked it (formatted
+// with format); Inbound while on its way, Not arrived for a stay that ended
+// first. An older API's stays count as arrived when they began.
+export function stayArrivalLabel(s: PatientStay, format: (ts: Timestamp) => string): string {
+  if (s.arrived_at === undefined) return format(s.assigned_at);
+  if (s.arrived_at === null) return s.released_at ? 'Not arrived' : 'Inbound';
+  return `${format(s.arrived_at)}${s.arrived_by ? ` (${s.arrived_by})` : ''}`;
+}
+
+// How the stay ended: Checked out (and by whom), the removal's reason, or
+// empty for the current stay or one ended by a move.
+export function stayEndLabel(s: PatientStay): string {
+  if (s.checked_out_by) return `Checked out (${s.checked_out_by})`;
+  return s.release_reason ? `Removed: ${s.release_reason}` : '';
+}
 
 // A patient without missions, cared for only in an UHS.
 export const isWalkIn = (p: Patient) => p.missions.length + (p.other_missions?.length ?? 0) === 0;
@@ -222,6 +306,31 @@ export function uhsBlocker(
   if (ctx.uhsSession) return 'An UHS function cannot move patients to another UHS.';
   if (target && !target.active) return 'The UHS is inactive.';
   if (target && p.uhs?.id === target.id) return 'The patient is already in this UHS.';
+  return null;
+}
+
+// Why the inbound patient cannot be marked as arrived, null if it can. Also
+// for UHS sessions, whose staff receive it.
+export function arriveBlocker(p: Patient, ctx: UhsWriteContext): string | null {
+  if (ctx.offline) return 'Not available offline.';
+  if (!ctx.canEdit) return 'Needs the permission patients.edit.';
+  if (!p.uhs) return 'The patient is in no UHS.';
+  if (!isInbound(p)) return 'The patient has already arrived.';
+  return null;
+}
+
+// Why the patient cannot be checked out of its UHS, null if it can: only one
+// that arrived (or walked in) leaves by a checkout; one that never came is
+// removed instead. Also for UHS sessions. A patient in an UHS is never
+// historic, so the time does not matter.
+export function checkoutBlocker(
+  p: Patient,
+  ctx: Pick<UhsWriteContext, 'canEdit' | 'offline'>,
+): string | null {
+  if (ctx.offline) return 'Not available offline.';
+  if (!ctx.canEdit) return 'Needs the permission patients.edit.';
+  if (!p.uhs) return 'The patient is in no UHS.';
+  if (isInbound(p)) return 'The patient has not arrived: remove it instead.';
   return null;
 }
 
