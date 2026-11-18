@@ -80,3 +80,12 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+// The chips after a name in a cell (PatientTable).
+.chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}

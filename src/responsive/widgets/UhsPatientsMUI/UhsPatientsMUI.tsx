@@ -1,10 +1,13 @@
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import { useState } from 'react';
 import {
+  criticalCategoryLabel,
+  criticalCategoryOf,
   formatPatientName,
   isWalkIn,
   localDate,
@@ -12,13 +15,23 @@ import {
   patientAge,
   uhsArrival,
 } from '@/api/patients';
+import { medicalCategoryPath, useMedicalCategories } from '@/api/medicalCategories';
 import { useNow } from '@/app/useNow';
 import { MutedMUI } from '../shared/FormMUI';
 
 const time = (ts: string) =>
   new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
-// The patients of an UHS as a list: name (or Unknown), age, when they
+// The chip colors of the critical categories (not_set: the default chip).
+const categoryChip = {
+  red: { bgcolor: 'var(--triage-red)', color: '#fff' },
+  yellow: { bgcolor: 'var(--triage-yellow)', color: '#000' },
+  green: { bgcolor: 'var(--triage-green)', color: '#fff' },
+  not_set: {},
+} as const;
+
+// The patients of an UHS as a list: name (or Unknown), critical category, age,
+// medical category, when they
 // arrived (or, inbound, were assigned), and Walk-in or their missions by
 // name. With onArrive (the Inbound view) each row has an Arrived button.
 function UhsPatientsMUI({
@@ -33,6 +46,7 @@ function UhsPatientsMUI({
   arriveDisabled?: boolean;
 }) {
   const today = localDate(new Date(useNow(60_000)));
+  const categories = useMedicalCategories().data;
   // The patients whose arrival is being saved, so a double tap sends one.
   const [arriving, setArriving] = useState<ReadonlySet<string>>(new Set());
   if (patients.length === 0) return <MutedMUI>No patients.</MutedMUI>;
@@ -57,15 +71,26 @@ function UhsPatientsMUI({
         const arrival = uhsArrival(p);
         const secondary = [
           age === null ? null : `${age} years`,
+          medicalCategoryPath(categories ?? [], p.medical_category),
           arrival ? `arrived ${time(arrival)}` : p.uhs ? `assigned ${time(p.uhs.since)}` : null,
           isWalkIn(p) ? 'Walk-in' : missions || null,
           p.event,
         ]
           .filter(Boolean)
           .join(' · ');
+        const category = criticalCategoryOf(p);
         const text = (
           <ListItemText
-            primary={formatPatientName(p)}
+            primary={
+              <>
+                {formatPatientName(p)}{' '}
+                <Chip
+                  size="small"
+                  label={criticalCategoryLabel(category)}
+                  sx={{ ml: 0.5, fontWeight: 600, ...categoryChip[category] }}
+                />
+              </>
+            }
             secondary={secondary || undefined}
             slotProps={{
               primary: { color: p.first_name || p.last_name ? undefined : 'text.secondary' },

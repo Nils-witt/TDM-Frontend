@@ -1,0 +1,35 @@
+// A pill like MUI's small Chip, for the desktop, which does not use MUI.
+.chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  height: 1.5rem;
+  padding: 0 0.625rem;
+  border-radius: 0.75rem;
+  background: var(--chip);
+  // Set, so a muted cell does not dim it.
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  vertical-align: middle;
+  white-space: nowrap;
+
+  .label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &.red {
+    background: var(--triage-red);
+    color: #fff;
+  }
+  &.yellow {
+    background: var(--triage-yellow);
+    color: #000;
+  }
+  &.green {
+    background: var(--triage-green);
+    color: #fff;
+  }
+}

@@ -1,6 +1,13 @@
+import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import type { ReactNode } from 'react';
-import { type Patient, type PatientFields, patientTextMax } from '@/api/patients';
+import {
+  type Patient,
+  patientCriticalCategories,
+  type PatientFields,
+  patientTextMax,
+} from '@/api/patients';
+import { useMedicalCategoryOptions } from '@/pages/dashboard/widgets/shared/medicalCategoryOptions';
 import { usePatientForm } from '@/pages/dashboard/widgets/shared/usePatientForm';
 import {
   FieldRowMUI,
@@ -27,6 +34,7 @@ function PatientFormMUI({ patient, legend, submitLabel, disabled, onSubmit, asid
     onSubmit,
     disabled,
   );
+  const medical = useMedicalCategoryOptions(draft.medical_category);
   const text = (key: 'first_name' | 'last_name' | 'event', label: string) => (
     <TextField
       label={label}
@@ -54,6 +62,37 @@ function PatientFormMUI({ patient, legend, submitLabel, disabled, onSubmit, asid
             onChange={(e) => set('birth_date')(e.target.value)}
           />
           {text('event', 'Event')}
+        </FieldRowMUI>
+        <FieldRowMUI>
+          <TextField
+            select
+            label="Category"
+            value={draft.critical_category}
+            disabled={disabled}
+            onChange={(e) => set('critical_category')(e.target.value)}
+          >
+            {patientCriticalCategories.map((c) => (
+              <MenuItem key={c.value} value={c.value}>
+                {c.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            label="Medical category"
+            value={draft.medical_category}
+            disabled={disabled}
+            error={medical.error !== null}
+            helperText={medical.error ?? undefined}
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            onChange={(e) => set('medical_category')(e.target.value)}
+          >
+            {medical.options.map((o) => (
+              <MenuItem key={o.value} value={o.value} sx={{ pl: 2 + o.depth * 2 }}>
+                {o.label}
+              </MenuItem>
+            ))}
+          </TextField>
         </FieldRowMUI>
       </FormSectionMUI>
       <FormActionsMUI

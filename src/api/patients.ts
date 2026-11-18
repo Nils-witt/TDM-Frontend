@@ -21,6 +21,11 @@ export type Patient = EntityMeta & {
   birth_date: string | null;
   // Free text.
   event: string | null;
+  // The triage category. Absent from an API older than it: not_set.
+  critical_category?: PatientCriticalCategory;
+  // The ID of its medical category (api/medicalCategories.ts), which may have
+  // been deleted since; null without one, absent from an older API.
+  medical_category?: string | null;
   // The linked missions in the session's scope, oldest link first.
   missions: string[];
   // The linked missions outside the session's scope: only their ID and
@@ -33,6 +38,25 @@ export type Patient = EntityMeta & {
   // a mission is open or the patient is in an UHS.
   closed_at: Timestamp | null;
 };
+
+export type PatientCriticalCategory = 'red' | 'yellow' | 'green' | 'not_set';
+
+// In the order the forms offer them.
+export const patientCriticalCategories: readonly {
+  value: PatientCriticalCategory;
+  label: string;
+}[] = [
+  { value: 'not_set', label: 'Not set' },
+  { value: 'red', label: 'Red' },
+  { value: 'yellow', label: 'Yellow' },
+  { value: 'green', label: 'Green' },
+];
+
+export const criticalCategoryOf = (p: Patient): PatientCriticalCategory =>
+  p.critical_category ?? 'not_set';
+
+export const criticalCategoryLabel = (c: PatientCriticalCategory): string =>
+  patientCriticalCategories.find((o) => o.value === c)?.label ?? c;
 
 export type PatientUhs = {
   id: string;
@@ -105,6 +129,8 @@ export type PatientFields = {
   last_name: string | null;
   birth_date: string | null;
   event: string | null;
+  critical_category: PatientCriticalCategory;
+  medical_category: string | null;
 };
 
 // scope: a scope ID, null for Default, undefined for every scope (Global).

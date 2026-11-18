@@ -75,6 +75,21 @@
   }
 }
 
+// A patient's critical (triage) category, as badge backgrounds.
+:root {
+  --triage-red: #d32f2f;
+  --triage-yellow: #fbc02d;
+  --triage-green: #2e7d32;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --triage-red: #f44336;
+    --triage-yellow: #fdd835;
+    --triage-green: #66bb6a;
+  }
+}
+
 // The names are those stored with a channel (see pages/dashboard/monitors/channels.ts).
 :root {
   --channel-blue: #1976d2;

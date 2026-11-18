@@ -1,6 +1,13 @@
 import { type ReactNode, useId } from 'react';
-import { type Patient, type PatientFields, patientTextMax } from '@/api/patients';
+import {
+  type Patient,
+  type PatientCriticalCategory,
+  patientCriticalCategories,
+  type PatientFields,
+  patientTextMax,
+} from '@/api/patients';
 import { FieldRow, FormActions, FormError, Section, WidgetForm } from '@/components/form';
+import { indentedLabel, useMedicalCategoryOptions } from './medicalCategoryOptions';
 import { usePatientForm } from './usePatientForm';
 
 type Props = {
@@ -33,6 +40,7 @@ function PatientForm({
     onSubmit,
     disabled,
   );
+  const medical = useMedicalCategoryOptions(draft.medical_category);
 
   const text = (key: 'first_name' | 'last_name' | 'event', label: string) => (
     <FieldRow id={`${id}-${key}`} label={label}>
@@ -62,6 +70,34 @@ function PatientForm({
           />
         </FieldRow>
         {text('event', 'Event')}
+        <FieldRow id={`${id}-category`} label="Category">
+          <select
+            id={`${id}-category`}
+            value={draft.critical_category}
+            onChange={(e) => set('critical_category')(e.target.value as PatientCriticalCategory)}
+          >
+            {patientCriticalCategories.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </FieldRow>
+        <FieldRow id={`${id}-medical`} label="Medical category">
+          <select
+            id={`${id}-medical`}
+            className="grow"
+            value={draft.medical_category}
+            title={medical.error ?? undefined}
+            onChange={(e) => set('medical_category')(e.target.value)}
+          >
+            {medical.options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {indentedLabel(o)}
+              </option>
+            ))}
+          </select>
+        </FieldRow>
       </Section>
       <FormActions
         submitLabel={submitLabel}

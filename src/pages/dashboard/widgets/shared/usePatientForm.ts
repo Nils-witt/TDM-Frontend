@@ -1,5 +1,12 @@
 import { type FormEvent, useState } from 'react';
-import { blankToNull, localDate, type Patient, type PatientFields } from '@/api/patients';
+import {
+  blankToNull,
+  criticalCategoryOf,
+  localDate,
+  type Patient,
+  type PatientCriticalCategory,
+  type PatientFields,
+} from '@/api/patients';
 import { useNow } from '@/app/useNow';
 
 export type PatientDraft = {
@@ -7,6 +14,9 @@ export type PatientDraft = {
   last_name: string;
   birth_date: string;
   event: string;
+  critical_category: PatientCriticalCategory;
+  // '' without one.
+  medical_category: string;
 };
 
 export const patientDraftOf = (p: Patient | null): PatientDraft => ({
@@ -14,6 +24,8 @@ export const patientDraftOf = (p: Patient | null): PatientDraft => ({
   last_name: p?.last_name ?? '',
   birth_date: p?.birth_date ?? '',
   event: p?.event ?? '',
+  critical_category: p ? criticalCategoryOf(p) : 'not_set',
+  medical_category: p?.medical_category ?? '',
 });
 
 export const patientFieldsOf = (d: PatientDraft): PatientFields => ({
@@ -21,6 +33,8 @@ export const patientFieldsOf = (d: PatientDraft): PatientFields => ({
   last_name: blankToNull(d.last_name),
   birth_date: d.birth_date === '' ? null : d.birth_date,
   event: blankToNull(d.event),
+  critical_category: d.critical_category,
+  medical_category: d.medical_category === '' ? null : d.medical_category,
 });
 
 // The state of a patient's form, shared by the desktop PatientForm and the

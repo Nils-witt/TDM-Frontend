@@ -106,6 +106,7 @@ function Nav() {
                   <NavMenuItem label="Mission Types" widget="MissionTypes" />
                   <NavMenuItem label="Logbook Types" widget="LogbookTypes" />
                   <NavMenuItem label="File Types" widget="FileTypes" />
+                  <NavMenuItem label="Medical Categories" widget="MedicalCategories" />
                   <NavMenuItem label="Scopes" widget="Scopes" />
                   <NavMenuItem label="UHS" widget="Uhs" />
                   <NavMenuItem label="Map Defaults" widget="MapAdmin" />

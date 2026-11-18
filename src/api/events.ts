@@ -23,6 +23,7 @@ const typePaths: Record<string, string[]> = {
   logbook_types: ['/api/v1/logbook-types'],
   file_types: ['/api/v1/file-types'],
   scopes: ['/api/v1/scopes'],
+  medical_categories: ['/api/v1/medical-categories'],
   // A patient's closed_at follows its missions.
   missions: ['/api/v1/missions', '/api/v1/patients'],
   log_entries: ['/api/v1/log-entries'],

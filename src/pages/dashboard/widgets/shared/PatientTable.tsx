@@ -1,17 +1,24 @@
 import type { ReactNode } from 'react';
 import {
+  criticalCategoryOf,
   formatPatientName,
   isInbound,
-  isWalkIn,
   localDate,
   type Patient,
   patientAge,
   uhsArrival,
 } from '@/api/patients';
+import {
+  type MedicalCategory,
+  medicalCategoryPath,
+  useMedicalCategories,
+} from '@/api/medicalCategories';
 import { useNow } from '@/app/useNow';
+import Chip from '@/components/Chip';
 import ContextMenu from '@/components/menu/ContextMenu';
 import { useContextMenu } from '@/components/menu/useContextMenu';
 import tableStyles from './CatalogManager.module.scss';
+import CriticalCategoryBadge from './CriticalCategoryBadge';
 
 type Action = {
   label: string;
@@ -34,7 +41,7 @@ type Props = {
   showSince?: boolean;
 };
 
-// Name (Unknown without one), birth date with the age, event, and optionally
+// Name (Unknown without one), critical and medical category, birth date with the age, event, and optionally
 // the UHS the patient is in.
 function PatientTable({
   patients,
@@ -46,14 +53,13 @@ function PatientTable({
   showSince,
 }: Props) {
   const today = localDate(new Date(useNow(60_000)));
+  const categories = useMedicalCategories().data ?? noCategories;
   return (
     <div className={tableStyles.tableWrap}>
       <table className={tableStyles.table}>
         <thead>
           <tr>
             <th>Name</th>
-            <th>Born</th>
-            <th>Event</th>
             {showUhs && <th>UHS</th>}
             {showSince && <th>Arrived</th>}
             {action && (
@@ -69,6 +75,7 @@ function PatientTable({
               key={p.id}
               patient={p}
               today={today}
+              categories={categories}
               selected={p.id === selectedId}
               onPick={onPick}
               action={action}
@@ -86,6 +93,7 @@ function PatientTable({
 type RowProps = {
   patient: Patient;
   today: string;
+  categories: readonly MedicalCategory[];
   selected: boolean;
   onPick: (p: Patient) => void;
   action?: Action;
@@ -94,14 +102,27 @@ type RowProps = {
   showSince?: boolean;
 };
 
+const noCategories: readonly MedicalCategory[] = [];
+
 const sinceTime = (ts: string) =>
   new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
-function Row({ patient: p, today, selected, onPick, action, menu, showUhs, showSince }: RowProps) {
+function Row({
+  patient: p,
+  today,
+  categories,
+  selected,
+  onPick,
+  action,
+  menu,
+  showUhs,
+  showSince,
+}: RowProps) {
   const ctx = useContextMenu();
   const age = patientAge(p.birth_date, today);
   const blocked = action?.disabled?.(p) ?? null;
   const arrival = uhsArrival(p);
+  const medical = medicalCategoryPath(categories, p.medical_category);
   return (
     <tr
       className={selected ? tableStyles.highlight : undefined}
@@ -121,13 +142,14 @@ function Row({ patient: p, today, selected, onPick, action, menu, showUhs, showS
       }}
     >
       <td className={p.first_name || p.last_name ? undefined : 'muted'}>
-        {formatPatientName(p)}
-        {isWalkIn(p) && <span className="muted"> · Walk-in</span>}
+        {formatPatientName(p)} {age === null ? '' : ` (${age})`}
+        <span className={tableStyles.chips}>
+          <CriticalCategoryBadge category={criticalCategoryOf(p)} />
+          {p.medical_category && (
+            <Chip label={medical ?? '(deleted)'} title={medical ?? 'Deleted medical category'} />
+          )}
+        </span>
       </td>
-      <td className={tableStyles.meta}>
-        {p.birth_date ? `${p.birth_date}${age === null ? '' : ` (${age})`}` : ''}
-      </td>
-      <td>{p.event ?? ''}</td>
       {showUhs && (
         <td className={p.uhs && !p.uhs.in_scope ? 'muted' : undefined}>
           {p.uhs ? `${p.uhs.name}${p.uhs.active ? '' : ' (inactive)'}` : ''}

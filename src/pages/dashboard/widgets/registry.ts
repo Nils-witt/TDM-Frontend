@@ -20,6 +20,7 @@ const AttachmentViewerWidget = lazy(() => import('./AttachmentViewer/AttachmentV
 const MissionTypesWidget = lazy(() => import('./MissionTypes/MissionTypes.tsx'));
 const LogbookTypesWidget = lazy(() => import('./LogbookTypes/LogbookTypes.tsx'));
 const FileTypesWidget = lazy(() => import('./FileTypes/FileTypes.tsx'));
+const MedicalCategoriesWidget = lazy(() => import('./MedicalCategories/MedicalCategories.tsx'));
 const ScopesWidget = lazy(() => import('./Scopes/Scopes.tsx'));
 const UhsWidget = lazy(() => import('./Uhs/Uhs.tsx'));
 const AssignUhsWidget = lazy(() => import('./AssignUhs/AssignUhs.tsx'));
@@ -695,6 +696,16 @@ const FileTypes: Widget = {
   Component: FileTypesWidget,
 };
 
+const MedicalCategories: Widget = {
+  ...adminWidget,
+  adminOnly: false,
+  permission: 'catalogs.manage',
+  id: 'MedicalCategories',
+  name: 'Medical categories',
+  description: 'Manages the medical categories of patients, each optionally below a parent.',
+  Component: MedicalCategoriesWidget,
+};
+
 const Scopes: Widget = {
   ...adminWidget,
   adminOnly: false,
@@ -917,6 +928,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     MissionTypes,
     LogbookTypes,
     FileTypes,
+    MedicalCategories,
     Scopes,
     Uhs,
     AssignUhs,
