@@ -15,9 +15,10 @@ import { LinkOffIcon } from '@/components/icons';
 import MenuItem from '@/components/menu/MenuItem';
 import RevokeDialog from '@/components/RevokeDialog';
 import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
+import PatientHistoryItem from './PatientHistoryItem';
 
-// The context menu of a patient row (Patients in Mission, Patients in UHS):
-// Open, Mark as arrived (an inbound patient), Assign to UHS (the AssignUhs
+// The context menu of a patient row (Patients in Mission, Patients in UHS,
+// Patients): Open, History, Mark as arrived (an inbound patient), Assign to UHS (the AssignUhs
 // window) and Remove from UHS, which asks for the reason. Returns the rowMenu of PatientTable, the reason dialog to
 // render and the error of the last removal.
 export function usePatientRowMenu() {
@@ -37,6 +38,7 @@ export function usePatientRowMenu() {
     return (
       <>
         <MenuItem onClick={() => openWidget('Patient', { patientId: p.id })}>Open</MenuItem>
+        <PatientHistoryItem patient={p} />
         {isInbound(p) && (
           <MenuItem
             disabled={arrive !== null}

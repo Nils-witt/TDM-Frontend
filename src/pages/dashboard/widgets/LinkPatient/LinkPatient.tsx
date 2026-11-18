@@ -6,6 +6,7 @@ import { useHasPermission } from '@/app/session';
 import { FormError, SectionHeading, sectionStack } from '@/components/form';
 import Spinner from '@/components/Spinner';
 import { useMission } from '@/data/missionsContext';
+import PatientHistoryItem from '../shared/PatientHistoryItem';
 import PatientTable from '../shared/PatientTable';
 import { EmptyState } from '../shared/WidgetStates';
 import type { WidgetProps } from '../widgetOptions';
@@ -55,6 +56,7 @@ function LinkPatient({ options }: WidgetProps) {
           <PatientTable
             patients={found.data}
             onPick={() => undefined}
+            rowMenu={(p) => <PatientHistoryItem patient={p} />}
             action={{
               label: 'Link',
               disabled: (p) => linkBlocker(p, mission),

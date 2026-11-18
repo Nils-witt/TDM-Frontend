@@ -23,6 +23,7 @@ const FileTypesWidget = lazy(() => import('./FileTypes/FileTypes.tsx'));
 const ScopesWidget = lazy(() => import('./Scopes/Scopes.tsx'));
 const UhsWidget = lazy(() => import('./Uhs/Uhs.tsx'));
 const AssignUhsWidget = lazy(() => import('./AssignUhs/AssignUhs.tsx'));
+const PatientHistoryWidget = lazy(() => import('./PatientHistory/PatientHistory.tsx'));
 const UhsPatientsWidget = lazy(() => import('./UhsPatients/UhsPatients.tsx'));
 const UsersWidget = lazy(() => import('./Users/Users.tsx'));
 const GroupsWidget = lazy(() => import('./Groups/Groups.tsx'));
@@ -527,6 +528,24 @@ const AssignUhs: Widget = {
   Component: AssignUhsWidget,
 };
 
+// A patient row's menu opens it to show patientId's missions and UHS stays.
+const PatientHistory: Widget = {
+  id: 'PatientHistory',
+  name: 'Patient History',
+  category: 'missions',
+  description: "One patient's missions and UHS stays.",
+  permission: 'patients.view',
+  minWidth: 25,
+  maxWidth: 120,
+  minHeight: 10,
+  maxHeight: 400,
+  defaultWidth: 45,
+  defaultHeight: 36,
+  windowOnly: true,
+  options: [{ key: 'patientId', label: 'Patient ID', type: 'text', default: '' }],
+  Component: PatientHistoryWidget,
+};
+
 // The patients currently in one UHS (uhsId, switchable in the widget).
 const UhsPatients: Widget = {
   id: 'UhsPatients',
@@ -890,6 +909,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     Scopes,
     Uhs,
     AssignUhs,
+    PatientHistory,
     UhsPatients,
     MapStyles,
     MapAdmin,

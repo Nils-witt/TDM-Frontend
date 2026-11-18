@@ -7,6 +7,7 @@ import { FormError, SectionHeading, sectionStack } from '@/components/form';
 import Spinner from '@/components/Spinner';
 import { useSelectedScope } from '@/data/selectedScope';
 import PatientEditor from '../shared/PatientEditor';
+import { usePatientRowMenu } from '../shared/PatientRowMenu';
 import PatientTable from '../shared/PatientTable';
 import WidgetActionBar, { WidgetAction } from '../shared/WidgetActionBar';
 import { EmptyState } from '../shared/WidgetStates';
@@ -39,6 +40,7 @@ function Patients({ options }: WidgetProps) {
     scope: patientScope(scope, true),
   };
   const list = usePatients(offline ? null : filter);
+  const menu = usePatientRowMenu();
 
   if (offline) return <EmptyState>Patients are not available offline.</EmptyState>;
 
@@ -99,10 +101,12 @@ function Patients({ options }: WidgetProps) {
         ) : patients.length === 0 ? (
           <EmptyState className="">No matching patients.</EmptyState>
         ) : (
-          <PatientTable patients={patients} onPick={setEditing} />
+          <PatientTable patients={patients} showUhs rowMenu={menu.rowMenu} onPick={setEditing} />
         )}
       </div>
       <FormError error={list.error} onClose={() => void list.reload()} />
+      <FormError error={menu.error} onClose={menu.clearError} />
+      {menu.dialog}
     </div>
   );
 }

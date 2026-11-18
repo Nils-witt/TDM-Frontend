@@ -10,6 +10,7 @@ import {
   stayArrivalLabel,
   stayEndLabel,
   uhsBlocker,
+  type PatientStay,
   usePatientStays,
 } from '@/api/patients';
 import { useHasPermission, useSessionUhs } from '@/app/session';
@@ -107,36 +108,7 @@ function PatientStays({ patient, onChange }: Props) {
           </button>
         )}
       </SectionText>
-      {list.length > 0 && (
-        <div className={tableStyles.tableWrap}>
-          <table className={tableStyles.table}>
-            <thead>
-              <tr>
-                <th>UHS</th>
-                <th>From</th>
-                <th>Arrived</th>
-                <th>To</th>
-                <th>By</th>
-                <th>Ended</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((s) => (
-                <tr key={s.id}>
-                  <td>{s.uhs_name}</td>
-                  <td className={tableStyles.meta}>{formatTime(s.assigned_at)}</td>
-                  <td className={tableStyles.meta}>{stayArrivalLabel(s, formatTime)}</td>
-                  <td className={tableStyles.meta}>
-                    {s.released_at ? formatTime(s.released_at) : 'now'}
-                  </td>
-                  <td className={tableStyles.meta}>{s.created_by}</td>
-                  <td className={tableStyles.meta}>{stayEndLabel(s)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {list.length > 0 && <StaysTable stays={list} />}
       <FormError error={error ?? stays.error} onClose={() => setError(null)} />
       {removing && patient.uhs && (
         <RevokeDialog
@@ -146,6 +118,41 @@ function PatientStays({ patient, onChange }: Props) {
           onCancel={() => setRemoving(false)}
         />
       )}
+    </div>
+  );
+}
+
+// Every stay of a patient, newest first: from, arrived, to, by whom and how
+// it ended. Also the UHS part of the PatientHistory window.
+export function StaysTable({ stays }: { stays: PatientStay[] }) {
+  return (
+    <div className={tableStyles.tableWrap}>
+      <table className={tableStyles.table}>
+        <thead>
+          <tr>
+            <th>UHS</th>
+            <th>From</th>
+            <th>Arrived</th>
+            <th>To</th>
+            <th>By</th>
+            <th>Ended</th>
+          </tr>
+        </thead>
+        <tbody>
+          {stays.map((s) => (
+            <tr key={s.id}>
+              <td>{s.uhs_name}</td>
+              <td className={tableStyles.meta}>{formatTime(s.assigned_at)}</td>
+              <td className={tableStyles.meta}>{stayArrivalLabel(s, formatTime)}</td>
+              <td className={tableStyles.meta}>
+                {s.released_at ? formatTime(s.released_at) : 'now'}
+              </td>
+              <td className={tableStyles.meta}>{s.created_by}</td>
+              <td className={tableStyles.meta}>{stayEndLabel(s)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
