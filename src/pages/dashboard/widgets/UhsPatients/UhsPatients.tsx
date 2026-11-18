@@ -7,7 +7,7 @@ import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext'
 import { useCatalogs } from '@/data/catalogContext';
 import { usePatientRowMenu } from '../shared/PatientRowMenu';
 import PatientTable from '../shared/PatientTable';
-import WidgetActionBar, { WidgetAction } from '../shared/WidgetActionBar';
+import WidgetActionBar, { WidgetAction, WidgetActionSelect } from '../shared/WidgetActionBar';
 import { EmptyState } from '../shared/WidgetStates';
 import type { WidgetProps } from '../widgetOptions';
 import { useUhsPatients } from './useUhsPatients';
@@ -31,7 +31,7 @@ function UhsPatients({ options }: WidgetProps) {
   const sorted = uhs.items.toSorted((a, b) => a.name.localeCompare(b.name));
   const actions = (
     <WidgetActionBar label="UHS actions">
-      <select
+      <WidgetActionSelect
         aria-label="UHS"
         value={current ? current.id : ''}
         onChange={(e) => setChosen(e.target.value)}
@@ -43,7 +43,7 @@ function UhsPatients({ options }: WidgetProps) {
             {u.active ? '' : ' (inactive)'}
           </option>
         ))}
-      </select>
+      </WidgetActionSelect>
       <WidgetAction
         disabled={!canEdit || !current?.active}
         onClick={() => current && openWidget('Patient', { uhsId: current.id })}

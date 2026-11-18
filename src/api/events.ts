@@ -24,21 +24,22 @@ const typePaths: Record<string, string[]> = {
   file_types: ['/api/v1/file-types'],
   scopes: ['/api/v1/scopes'],
   medical_categories: ['/api/v1/medical-categories'],
-  // A patient's closed_at follows its missions.
-  missions: ['/api/v1/missions', '/api/v1/patients'],
+  // A patient's closed_at follows its missions; the UHS statistics count
+  // patients assigned from them.
+  missions: ['/api/v1/missions', '/api/v1/patients', '/api/v1/uhs-statistics'],
   log_entries: ['/api/v1/log-entries'],
   log_files: ['/api/v1/log-files'],
   tasks: ['/api/v1/tasks'],
   mission_units: ['/api/v1/mission-units'],
   unit_scopes: ['/api/v1/unit-scopes'],
-  patients: ['/api/v1/patients'],
-  patient_missions: ['/api/v1/patients'],
+  patients: ['/api/v1/patients', '/api/v1/uhs-statistics'],
+  patient_missions: ['/api/v1/patients', '/api/v1/uhs-statistics'],
   // An UHS names its user function.
-  uhs: ['/api/v1/uhs', '/api/v1/user-functions', '/api/v1/me/functions'],
+  uhs: ['/api/v1/uhs', '/api/v1/user-functions', '/api/v1/me/functions', '/api/v1/uhs-statistics'],
   // A stay changes the patient and its UHS's patient count.
-  patient_uhs: ['/api/v1/patients', '/api/v1/uhs'],
+  patient_uhs: ['/api/v1/patients', '/api/v1/uhs', '/api/v1/uhs-statistics'],
   // A patient's transport request (`…/transport`) is below its path.
-  transport_requests: ['/api/v1/patients'],
+  transport_requests: ['/api/v1/patients', '/api/v1/uhs-statistics'],
   map_styles: ['/api/v1/map-styles'],
   map_settings: ['/api/v1/map-settings'],
   // A restriction changes which overlays a caller is listed.

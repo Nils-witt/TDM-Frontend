@@ -6,3 +6,30 @@
   background: var(--menubar);
   color: var(--on-menubar);
 }
+
+// A select in the bar, sized like its items: the global form style (1rem,
+// 8.5px padding) is taller than the bar.
+.select {
+  height: 22px;
+  max-width: 14rem;
+  margin: 0 2px;
+  padding: 0 4px;
+  border: 1px solid var(--divider);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: default;
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--primary) 60%, transparent);
+    outline-offset: -2px;
+  }
+
+  option {
+    background: var(--surface);
+    color: var(--text);
+  }
+}

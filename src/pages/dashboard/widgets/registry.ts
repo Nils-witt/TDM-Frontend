@@ -4,6 +4,7 @@ import { maxUnitStatusChanges } from '@/api/units';
 import { frameCount, frameKeys, windowUnits } from './ActiveMissions/ActiveMissions.ts';
 import { logbookFilterOptions } from './shared/logbookFilterOptions';
 import { unitFunctionOption } from './shared/unitFunctionFilter';
+import { statisticsWindows } from './UhsStatistics/uhsStatistics';
 import type { Widget } from './widget';
 
 const ExampleWidget = lazy(() => import('./Example/Example.tsx'));
@@ -26,6 +27,7 @@ const UhsWidget = lazy(() => import('./Uhs/Uhs.tsx'));
 const AssignUhsWidget = lazy(() => import('./AssignUhs/AssignUhs.tsx'));
 const PatientHistoryWidget = lazy(() => import('./PatientHistory/PatientHistory.tsx'));
 const UhsPatientsWidget = lazy(() => import('./UhsPatients/UhsPatients.tsx'));
+const UhsStatisticsWidget = lazy(() => import('./UhsStatistics/UhsStatistics.tsx'));
 const UsersWidget = lazy(() => import('./Users/Users.tsx'));
 const GroupsWidget = lazy(() => import('./Groups/Groups.tsx'));
 const PermissionsWidget = lazy(() => import('./Permissions/Permissions.tsx'));
@@ -575,6 +577,32 @@ const UhsPatients: Widget = {
   Component: UhsPatientsWidget,
 };
 
+// Counts only, from the API; the hours option is one of statisticsWindows.
+const UhsStatistics: Widget = {
+  id: 'UhsStatistics',
+  name: 'UHS Statistics',
+  category: 'missions',
+  description: "Occupancy, triage, medical categories and throughput of the scope's UHS.",
+  permission: 'patients.view',
+  minWidth: 25,
+  maxWidth: 160,
+  minHeight: 10,
+  maxHeight: 800,
+  defaultWidth: 50,
+  defaultHeight: 35,
+  options: [
+    {
+      key: 'hours',
+      label: 'Time window',
+      type: 'select',
+      default: '24',
+      choices: statisticsWindows.map((w) => ({ value: String(w.value), label: w.label })),
+    },
+    { key: 'uhsId', label: 'UHS ID (empty: overview, all: totals)', type: 'text', default: '' },
+  ],
+  Component: UhsStatisticsWidget,
+};
+
 // Every patient across missions; the dashboard's selection stays.
 const Patients: Widget = {
   id: 'Patients',
@@ -934,6 +962,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     AssignUhs,
     PatientHistory,
     UhsPatients,
+    UhsStatistics,
     MapStyles,
     MapAdmin,
     OverlayAccess,

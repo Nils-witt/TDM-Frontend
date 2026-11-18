@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import MenuBar from '@/components/menu/MenuBar';
 import { menuItemClass, menuItemsClass } from '@/components/menu/menuClasses';
@@ -54,6 +54,17 @@ export function WidgetAction({
     >
       {children}
     </button>
+  );
+}
+
+// A select in the bar, e.g. what the widget shows. It needs an aria-label,
+// as the bar has no room for a label.
+export function WidgetActionSelect({
+  className,
+  ...props
+}: ComponentProps<'select'> & { 'aria-label': string }) {
+  return (
+    <select {...props} className={className ? `${styles.select} ${className}` : styles.select} />
   );
 }
 
