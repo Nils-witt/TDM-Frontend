@@ -42,7 +42,6 @@ export function totalsOf(entries: readonly UhsStatisticsEntry[]): UhsStatisticsE
   let admitted = 0;
   let checkedOut = 0;
   let movedOut = 0;
-  let removed = 0;
   let transports = 0;
   let stayMinutes = 0;
   let timedCheckouts = 0;
@@ -56,7 +55,6 @@ export function totalsOf(entries: readonly UhsStatisticsEntry[]): UhsStatisticsE
     admitted += e.window.admitted;
     checkedOut += e.window.checked_out;
     movedOut += e.window.moved_out;
-    removed += e.window.removed;
     transports += e.window.transports;
     if (e.window.avg_stay_minutes !== null) {
       stayMinutes += e.window.avg_stay_minutes * e.window.checked_out;
@@ -82,7 +80,6 @@ export function totalsOf(entries: readonly UhsStatisticsEntry[]): UhsStatisticsE
       admitted,
       checked_out: checkedOut,
       moved_out: movedOut,
-      removed,
       transports,
       avg_stay_minutes: timedCheckouts > 0 ? stayMinutes / timedCheckouts : null,
       arrivals_per_hour: [...hours]

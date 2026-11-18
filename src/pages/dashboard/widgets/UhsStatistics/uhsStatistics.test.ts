@@ -25,7 +25,6 @@ const entry = (
     admitted: 0,
     checked_out: 0,
     moved_out: 0,
-    removed: 0,
     transports: 0,
     avg_stay_minutes: null,
     arrivals_per_hour: [],

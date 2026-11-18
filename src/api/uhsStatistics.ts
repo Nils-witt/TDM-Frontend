@@ -22,15 +22,14 @@ export type UhsStatisticsEntry = {
     // Per medical category ID (null for none), most first.
     medical: { category: string | null; count: number }[];
   };
-  // Its stays in the window.
+  // Its stays in the window. Removed stays (released with a reason: assigned
+  // in error or never came) and those of deleted patients count nowhere.
   window: {
     // Stays that began.
     admitted: number;
-    // Stays that ended: by a checkout, a move to another UHS, or otherwise
-    // (released with a reason, the patient deleted).
+    // Stays that ended: by a checkout or a move to another UHS.
     checked_out: number;
     moved_out: number;
-    removed: number;
     // Transport requests made.
     transports: number;
     // Mean arrival to checkout of the checkouts; null without one.

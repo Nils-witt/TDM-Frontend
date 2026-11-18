@@ -128,7 +128,6 @@ function Overview({
             <th className={styles.number}>Admitted</th>
             <th className={styles.number}>Checked out</th>
             <th className={styles.number}>Moved</th>
-            <th className={styles.number}>Removed</th>
             <th className={styles.number}>Transports</th>
             <th className={styles.number} title="Mean arrival to checkout">
               Ø Stay
@@ -188,7 +187,6 @@ function Row({
       <td className={styles.number}>{e.window.admitted}</td>
       <td className={styles.number}>{e.window.checked_out}</td>
       <td className={styles.number}>{e.window.moved_out}</td>
-      <td className={styles.number}>{e.window.removed}</td>
       <td className={styles.number}>{e.window.transports}</td>
       <td className={styles.number}>{formatMinutes(e.window.avg_stay_minutes)}</td>
     </tr>
@@ -253,7 +251,6 @@ function Detail({
           <Figure label="Admitted" value={e.window.admitted} />
           <Figure label="Checked out" value={e.window.checked_out} />
           <Figure label="Moved out" value={e.window.moved_out} />
-          <Figure label="Removed" value={e.window.removed} />
           <Figure label="Transports" value={e.window.transports} />
           <Figure label="Ø Stay" value={formatMinutes(e.window.avg_stay_minutes)} />
         </dl>
