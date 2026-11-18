@@ -428,6 +428,17 @@ const UnitStatus: Widget = {
       min: 1,
       max: maxUnitStatusChanges,
     },
+    {
+      key: 'unitText',
+      label: 'Unit shown as',
+      type: 'select',
+      default: 'both',
+      choices: [
+        { value: 'both', label: 'Call sign and name' },
+        { value: 'label', label: 'Call sign' },
+        { value: 'name', label: 'Name' },
+      ],
+    },
     unitFunctionOption,
   ],
   Component: UnitStatusWidget,

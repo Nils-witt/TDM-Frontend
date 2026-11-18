@@ -29,6 +29,7 @@ import styles from './UnitStatus.module.scss';
 // unit the units server no longer has are hidden while it is set.
 function UnitStatus({ options }: WidgetProps) {
   const limit = Number(options.limit);
+  const unitText = options.unitText as UnitText;
   const { data, error, reload } = useUnitStatusChanges(limit);
   const units = useUnits();
   const fns = useUnitFunctionFilter(options);
@@ -108,7 +109,7 @@ function UnitStatus({ options }: WidgetProps) {
             </thead>
             <tbody>
               {changes.map((c) => (
-                <Change key={`${c.unit_id}/${c.at}/${c.to ?? ''}`} change={c} />
+                <Change key={`${c.unit_id}/${c.at}/${c.to ?? ''}`} change={c} unitText={unitText} />
               ))}
             </tbody>
           </table>
@@ -118,7 +119,11 @@ function UnitStatus({ options }: WidgetProps) {
   );
 }
 
-function Change({ change: c }: { change: UnitStatusChange }) {
+// Option unitText: the call sign (the name for a unit without one), the
+// name, or both.
+type UnitText = 'both' | 'label' | 'name';
+
+function Change({ change: c, unitText }: { change: UnitStatusChange; unitText: UnitText }) {
   const label = unitLabel(c);
   return (
     <tr>
@@ -126,8 +131,16 @@ function Change({ change: c }: { change: UnitStatusChange }) {
         {formatTime(c.at)}
       </td>
       <td>
-        {label}
-        {label !== c.name && <span className={tableStyles.meta}> {c.name}</span>}
+        {unitText === 'name' ? (
+          c.name || label
+        ) : (
+          <>
+            {label}
+            {unitText === 'both' && label !== c.name && (
+              <span className={tableStyles.meta}> {c.name}</span>
+            )}
+          </>
+        )}
       </td>
       <td>
         <span className={styles.transition}>
