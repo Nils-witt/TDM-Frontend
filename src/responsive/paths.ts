@@ -14,6 +14,9 @@ export const responsivePaths = {
   uhs: `${mobileBasePath}/uhs`,
   uhsNewPatient: `${mobileBasePath}/uhs/new`,
   uhsPatient: (id: string) => `${mobileBasePath}/uhs/patients/${encodeURIComponent(id)}`,
+  // The patient's transport request and its destination.
+  uhsTransport: (id: string) =>
+    `${mobileBasePath}/uhs/patients/${encodeURIComponent(id)}/transport`,
   mission: (id: string) => `${mobileBasePath}/missions/${encodeURIComponent(id)}`,
   // The Map page selects the mission and flies to it.
   // The Reports page filtered by the mission.

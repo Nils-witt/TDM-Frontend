@@ -4,25 +4,20 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useId, useState } from 'react';
 import type { Mission } from '@/api/missions';
-import {
-  type AddressField,
-  useAddressSuggest,
-} from '@/pages/dashboard/widgets/shared/AddressSuggest';
+import type { AddressKey } from '@/pages/dashboard/widgets/shared/addressEdits';
 import { formatTime } from '@/pages/dashboard/widgets/shared/logbookEntries';
 import {
   type AddressKind,
   type CoordKey,
   type TextKey,
   addressKey,
-  addressSetter,
   coordKey,
   useMissionForm,
 } from '@/pages/dashboard/widgets/MissionDetails/MissionDetails.ts';
 import { useRegisterMissionSave } from '@/pages/dashboard/widgets/MissionDetails/missionSave';
-import AddressFieldMUI from '../shared/AddressFieldMUI';
+import AddressFieldsetMUI from '../shared/AddressFieldsetMUI';
 import { FormActionBarMUI } from '../shared/ActionsMUI';
 import { ConfirmDialogMUI } from '../shared/DialogsMUI';
-import NearbyPlacesButtonMUI from '../shared/NearbyPlacesButtonMUI';
 import { FieldRowMUI, FormErrorMUI, FormMUI, FormSectionMUI } from '../shared/FormMUI';
 import { MissionTypeInputMUI, StatusSelectMUI } from '../shared/MissionInputsMUI';
 
@@ -40,57 +35,18 @@ function AddressSectionMUI({
   coordValue: (k: CoordKey) => string;
   readOnly: boolean;
 }) {
-  const lat = coordKey(kind, 'lat');
-  const lon = coordKey(kind, 'lon');
-  const suggest = useAddressSuggest(
-    (k) => value(addressKey(kind, k)),
-    (k, v) => set(addressKey(kind, k), v),
-    (la, lo) => {
-      set(lat, la);
-      set(lon, lo);
-    },
-  );
-  const address = (k: AddressField, label: string) => (
-    <AddressFieldMUI {...suggest[k]} label={label} disabled={readOnly} />
-  );
-
+  const isCoord = (k: AddressKey): k is 'lat' | 'lon' => k === 'lat' || k === 'lon';
+  const fieldValue = (k: AddressKey) =>
+    isCoord(k) ? coordValue(coordKey(kind, k)) : value(addressKey(kind, k));
+  const setField = (k: AddressKey, v: string) =>
+    set(isCoord(k) ? coordKey(kind, k) : addressKey(kind, k), v);
   return (
-    <FormSectionMUI legend={kind === 'address' ? 'Address' : 'Destination'} disabled={readOnly}>
-      {address('object_name', 'Object')}
-      <FieldRowMUI>
-        {address('street', 'Street')}
-        {address('house_number', 'No.')}
-      </FieldRowMUI>
-      <FieldRowMUI>
-        {address('city', 'City')}
-        {address('district', 'District')}
-      </FieldRowMUI>
-      <FieldRowMUI>
-        {(
-          [
-            [lat, 'Latitude', '50.7374'],
-            [lon, 'Longitude', '7.0982'],
-          ] as const
-        ).map(([k, label, example]) => (
-          <TextField
-            key={k}
-            label={label}
-            size="small"
-            placeholder={example}
-            value={coordValue(k)}
-            disabled={readOnly}
-            onChange={(e) => set(k, e.target.value)}
-            slotProps={{ htmlInput: { inputMode: 'decimal' } }}
-          />
-        ))}
-        <NearbyPlacesButtonMUI
-          lat={coordValue(lat)}
-          lon={coordValue(lon)}
-          set={addressSetter(kind, set)}
-          disabled={readOnly}
-        />
-      </FieldRowMUI>
-    </FormSectionMUI>
+    <AddressFieldsetMUI
+      legend={kind === 'address' ? 'Address' : 'Destination'}
+      value={fieldValue}
+      set={setField}
+      readOnly={readOnly}
+    />
   );
 }
 

@@ -59,12 +59,6 @@ export const coordKey = (a: AddressKind, k: 'lat' | 'lon'): CoordKey => coordFie
 // The text key of kind a's field f.
 export const addressKey = (a: AddressKind, f: AddressField): TextKey => `${a}_${f}`;
 
-// set for kind a of something that writes the address keys (address_*), as
-// the nearby places do.
-export const addressSetter =
-  (a: AddressKind, set: (k: TextKey, v: string) => void) => (k: TextKey, v: string) =>
-    set(k.startsWith('address_') ? addressKey(a, k.slice(8) as AddressField) : k, v);
-
 // What is typed but not saved; every other field shows the mission's current
 // value, so changes others save show up on reload. Coordinates are edited as
 // text and parsed on save.

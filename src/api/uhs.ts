@@ -1,5 +1,6 @@
 import { request } from './client';
 import type { EntityMeta } from './entity';
+import type { Coordinates } from './missions';
 import { listFetcher } from './list';
 import { useResource } from './resource';
 
@@ -17,7 +18,28 @@ export type Uhs = EntityMeta & {
   function?: string | null;
   // The patients currently in it.
   patient_count?: number;
+  // Where it is: the address of its transport requests' missions. Rows
+  // replicated before the API had it lack it.
+  address_street?: string;
+  address_house_number?: string;
+  address_city?: string;
+  address_district?: string;
+  address_object_name?: string;
+  address_coordinates?: Coordinates | null;
 };
+
+// An UHS's writable address fields (address_*), as in a mission.
+export type UhsAddressFields = Partial<
+  Pick<
+    Uhs,
+    | 'address_street'
+    | 'address_house_number'
+    | 'address_city'
+    | 'address_district'
+    | 'address_object_name'
+    | 'address_coordinates'
+  >
+>;
 
 // The API's limit: an UHS names its user function.
 export const uhsNameMax = 100;
@@ -36,9 +58,9 @@ const ifMatch = (u: Uhs) => ({ 'If-Match': `"${u.updated_at}"` });
 
 export const uhsApi = {
   // scope: an ID, null for Default; undefined for the session's.
-  create: (input: { name: string; scope?: string | null; active?: boolean }) =>
+  create: (input: { name: string; scope?: string | null; active?: boolean } & UhsAddressFields) =>
     request<Uhs>(uhsListPath, { method: 'POST', body: JSON.stringify(input) }),
-  patch: (u: Uhs, fields: { name?: string; active?: boolean }) =>
+  patch: (u: Uhs, fields: { name?: string; active?: boolean } & UhsAddressFields) =>
     request<Uhs>(uhsPath(u.id), {
       method: 'PATCH',
       headers: ifMatch(u),

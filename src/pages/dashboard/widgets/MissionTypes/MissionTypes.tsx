@@ -38,6 +38,7 @@ function MissionTypesWidget() {
         deleteNote="Missions given it keep it, but it is no longer offered."
         parents={{ label: 'Group', collection: missionTypeGroups }}
         describe
+        transport
       />
     </div>
   );

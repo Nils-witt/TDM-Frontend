@@ -35,6 +35,8 @@ type Props<T extends CatalogEntry> = {
   parents?: Parents;
   // With a description per entry (mission types).
   describe?: boolean;
+  // With the transport request flag per entry (mission types).
+  transport?: boolean;
 };
 
 const parentId = (t: CatalogEntry) =>
@@ -42,6 +44,8 @@ const parentId = (t: CatalogEntry) =>
 
 const descriptionOf = (t: CatalogEntry) =>
   'description' in t && typeof t.description === 'string' ? t.description : '';
+
+const transportOf = (t: CatalogEntry) => 'transport_request' in t && t.transport_request === true;
 
 const byName = (a: CatalogEntry, b: CatalogEntry) => a.name.localeCompare(b.name);
 
@@ -57,6 +61,7 @@ function CatalogManager<T extends CatalogEntry>({
   deleteNote,
   parents,
   describe = false,
+  transport = false,
 }: Props<T>) {
   const { openWidget } = useWidgetWindows();
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +80,7 @@ function CatalogManager<T extends CatalogEntry>({
     }
     return byName(a, b);
   });
-  const columns = 3 + (parents ? 1 : 0) + (describe ? 1 : 0);
+  const columns = 3 + (parents ? 1 : 0) + (describe ? 1 : 0) + (transport ? 1 : 0);
 
   const write = async (fn: () => Promise<unknown>) => {
     try {
@@ -96,6 +101,7 @@ function CatalogManager<T extends CatalogEntry>({
         noun={noun}
         parents={parents}
         describe={describe}
+        transport={transport}
         create={async (input) => {
           await api.create(input);
           await collection.reload();
@@ -111,6 +117,7 @@ function CatalogManager<T extends CatalogEntry>({
                 {parents && <th>{parents.label}</th>}
                 <th>Name</th>
                 {describe && <th>Description</th>}
+                {transport && <th title="Offered for UHS transport requests">Transport</th>}
                 <th>Changed</th>
                 <th>
                   <span className={styles.hidden}>Actions</span>
@@ -131,6 +138,7 @@ function CatalogManager<T extends CatalogEntry>({
                   entry={t}
                   parents={parents}
                   describe={describe}
+                  transport={transport}
                   parentName={parentName(t)}
                   save={(input) => write(() => api.patch(t.id, input))}
                   onDelete={() => setDeleting(t)}
@@ -171,16 +179,19 @@ function CreateEntry({
   noun,
   parents,
   describe,
+  transport,
   create,
 }: {
   noun: string;
   parents?: Parents;
   describe: boolean;
+  transport: boolean;
   create: (input: CatalogInput) => Promise<void>;
 }) {
   const [name, setName] = useState('');
   const [parent, setParent] = useState('');
   const [description, setDescription] = useState('');
+  const [transportRequest, setTransportRequest] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const id = useId();
@@ -194,9 +205,11 @@ function CreateEntry({
       const input: CatalogInput = { name: name.trim() };
       if (parents) input.group_id = parent;
       if (describe) input.description = description.trim();
+      if (transport) input.transport_request = transportRequest;
       await create(input);
       setName('');
       setDescription('');
+      setTransportRequest(false);
       setError(null);
     } catch (err) {
       setError((err as Error).message);
@@ -250,6 +263,19 @@ function CreateEntry({
             />
           </FieldRow>
         )}
+        {transport && (
+          <FieldRow id={`${id}-transport`} label="Transport">
+            <label className="row">
+              <input
+                id={`${id}-transport`}
+                type="checkbox"
+                checked={transportRequest}
+                onChange={(e) => setTransportRequest(e.target.checked)}
+              />
+              Offered for UHS transport requests
+            </label>
+          </FieldRow>
+        )}
       </Section>
       <FormActions submitLabel="Create" busy={busy} canSubmit={name.trim() !== ''} />
       <FormError error={error} onClose={() => setError(null)} />
@@ -261,6 +287,7 @@ type EntryRowProps = {
   entry: CatalogEntry;
   parents?: Parents;
   describe: boolean;
+  transport: boolean;
   parentName: string;
   // Sends only the changed fields; false keeps the row in edit mode.
   save: (input: Partial<CatalogInput>) => Promise<boolean>;
@@ -274,14 +301,18 @@ function EntryRow({
   entry,
   parents,
   describe,
+  transport,
   parentName,
   save,
   onDelete,
   onHistory,
 }: EntryRowProps) {
-  const [edit, setEdit] = useState<{ name: string; parent: string; description: string } | null>(
-    null,
-  );
+  const [edit, setEdit] = useState<{
+    name: string;
+    parent: string;
+    description: string;
+    transport: boolean;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const formId = useId();
   const offline = useOffline();
@@ -295,6 +326,8 @@ function EntryRow({
     if (describe && edit.description.trim() !== descriptionOf(entry)) {
       input.description = edit.description.trim();
     }
+    if (transport && edit.transport !== transportOf(entry))
+      input.transport_request = edit.transport;
     if (Object.keys(input).length === 0) {
       setEdit(null);
       return;
@@ -362,6 +395,21 @@ function EntryRow({
           )}
         </td>
       )}
+      {transport && (
+        <td>
+          {edit ? (
+            <input
+              form={formId}
+              type="checkbox"
+              aria-label="Offered for UHS transport requests"
+              checked={edit.transport}
+              onChange={(e) => setEdit({ ...edit, transport: e.target.checked })}
+            />
+          ) : (
+            transportOf(entry) && 'Yes'
+          )}
+        </td>
+      )}
       <td className={styles.meta}>
         {formatTime(entry.updated_at)} · {entry.updated_by}
       </td>
@@ -386,6 +434,7 @@ function EntryRow({
                   name: entry.name,
                   parent: parentId(entry),
                   description: descriptionOf(entry),
+                  transport: transportOf(entry),
                 })
               }
             >

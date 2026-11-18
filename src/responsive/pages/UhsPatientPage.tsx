@@ -12,6 +12,12 @@ import {
   usePatientStays,
 } from '@/api/patients';
 import { useResourceCache } from '@/api/resource';
+import {
+  patientTransportPath,
+  transportBlocker,
+  transportsApi,
+  usePatientTransport,
+} from '@/api/transports';
 import { useHasPermission, useSessionUhs } from '@/app/session';
 import Alert from '@/components/Alert';
 import Spinner from '@/components/Spinner';
@@ -21,8 +27,11 @@ import styles from './MissionPage.module.scss';
 
 const PatientFormMUI = lazy(() => import('../widgets/UhsPatientsMUI/PatientFormMUI'));
 const UhsPatientDetailsMUI = lazy(() => import('../widgets/UhsPatientsMUI/UhsPatientDetailsMUI'));
+const UhsTransportMUI = lazy(() => import('../widgets/UhsPatientsMUI/UhsTransportMUI'));
 
-// One patient of the session's UHS: its fields, its stays, Check out and
+// One patient of the session's UHS: its fields, its transport (Request
+// transport, and a button to its page for the destination), its stays,
+// Check out and
 // Remove from UHS, after either of which it is out of the session's sight,
 // so the page returns to the list. So does a patient removed elsewhere (404).
 function UhsPatientPage() {
@@ -32,6 +41,7 @@ function UhsPatientPage() {
   const canEdit = useHasPermission('patients.edit') && !offline;
   const patient = usePatient(offline ? null : id);
   const stays = usePatientStays(offline ? null : id);
+  const transport = usePatientTransport(offline ? null : id);
   const cache = useResourceCache();
   const navigate = useNavigate();
   // Removed from the UHS elsewhere (or deleted): out of this session's sight.
@@ -88,6 +98,16 @@ function UhsPatientPage() {
             onSubmit={async (fields) => {
               const saved = await patientsApi.patch(p, fields);
               cache.put(patientPath(saved.id), saved);
+            }}
+          />
+          <UhsTransportMUI
+            transport={transport.data}
+            blocked={transportBlocker(p, transport.data, { canEdit, offline })}
+            onOpen={() => void navigate(responsivePaths.uhsTransport(p.id))}
+            onRequest={async (missionType) => {
+              const r = await transportsApi.request(p.id, missionType);
+              cache.put(patientTransportPath(p.id), r);
+              void navigate(responsivePaths.uhsTransport(p.id));
             }}
           />
           <UhsPatientDetailsMUI

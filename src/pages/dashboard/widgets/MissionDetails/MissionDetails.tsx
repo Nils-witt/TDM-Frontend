@@ -1,28 +1,19 @@
 import { useId, useState } from 'react';
 import Alert from '@/components/Alert';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import {
-  FieldRow,
-  FormError,
-  Section,
-  SectionText,
-  WidgetForm,
-  fieldWidth,
-} from '@/components/form';
+import { FieldRow, FormError, Section, SectionText, WidgetForm } from '@/components/form';
 import type { Mission } from '@/api/missions';
 import { formatTime } from '../shared/logbookEntries';
 import { StatusSelect } from '../shared/MissionStatus';
 import { MissionTypeInput } from '../shared/MissionType';
-import { type AddressField, useAddressSuggest } from '../shared/AddressSuggest';
-import NearbyPlacesButton from '../shared/NearbyPlacesButton';
+import AddressFieldset from '../shared/AddressFieldset';
+import type { AddressKey } from '../shared/addressEdits';
 import { FormActionBar } from '../shared/WidgetActionBar';
-import { SuggestInput } from '@/components/SuggestInput';
 import {
   type AddressKind,
   type CoordKey,
   type TextKey,
   addressKey,
-  addressSetter,
   coordKey,
   useMissionDetailsWidget,
   useMissionForm,
@@ -46,65 +37,19 @@ function AddressSection({
   readOnly: boolean;
   id: (k: string) => string;
 }) {
-  const lat = coordKey(kind, 'lat');
-  const lon = coordKey(kind, 'lon');
-  const suggest = useAddressSuggest(
-    (k) => value(addressKey(kind, k)),
-    (k, v) => set(addressKey(kind, k), v),
-    (la, lo) => {
-      set(lat, la);
-      set(lon, lo);
-    },
-  );
-  const id = (k: string) => formId(`${kind}-${k}`);
-  const address = (k: AddressField, label: string, className = 'grow', inputId?: string) => (
-    <SuggestInput
-      {...suggest[k]}
-      id={inputId}
-      className={className}
-      aria-label={inputId ? undefined : label}
-    />
-  );
-
+  const isCoord = (k: AddressKey): k is 'lat' | 'lon' => k === 'lat' || k === 'lon';
+  const fieldValue = (k: AddressKey) =>
+    isCoord(k) ? coordValue(coordKey(kind, k)) : value(addressKey(kind, k));
+  const setField = (k: AddressKey, v: string) =>
+    set(isCoord(k) ? coordKey(kind, k) : addressKey(kind, k), v);
   return (
-    <Section legend={kind === 'address' ? 'Address' : 'Destination'} disabled={readOnly}>
-      <FieldRow id={id('object')} label="Object">
-        {address('object_name', 'Object', 'grow', id('object'))}
-      </FieldRow>
-      <FieldRow id={id('street')} label="Street / No.">
-        {address('street', 'Street', 'grow', id('street'))}
-        {address('house_number', 'No.', fieldWidth.narrow)}
-      </FieldRow>
-      <FieldRow id={id('city')} label="City / District">
-        {address('city', 'City', 'grow', id('city'))}
-        {address('district', 'District')}
-      </FieldRow>
-      <FieldRow id={id('lat')} label="Lat / Lon">
-        {(
-          [
-            [lat, 'Latitude', '50.7374'],
-            [lon, 'Longitude', '7.0982'],
-          ] as const
-        ).map(([k, label, example]) => (
-          <input
-            key={k}
-            id={k === lat ? id('lat') : undefined}
-            className="grow"
-            aria-label={k === lat ? undefined : label}
-            inputMode="decimal"
-            placeholder={example}
-            value={coordValue(k)}
-            onChange={(e) => set(k, e.target.value)}
-          />
-        ))}
-        <NearbyPlacesButton
-          lat={coordValue(lat)}
-          lon={coordValue(lon)}
-          set={addressSetter(kind, set)}
-          disabled={readOnly}
-        />
-      </FieldRow>
-    </Section>
+    <AddressFieldset
+      legend={kind === 'address' ? 'Address' : 'Destination'}
+      value={fieldValue}
+      set={setField}
+      readOnly={readOnly}
+      id={(k) => formId(`${kind}-${k}`)}
+    />
   );
 }
 

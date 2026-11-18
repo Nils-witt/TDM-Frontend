@@ -36,6 +36,8 @@ const typePaths: Record<string, string[]> = {
   uhs: ['/api/v1/uhs', '/api/v1/user-functions', '/api/v1/me/functions'],
   // A stay changes the patient and its UHS's patient count.
   patient_uhs: ['/api/v1/patients', '/api/v1/uhs'],
+  // A patient's transport request (`…/transport`) is below its path.
+  transport_requests: ['/api/v1/patients'],
   map_styles: ['/api/v1/map-styles'],
   map_settings: ['/api/v1/map-settings'],
   // A restriction changes which overlays a caller is listed.

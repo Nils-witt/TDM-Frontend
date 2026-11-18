@@ -16,6 +16,7 @@ import SettingsPage from './pages/SettingsPage';
 import UhsNewPatientPage from './pages/UhsNewPatientPage';
 import UhsPage from './pages/UhsPage';
 import UhsPatientPage from './pages/UhsPatientPage';
+import UhsTransportPage from './pages/UhsTransportPage';
 import WidgetSheets from './WidgetSheets';
 
 // MapLibre is large; only the map tab loads it.
@@ -56,6 +57,7 @@ function ResponsiveShell() {
                         <Route path="uhs" element={<UhsPage />} />
                         <Route path="uhs/new" element={<UhsNewPatientPage />} />
                         <Route path="uhs/patients/:id" element={<UhsPatientPage />} />
+                        <Route path="uhs/patients/:id/transport" element={<UhsTransportPage />} />
                       </>
                     )}
                     <Route path="missions/:id" element={<MissionPage />} />

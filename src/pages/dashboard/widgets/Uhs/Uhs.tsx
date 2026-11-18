@@ -1,6 +1,6 @@
 import { type FormEvent, useId, useState } from 'react';
 import { useOffline } from '@/api/connectivity';
-import { type Uhs, uhsApi, uhsNameMax, useAllUhs } from '@/api/uhs';
+import { type Uhs, type UhsAddressFields, uhsApi, uhsNameMax, useAllUhs } from '@/api/uhs';
 import { useIsAdmin, useSession } from '@/app/session';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
@@ -15,6 +15,13 @@ import {
 import Spinner from '@/components/Spinner';
 import { useWidgetWindows } from '@/components/widgetWindow/widgetWindowContext';
 import { useCatalogs } from '@/data/catalogContext';
+import AddressFieldset from '../shared/AddressFieldset';
+import {
+  type AddressValues,
+  addressChanges,
+  addressValues,
+  useAddressEdits,
+} from '../shared/addressEdits';
 import styles from '../shared/CatalogManager.module.scss';
 
 // The scope select's value of Default (an UHS without a scope).
@@ -23,9 +30,20 @@ const allScopes = '*';
 
 const noUhs: readonly Uhs[] = [];
 
-// Every scope's UHS (uhs.manage): create, rename, (de)activate, delete. Each
-// UHS has a user function, created and deleted with it, whose groups are set
-// in User Functions.
+const blankAddress = addressValues(null, 'address_');
+
+// One line: object, street and number, city.
+const addressLine = (a: AddressValues) =>
+  [a.object_name, [a.street, a.house_number].filter(Boolean).join(' '), a.city]
+    .filter(Boolean)
+    .join(', ');
+
+type Fields = { name?: string; active?: boolean } & UhsAddressFields;
+
+// Every scope's UHS (uhs.manage): create, rename, (de)activate, set the
+// address (that of its transport requests' missions), delete. Each UHS has a
+// user function, created and deleted with it, whose groups are set in User
+// Functions.
 function UhsWidget() {
   const list = useAllUhs(true);
   const { scopes } = useCatalogs();
@@ -94,6 +112,7 @@ function UhsWidget() {
               <tr>
                 <th>Scope</th>
                 <th>Name</th>
+                <th>Address</th>
                 <th>Active</th>
                 <th>Patients</th>
                 <th>
@@ -104,7 +123,7 @@ function UhsWidget() {
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="muted">
+                  <td colSpan={6} className="muted">
                     No UHS yet.
                   </td>
                 </tr>
@@ -160,10 +179,12 @@ function CreateUhs({
   create,
 }: {
   defaultScope: string;
-  create: (input: { name: string; scope: string | null }) => Promise<boolean>;
+  create: (input: { name: string; scope: string | null } & UhsAddressFields) => Promise<boolean>;
 }) {
   const { scopes } = useCatalogs();
   const [name, setName] = useState('');
+  const address = useAddressEdits(blankAddress);
+  const [error, setError] = useState<string | null>(null);
   const [scope, setScope] = useState(initialScope);
   const [busy, setBusy] = useState(false);
   const id = useId();
@@ -172,9 +193,20 @@ function CreateUhs({
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (busy) return;
+    let fields: UhsAddressFields;
+    try {
+      fields = addressChanges(blankAddress, address.values, 'address_');
+    } catch (err) {
+      setError((err as Error).message);
+      return;
+    }
+    setError(null);
     setBusy(true);
-    if (await create({ name: name.trim(), scope: scope === defaultScope ? null : scope })) {
+    if (
+      await create({ name: name.trim(), scope: scope === defaultScope ? null : scope, ...fields })
+    ) {
       setName('');
+      address.reset();
     }
     setBusy(false);
   };
@@ -213,7 +245,15 @@ function CreateUhs({
           />
         </FieldRow>
       </Section>
+      <AddressFieldset
+        legend="Address"
+        value={address.value}
+        set={address.set}
+        readOnly={false}
+        id={(k) => `${id}-address-${k}`}
+      />
       <FormActions submitLabel="Create" busy={busy} canSubmit={name.trim() !== ''} />
+      <FormError error={error} onClose={() => setError(null)} />
     </WidgetForm>
   );
 }
@@ -223,7 +263,7 @@ type RowProps = {
   scopeName: string;
   readOnly: boolean;
   // false keeps the row in edit mode.
-  save: (fields: { name?: string; active?: boolean }) => Promise<boolean>;
+  save: (fields: Fields) => Promise<boolean>;
   onDelete: () => void;
   onHistory: () => void;
   // Opens its user function; undefined for non-admins.
@@ -232,11 +272,13 @@ type RowProps = {
 
 function UhsRow({ uhs, scopeName, readOnly, save, onDelete, onHistory, onFunction }: RowProps) {
   const [name, setName] = useState<string | null>(null);
+  const [editAddress, setEditAddress] = useState(false);
   const [busy, setBusy] = useState(false);
   const formId = useId();
   const patients = uhs.patient_count ?? 0;
+  const address = addressValues(uhs, 'address_');
 
-  const run = async (fields: { name?: string; active?: boolean }) => {
+  const run = async (fields: Fields) => {
     setBusy(true);
     const ok = await save(fields);
     setBusy(false);
@@ -250,77 +292,167 @@ function UhsRow({ uhs, scopeName, readOnly, save, onDelete, onHistory, onFunctio
   };
 
   return (
-    <tr className={uhs.active ? undefined : styles.dimmed}>
-      <td>{scopeName}</td>
-      <td>
-        {name === null ? (
-          uhs.name
-        ) : (
-          <input
-            form={formId}
-            aria-label="Name"
-            value={name}
-            maxLength={uhsNameMax}
-            autoFocus
-            required
-            onChange={(e) => setName(e.target.value)}
-          />
-        )}
-      </td>
-      <td>
-        <input
-          type="checkbox"
-          aria-label={`${uhs.name} active`}
-          checked={uhs.active}
-          disabled={readOnly || busy}
-          title={uhs.active ? 'Deactivating ends the sessions of its function.' : undefined}
-          onChange={(e) => void run({ active: e.target.checked })}
-        />
-      </td>
-      <td>{patients}</td>
-      <td className={styles.actions}>
-        <form id={formId} className="row" onSubmit={(e) => void submit(e)}>
+    <>
+      <tr className={uhs.active ? undefined : styles.dimmed}>
+        <td>{scopeName}</td>
+        <td>
           {name === null ? (
-            <>
-              <button
-                type="button"
-                className="btn"
-                disabled={readOnly}
-                onClick={() => setName(uhs.name)}
-              >
-                Rename
-              </button>
-              {onFunction && (
-                <button type="button" className="btn" onClick={onFunction}>
-                  Function
-                </button>
-              )}
-              <button type="button" className="btn" onClick={onHistory}>
-                History
-              </button>
-              <button
-                type="button"
-                className="btn danger"
-                disabled={readOnly || patients > 0}
-                title={patients > 0 ? 'Patients are in it: move or remove them first.' : undefined}
-                onClick={onDelete}
-              >
-                Delete
-              </button>
-            </>
+            uhs.name
           ) : (
-            <>
-              <button type="submit" className="btn primary" disabled={busy || !name.trim()}>
-                Save
-              </button>
-              <button type="button" className="btn" disabled={busy} onClick={() => setName(null)}>
-                Cancel
-              </button>
-            </>
+            <input
+              form={formId}
+              aria-label="Name"
+              value={name}
+              maxLength={uhsNameMax}
+              autoFocus
+              required
+              onChange={(e) => setName(e.target.value)}
+            />
           )}
-        </form>
-      </td>
-    </tr>
+        </td>
+        <td>
+          {addressLine(address) || (
+            <span className="muted" title="Its transport requests' missions get no address.">
+              None
+            </span>
+          )}
+        </td>
+        <td>
+          <input
+            type="checkbox"
+            aria-label={`${uhs.name} active`}
+            checked={uhs.active}
+            disabled={readOnly || busy}
+            title={uhs.active ? 'Deactivating ends the sessions of its function.' : undefined}
+            onChange={(e) => void run({ active: e.target.checked })}
+          />
+        </td>
+        <td>{patients}</td>
+        <td className={styles.actions}>
+          <form id={formId} className="row" onSubmit={(e) => void submit(e)}>
+            {name === null ? (
+              <>
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={readOnly}
+                  onClick={() => setName(uhs.name)}
+                >
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={readOnly || editAddress}
+                  onClick={() => setEditAddress(true)}
+                >
+                  Address
+                </button>
+                {onFunction && (
+                  <button type="button" className="btn" onClick={onFunction}>
+                    Function
+                  </button>
+                )}
+                <button type="button" className="btn" onClick={onHistory}>
+                  History
+                </button>
+                <button
+                  type="button"
+                  className="btn danger"
+                  disabled={readOnly || patients > 0}
+                  title={
+                    patients > 0 ? 'Patients are in it: move or remove them first.' : undefined
+                  }
+                  onClick={onDelete}
+                >
+                  Delete
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="submit" className="btn primary" disabled={busy || !name.trim()}>
+                  Save
+                </button>
+                <button type="button" className="btn" disabled={busy} onClick={() => setName(null)}>
+                  Cancel
+                </button>
+              </>
+            )}
+          </form>
+        </td>
+      </tr>
+      {editAddress && (
+        <tr>
+          <td colSpan={6}>
+            <AddressEditor
+              stored={address}
+              readOnly={readOnly}
+              save={(fields) => run(fields)}
+              onClose={() => setEditAddress(false)}
+            />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// An UHS's address, below its row; closes once saved.
+function AddressEditor({
+  stored,
+  readOnly,
+  save,
+  onClose,
+}: {
+  stored: AddressValues;
+  readOnly: boolean;
+  save: (fields: UhsAddressFields) => Promise<boolean>;
+  onClose: () => void;
+}) {
+  const address = useAddressEdits(stored);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const id = useId();
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (busy) return;
+    let fields: UhsAddressFields;
+    try {
+      fields = addressChanges(stored, address.values, 'address_');
+    } catch (err) {
+      setError((err as Error).message);
+      return;
+    }
+    if (Object.keys(fields).length === 0) {
+      onClose();
+      return;
+    }
+    setBusy(true);
+    const ok = await save(fields);
+    setBusy(false);
+    if (ok) onClose();
+  };
+
+  return (
+    <WidgetForm onSubmit={(e) => void submit(e)}>
+      <AddressFieldset
+        legend="Address"
+        value={address.value}
+        set={address.set}
+        readOnly={readOnly}
+        id={(k) => `${id}-${k}`}
+      />
+      <div className="row">
+        <button type="submit" className="btn primary" disabled={busy || readOnly}>
+          Save
+        </button>
+        <button type="button" className="btn" disabled={busy} onClick={onClose}>
+          Cancel
+        </button>
+      </div>
+      <FormError error={error} onClose={() => setError(null)} />
+    </WidgetForm>
   );
 }
 
