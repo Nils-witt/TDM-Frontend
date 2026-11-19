@@ -9,8 +9,10 @@ export type MissionTypeGroup = CatalogEntry;
 export type LogbookType = CatalogEntry;
 export type FileType = CatalogEntry;
 // A mission scope (not a layout's scope). A mission without one is in the
-// implicit Default scope, which has no entry.
-export type MissionScope = CatalogEntry;
+// implicit Default scope, which has no entry (its chat flag is
+// global_chat_enabled of api/messageSettings.ts). chat_enabled is absent
+// from an API older than the chat and from rows replicated before it: off.
+export type MissionScope = CatalogEntry & { chat_enabled?: boolean };
 
 // Unique by name within its group only. description tells when to pick it;
 // transport_request offers it to UHS functions for transport requests. Rows
@@ -34,9 +36,10 @@ export const fetchFileTypes = listFetcher<FileType>('file_types');
 export const fetchScopes = listFetcher<MissionScope>('scopes');
 
 // What a create sends; group_id, description and transport_request are for
-// mission types only.
+// mission types only, chat_enabled for scopes only.
 export type CatalogInput = {
   name: string;
+  chat_enabled?: boolean;
   group_id?: string;
   description?: string;
   transport_request?: boolean;

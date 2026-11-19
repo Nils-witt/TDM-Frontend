@@ -22,7 +22,11 @@ const typePaths: Record<string, string[]> = {
   mission_types: ['/api/v1/mission-types'],
   logbook_types: ['/api/v1/logbook-types'],
   file_types: ['/api/v1/file-types'],
-  scopes: ['/api/v1/scopes'],
+  // A scope's chat flag; the compose form reloads who can be addressed.
+  scopes: ['/api/v1/scopes', '/api/v1/message-receivers'],
+  // A function's name, views and message flags (can_receive_messages,
+  // always_cc).
+  user_functions: ['/api/v1/user-functions', '/api/v1/me/functions', '/api/v1/message-receivers'],
   medical_categories: ['/api/v1/medical-categories'],
   // A patient's closed_at follows its missions; the UHS statistics count
   // patients assigned from them.
@@ -40,6 +44,13 @@ const typePaths: Record<string, string[]> = {
   patient_uhs: ['/api/v1/patients', '/api/v1/uhs', '/api/v1/uhs-statistics'],
   // A patient's transport request (`…/transport`) is below its path.
   transport_requests: ['/api/v1/patients', '/api/v1/uhs-statistics'],
+  // Online only (persist: false); the stream names the type, never content.
+  messages: ['/api/v1/messages'],
+  // An acknowledgement changes its message.
+  message_receivers: ['/api/v1/messages'],
+  // Deleting a tag keeps it on messages, which show its name.
+  message_tags: ['/api/v1/message-tags'],
+  message_settings: ['/api/v1/message-settings'],
   map_styles: ['/api/v1/map-styles'],
   map_settings: ['/api/v1/map-settings'],
   // A restriction changes which overlays a caller is listed.

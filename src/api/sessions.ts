@@ -17,6 +17,10 @@ export type UserFunction = {
   // Its sessions work in that scope only and see only the UHS's patients;
   // its name, permissions (patients.view / .edit) and views are fixed.
   uhs?: { id: string; name: string; scope: string | null } | null;
+  // Messages can be addressed to it; always_cc (only with it) adds it as CC
+  // to every message. Absent from an API older than the chat.
+  can_receive_messages?: boolean;
+  always_cc?: boolean;
   created_at: string;
   created_by: string;
   updated_at: string;
@@ -102,7 +106,16 @@ export const userFunctionApi = {
       method: 'POST',
       body: JSON.stringify({ name, description }),
     }),
-  update: (id: string, patch: { name?: string; description?: string }) =>
+  // Clearing can_receive_messages clears always_cc too.
+  update: (
+    id: string,
+    patch: {
+      name?: string;
+      description?: string;
+      can_receive_messages?: boolean;
+      always_cc?: boolean;
+    },
+  ) =>
     request<UserFunction>(userFunctionPath(id), { method: 'PATCH', body: JSON.stringify(patch) }),
   remove: (id: string) => request<void>(userFunctionPath(id), { method: 'DELETE' }),
   setPermissions: (id: string, permissions: string[]) =>
