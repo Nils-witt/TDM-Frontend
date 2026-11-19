@@ -1,6 +1,6 @@
 // Styled like a macOS about window around a WidgetForm.
 .about {
-  width: 280px;
+  width: 340px;
   padding: 1.5rem 1.25rem 1.25rem;
   border: 0.5px solid var(--dropdown-border);
   border-radius: 12px;
@@ -34,4 +34,30 @@
   width: 56px;
   height: 56px;
   fill: var(--primary);
+}
+
+// Label and version side by side, the labels in one column.
+.versions {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  margin: 0;
+
+  dt {
+    opacity: 0.7;
+  }
+
+  dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+}
+
+.muted {
+  opacity: 0.6;
+}
+
+.down {
+  color: var(--error);
 }

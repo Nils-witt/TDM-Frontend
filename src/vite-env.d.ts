@@ -9,3 +9,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// The frontend build, set in vite.config.ts: the release (APP_VERSION, else
+// package.json's), the full commit (APP_COMMIT, else git; empty when
+// unknown) and when it was built (ISO 8601).
+declare const __APP_VERSION__: string;
+declare const __APP_COMMIT__: string;
+declare const __APP_BUILD_TIME__: string;

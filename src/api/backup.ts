@@ -37,6 +37,9 @@ export type BackupInstanceStatus = {
   name: string;
   error?: string;
   jobs: BackupJob[];
+  // go-backup-tool's release (or short commit); null when unknown, absent
+  // from an older API.
+  version?: string | null;
 };
 
 export type BackupStatus = {

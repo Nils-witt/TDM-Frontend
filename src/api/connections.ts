@@ -16,6 +16,9 @@ export type ServiceConnection = {
   since: string;
   // A short reason while a probed service is disconnected; null otherwise.
   error: string | null;
+  // The service's release (or short commit); null when it tells none,
+  // absent from an older API.
+  version?: string | null;
 };
 
 export type ConnectionList = { connections: ServiceConnection[] };

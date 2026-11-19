@@ -9,7 +9,10 @@ COPY . .
 # Fallback origin of universalGoApi, baked into the bundle. A config.json
 # mounted at /usr/share/nginx/html/config.json overrides it at runtime.
 ARG VITE_API_BASE_URL=
-RUN VITE_API_BASE_URL=$VITE_API_BASE_URL npm run build
+# The build the About dialog shows; .git is not in the build context.
+ARG APP_VERSION=
+ARG APP_COMMIT=
+RUN VITE_API_BASE_URL=$VITE_API_BASE_URL APP_VERSION=$APP_VERSION APP_COMMIT=$APP_COMMIT npm run build
 
 # Serve dist/ with a fallback to index.html for client-side routes.
 FROM nginx:alpine
