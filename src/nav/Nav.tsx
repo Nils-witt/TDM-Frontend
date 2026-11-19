@@ -44,6 +44,7 @@ function Nav() {
   const admin = useIsAdmin();
   const { principal } = useSession();
   const patients = useHasPermission('patients.view');
+  const messages = useHasPermission('messages.view');
   // The Admin menu shows for the admin group and for anyone holding one of
   // the personal permissions of its widgets.
   const adminMenu = admin || adminMenuPermissions.some((p) => hasPermission(principal, p));
@@ -102,6 +103,12 @@ function Nav() {
                 <NavMenuItem label="Logbook" widget="Logbook" />
                 <NavMenuItem label="Files" widget="FileList" />
               </TopLevelMenu>
+              {messages && (
+                <TopLevelMenu label="Messages">
+                  <NavMenuItem label="Messages" widget="Messages" shortcut="messages" />
+                  <NavMenuItem label="Message Tags" widget="MessageTags" />
+                </TopLevelMenu>
+              )}
               {adminMenu && (
                 <TopLevelMenu label="Admin">
                   <NavMenuItem label="Mission Types" widget="MissionTypes" />

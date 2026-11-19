@@ -56,6 +56,7 @@ const MissionPatientsWidget = lazy(() => import('./MissionPatients/MissionPatien
 const PatientWidget = lazy(() => import('./Patient/Patient.tsx'));
 const LinkPatientWidget = lazy(() => import('./LinkPatient/LinkPatient.tsx'));
 const PatientsWidget = lazy(() => import('./Patients/Patients.tsx'));
+const MessagesWidget = lazy(() => import('./Messages/Messages.tsx'));
 
 const Example: Widget = {
   id: 'Example',
@@ -481,6 +482,38 @@ const MissionPatients: Widget = {
   defaultWidth: 35,
   defaultHeight: 30,
   Component: MissionPatientsWidget,
+};
+
+// The chat of the session's scope. messageId opens one message (the
+// indicator and toasts).
+const Messages: Widget = {
+  id: 'Messages',
+  name: 'Messages',
+  category: 'general',
+  description: 'The chat of the scope: inbox, sent and all messages, acknowledge, tag and send.',
+  permission: 'messages.view',
+  minWidth: 25,
+  maxWidth: 120,
+  minHeight: 10,
+  maxHeight: 800,
+  defaultWidth: 45,
+  defaultHeight: 36,
+  options: [
+    {
+      key: 'box',
+      label: 'Box',
+      type: 'select',
+      default: 'inbox',
+      choices: [
+        { value: 'inbox', label: 'Inbox' },
+        { value: 'sent', label: 'Sent' },
+        { value: 'all', label: 'All' },
+      ],
+    },
+    { key: 'unacknowledged', label: 'Only unacknowledged', type: 'boolean', default: false },
+    { key: 'messageId', label: 'Message ID', type: 'text', default: '' },
+  ],
+  Component: MessagesWidget,
 };
 
 // Patients in Mission opens it to create a patient in missionId, or to edit
@@ -1011,6 +1044,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     Patient,
     LinkPatient,
     Patients,
+    Messages,
     Example,
   ].map((w) => [w.id, w]),
 );

@@ -1,0 +1,61 @@
+// The messages list, detail and compose form.
+
+.unread {
+  font-weight: 600;
+}
+
+.row {
+  cursor: pointer;
+}
+
+.address {
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  vertical-align: middle;
+}
+
+.text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+// A picked function with its remove button.
+.pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  height: 1.5rem;
+  padding: 0 0.25rem 0 0.625rem;
+  border-radius: 0.75rem;
+  background: var(--chip);
+  font-size: 0.8125rem;
+
+  button {
+    border: 0;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    line-height: 1;
+  }
+}
+
+// An always-CC function: shown, but not removable.
+.fixed {
+  padding-right: 0.625rem;
+  border: 1px dashed var(--divider);
+  color: var(--text-secondary);
+}
+
+.mine {
+  color: var(--warning);
+  font-weight: 600;
+}

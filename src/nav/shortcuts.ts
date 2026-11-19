@@ -10,6 +10,7 @@ export const navShortcuts = {
   closeMission: { shortcut: 'Alt+Shift+L', action: 'closeMission' },
   printMission: { shortcut: 'Mod+P', action: 'printMission' },
   newLogEntry: { shortcut: 'Alt+Shift+N', widget: 'LogbookForm' },
+  messages: { shortcut: 'Alt+Shift+M', widget: 'Messages' },
 } satisfies Record<string, NavShortcut>;
 
 export type NavShortcutKey = keyof typeof navShortcuts;
