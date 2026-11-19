@@ -51,14 +51,20 @@ const toggled = <T,>(set: Set<T>, value: T, on: boolean) => {
 const noGroups: readonly Group[] = [];
 
 // What an UHS function may hold; its name, views and lifetime follow the UHS.
-const uhsFunctionPermissions = ['patients.view', 'patients.edit'] as const;
+const uhsFunctionPermissions = [
+  'patients.view',
+  'patients.edit',
+  'messages.view',
+  'messages.send',
+] as const;
 const uhsHint = 'Set by its UHS (UHS widget).';
 
 const isResponsivePage = (p: string): p is ResponsivePage =>
   (responsivePageIds as readonly string[]).includes(p);
 
 // The user functions a user chooses one of at sign-in: their functional
-// permissions (missions, patients, units) and the groups that may choose
+// permissions (missions, patients, units, messages), whether messages can be
+// addressed to them, and the groups that may choose
 // them. Admins only. The functionId option opens it on one function (the UHS
 // widget's Function button).
 function UserFunctionsWidget({ options }: WidgetProps) {
@@ -174,6 +180,8 @@ function FunctionEditor({ fn, catalog, groups, onChanged, onDeleted }: EditorPro
   const { openWidget } = useWidgetWindows();
   const [name, setName] = useState(fn.name);
   const [description, setDescription] = useState(fn.description);
+  const [receive, setReceive] = useState(fn.can_receive_messages ?? false);
+  const [alwaysCc, setAlwaysCc] = useState(fn.always_cc ?? false);
   const [groupDraft, setGroupDraft] = useState<Set<string> | null>(null);
   const [viewsDraft, setViewsDraft] = useState<ViewsDraft | null>(null);
   const [busy, setBusy] = useState(false);
@@ -181,7 +189,11 @@ function FunctionEditor({ fn, catalog, groups, onChanged, onDeleted }: EditorPro
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isUhs = !!fn.uhs;
-  const dirty = name !== fn.name || description !== fn.description;
+  const dirty =
+    name !== fn.name ||
+    description !== fn.description ||
+    receive !== (fn.can_receive_messages ?? false) ||
+    alwaysCc !== (fn.always_cc ?? false);
   const chosenGroups = groupDraft ?? new Set(fn.groups);
   // An API older than views allows every view and page.
   const chosenViews = viewsDraft ?? {
@@ -205,7 +217,14 @@ function FunctionEditor({ fn, catalog, groups, onChanged, onDeleted }: EditorPro
   const saveDetails = (e: FormEvent) => {
     e.preventDefault();
     if (!dirty || busy) return;
-    void run(() => userFunctionApi.update(fn.id, { name, description }));
+    void run(() =>
+      userFunctionApi.update(fn.id, {
+        name,
+        description,
+        can_receive_messages: receive,
+        always_cc: receive && alwaysCc,
+      }),
+    );
   };
 
   const saveGroups = (e: FormEvent) => {
@@ -257,6 +276,32 @@ function FunctionEditor({ fn, catalog, groups, onChanged, onDeleted }: EditorPro
             />
           </FieldRow>
         </Section>
+        <Section legend="Messages">
+          <label className="row">
+            <input
+              type="checkbox"
+              checked={receive}
+              disabled={offline || busy}
+              onChange={(e) => {
+                setReceive(e.target.checked);
+                if (!e.target.checked) setAlwaysCc(false);
+              }}
+            />
+            <span>Can receive messages</span>
+          </label>
+          <label
+            className="row"
+            title={receive ? undefined : 'Only for a function that can receive messages.'}
+          >
+            <input
+              type="checkbox"
+              checked={receive && alwaysCc}
+              disabled={offline || busy || !receive}
+              onChange={(e) => setAlwaysCc(e.target.checked)}
+            />
+            <span>Always CC (added to every message of every scope)</span>
+          </label>
+        </Section>
         <FormActions
           submitLabel="Save"
           busy={busy}
@@ -265,6 +310,8 @@ function FunctionEditor({ fn, catalog, groups, onChanged, onDeleted }: EditorPro
           onDiscard={() => {
             setName(fn.name);
             setDescription(fn.description);
+            setReceive(fn.can_receive_messages ?? false);
+            setAlwaysCc(fn.always_cc ?? false);
           }}
           aside={
             <>

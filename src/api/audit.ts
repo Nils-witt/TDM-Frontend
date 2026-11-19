@@ -19,6 +19,10 @@ export const auditEntityTypes = [
   'log_files',
   'tasks',
   'map_styles',
+  'messages',
+  'message_receivers',
+  'message_tags',
+  'message_settings',
 ] as const;
 
 export type AuditEntityType = (typeof auditEntityTypes)[number];

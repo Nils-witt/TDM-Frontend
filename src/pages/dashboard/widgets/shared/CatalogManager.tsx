@@ -37,6 +37,8 @@ type Props<T extends CatalogEntry> = {
   describe?: boolean;
   // With the transport request flag per entry (mission types).
   transport?: boolean;
+  // With the chat flag per entry (scopes).
+  chat?: boolean;
 };
 
 const parentId = (t: CatalogEntry) =>
@@ -46,6 +48,8 @@ const descriptionOf = (t: CatalogEntry) =>
   'description' in t && typeof t.description === 'string' ? t.description : '';
 
 const transportOf = (t: CatalogEntry) => 'transport_request' in t && t.transport_request === true;
+
+const chatOf = (t: CatalogEntry) => 'chat_enabled' in t && t.chat_enabled === true;
 
 const byName = (a: CatalogEntry, b: CatalogEntry) => a.name.localeCompare(b.name);
 
@@ -62,6 +66,7 @@ function CatalogManager<T extends CatalogEntry>({
   parents,
   describe = false,
   transport = false,
+  chat = false,
 }: Props<T>) {
   const { openWidget } = useWidgetWindows();
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +85,7 @@ function CatalogManager<T extends CatalogEntry>({
     }
     return byName(a, b);
   });
-  const columns = 3 + (parents ? 1 : 0) + (describe ? 1 : 0) + (transport ? 1 : 0);
+  const columns = 3 + (parents ? 1 : 0) + (describe ? 1 : 0) + (transport ? 1 : 0) + (chat ? 1 : 0);
 
   const write = async (fn: () => Promise<unknown>) => {
     try {
@@ -102,6 +107,7 @@ function CatalogManager<T extends CatalogEntry>({
         parents={parents}
         describe={describe}
         transport={transport}
+        chat={chat}
         create={async (input) => {
           await api.create(input);
           await collection.reload();
@@ -118,6 +124,7 @@ function CatalogManager<T extends CatalogEntry>({
                 <th>Name</th>
                 {describe && <th>Description</th>}
                 {transport && <th title="Offered for UHS transport requests">Transport</th>}
+                {chat && <th title="Messages can be sent in the scope">Chat</th>}
                 <th>Changed</th>
                 <th>
                   <span className={styles.hidden}>Actions</span>
@@ -139,6 +146,7 @@ function CatalogManager<T extends CatalogEntry>({
                   parents={parents}
                   describe={describe}
                   transport={transport}
+                  chat={chat}
                   parentName={parentName(t)}
                   save={(input) => write(() => api.patch(t.id, input))}
                   onDelete={() => setDeleting(t)}
@@ -180,18 +188,21 @@ function CreateEntry({
   parents,
   describe,
   transport,
+  chat,
   create,
 }: {
   noun: string;
   parents?: Parents;
   describe: boolean;
   transport: boolean;
+  chat: boolean;
   create: (input: CatalogInput) => Promise<void>;
 }) {
   const [name, setName] = useState('');
   const [parent, setParent] = useState('');
   const [description, setDescription] = useState('');
   const [transportRequest, setTransportRequest] = useState(false);
+  const [chatEnabled, setChatEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const id = useId();
@@ -206,10 +217,12 @@ function CreateEntry({
       if (parents) input.group_id = parent;
       if (describe) input.description = description.trim();
       if (transport) input.transport_request = transportRequest;
+      if (chat) input.chat_enabled = chatEnabled;
       await create(input);
       setName('');
       setDescription('');
       setTransportRequest(false);
+      setChatEnabled(false);
       setError(null);
     } catch (err) {
       setError((err as Error).message);
@@ -276,6 +289,19 @@ function CreateEntry({
             </label>
           </FieldRow>
         )}
+        {chat && (
+          <FieldRow id={`${id}-chat`} label="Chat">
+            <label className="row">
+              <input
+                id={`${id}-chat`}
+                type="checkbox"
+                checked={chatEnabled}
+                onChange={(e) => setChatEnabled(e.target.checked)}
+              />
+              Chat enabled
+            </label>
+          </FieldRow>
+        )}
       </Section>
       <FormActions submitLabel="Create" busy={busy} canSubmit={name.trim() !== ''} />
       <FormError error={error} onClose={() => setError(null)} />
@@ -288,6 +314,7 @@ type EntryRowProps = {
   parents?: Parents;
   describe: boolean;
   transport: boolean;
+  chat: boolean;
   parentName: string;
   // Sends only the changed fields; false keeps the row in edit mode.
   save: (input: Partial<CatalogInput>) => Promise<boolean>;
@@ -302,6 +329,7 @@ function EntryRow({
   parents,
   describe,
   transport,
+  chat,
   parentName,
   save,
   onDelete,
@@ -312,6 +340,7 @@ function EntryRow({
     parent: string;
     description: string;
     transport: boolean;
+    chat: boolean;
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const formId = useId();
@@ -328,6 +357,7 @@ function EntryRow({
     }
     if (transport && edit.transport !== transportOf(entry))
       input.transport_request = edit.transport;
+    if (chat && edit.chat !== chatOf(entry)) input.chat_enabled = edit.chat;
     if (Object.keys(input).length === 0) {
       setEdit(null);
       return;
@@ -410,6 +440,21 @@ function EntryRow({
           )}
         </td>
       )}
+      {chat && (
+        <td>
+          {edit ? (
+            <input
+              form={formId}
+              type="checkbox"
+              aria-label="Chat enabled"
+              checked={edit.chat}
+              onChange={(e) => setEdit({ ...edit, chat: e.target.checked })}
+            />
+          ) : (
+            chatOf(entry) && 'Enabled'
+          )}
+        </td>
+      )}
       <td className={styles.meta}>
         {formatTime(entry.updated_at)} · {entry.updated_by}
       </td>
@@ -435,6 +480,7 @@ function EntryRow({
                   parent: parentId(entry),
                   description: descriptionOf(entry),
                   transport: transportOf(entry),
+                  chat: chatOf(entry),
                 })
               }
             >

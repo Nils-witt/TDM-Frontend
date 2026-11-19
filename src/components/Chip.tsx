@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import styles from './Chip.module.scss';
 
 export type ChipTone = 'default' | 'red' | 'yellow' | 'green';
@@ -8,17 +9,20 @@ function Chip({
   tone = 'default',
   title,
   className,
+  style,
 }: {
   label: string;
   tone?: ChipTone;
   title?: string;
   className?: string;
+  // A color of its own (a message tag's).
+  style?: CSSProperties;
 }) {
   const classes = [styles.chip, tone === 'default' ? '' : styles[tone], className ?? '']
     .filter(Boolean)
     .join(' ');
   return (
-    <span className={classes} title={title}>
+    <span className={classes} title={title} style={style}>
       <span className={styles.label}>{label}</span>
     </span>
   );

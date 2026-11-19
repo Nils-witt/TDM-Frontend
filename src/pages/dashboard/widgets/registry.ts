@@ -35,6 +35,8 @@ const AuditLogWidget = lazy(() => import('./AuditLog/AuditLog.tsx'));
 const MapWidget = lazy(() => import('./Map/Map.tsx'));
 const MapStylesWidget = lazy(() => import('./MapStyles/MapStyles.tsx'));
 const MapAdminWidget = lazy(() => import('./MapAdmin/MapAdmin.tsx'));
+const MessageSettingsWidget = lazy(() => import('./MessageSettings/MessageSettings.tsx'));
+const MessageTagsWidget = lazy(() => import('./MessageTags/MessageTags.tsx'));
 const OverlayAccessWidget = lazy(() => import('./OverlayAccess/OverlayAccess.tsx'));
 const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
@@ -837,6 +839,26 @@ const MapAdmin: Widget = {
   Component: MapAdminWidget,
 };
 
+// The priority labels and the Default scope's chat flag.
+const MessageSettings: Widget = {
+  ...adminWidget,
+  id: 'MessageSettings',
+  name: 'Message settings',
+  description: 'Sets the labels of the message priorities and turns the chat on in Default.',
+  Component: MessageSettingsWidget,
+};
+
+// Global tags (admins) and the scope's tags (messages.view).
+const MessageTags: Widget = {
+  ...adminWidget,
+  adminOnly: false,
+  permission: 'messages.view',
+  id: 'MessageTags',
+  name: 'Message tags',
+  description: 'Manages the tags messages can be given, global ones and the scope’s.',
+  Component: MessageTagsWidget,
+};
+
 // Which users and groups see each tile server overlay.
 const OverlayAccess: Widget = {
   ...adminWidget,
@@ -965,6 +987,8 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     UhsStatistics,
     MapStyles,
     MapAdmin,
+    MessageSettings,
+    MessageTags,
     OverlayAccess,
     ExportTemplates,
     Workflows,
