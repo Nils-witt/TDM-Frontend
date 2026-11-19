@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { useAllowedViews, useSession } from '@/app/session';
+import { useUnacknowledgedMessages } from '@/data/messages';
 import OfflineBanner from '@/components/OfflineBanner';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
 import LiveIndicator from '@/nav/actions/LiveIndicator';
@@ -15,6 +16,7 @@ function AppFrame() {
   const { logout } = useSession();
   const { pathname } = useLocation();
   const { pages } = useAllowedViews();
+  const unacknowledged = useUnacknowledgedMessages().count;
 
   const signOut = () => {
     logout().catch((err: unknown) =>
@@ -48,7 +50,14 @@ function AppFrame() {
             to={s.to}
             className={({ isActive }) => `${styles.item}${isActive ? ` ${styles.active}` : ''}`}
           >
-            <SymbolIcon name={s.icon} className={styles.icon} />
+            <span className={styles.iconWrap}>
+              <SymbolIcon name={s.icon} className={styles.icon} />
+              {s.badge === 'messages' && !!unacknowledged && (
+                <span className={styles.badge} aria-label={`${unacknowledged} to acknowledge`}>
+                  {unacknowledged > 99 ? '99+' : unacknowledged}
+                </span>
+              )}
+            </span>
             <span>{s.label}</span>
           </NavLink>
         ))}

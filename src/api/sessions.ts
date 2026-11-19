@@ -32,7 +32,7 @@ export const viewIds: readonly View[] = ['desktop', 'responsive'];
 
 // The configurable pages of the responsive view (/m); Settings is always
 // shown. uhs, the UHS view, is only for UHS functions (fixed by the API).
-export const responsivePageIds = ['missions', 'archive', 'map', 'reports'] as const;
+export const responsivePageIds = ['missions', 'archive', 'map', 'reports', 'messages'] as const;
 export type ResponsivePage = (typeof responsivePageIds)[number];
 export type FunctionPage = ResponsivePage | 'uhs';
 

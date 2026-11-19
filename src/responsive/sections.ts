@@ -8,6 +8,9 @@ export type Section = {
   // The user function decides whether it is shown; Settings has none and is
   // always shown.
   page?: FunctionPage;
+  // Shows the count of messages the session's function has yet to
+  // acknowledge.
+  badge?: 'messages';
 };
 
 export const sections: readonly Section[] = [
@@ -17,6 +20,13 @@ export const sections: readonly Section[] = [
   { to: responsivePaths.archive, label: 'Archive', icon: 'manage_search', page: 'archive' },
   { to: responsivePaths.map, label: 'Map', icon: 'map', page: 'map' },
   { to: responsivePaths.reports, label: 'Reports', icon: 'description', page: 'reports' },
+  {
+    to: responsivePaths.messages,
+    label: 'Messages',
+    icon: 'chat',
+    page: 'messages',
+    badge: 'messages',
+  },
   { to: responsivePaths.settings, label: 'Settings', icon: 'settings' },
 ];
 

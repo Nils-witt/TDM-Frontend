@@ -1,3 +1,4 @@
+import { useMessages } from '@/api/messages';
 import { useMessageSettings, priorityLabel } from '@/api/messageSettings';
 import { useOffline } from '@/api/connectivity';
 import { useHasPermission, useSession } from '@/app/session';
@@ -42,4 +43,13 @@ export function useMessageAccess() {
     // Load lists only while they can answer.
     load: view && !offline,
   };
+}
+
+// The messages the session's function has yet to acknowledge as a To
+// receiver (the menu bar indicator, /m's badge); null while unknown or
+// without messages.view.
+export function useUnacknowledgedMessages() {
+  const access = useMessageAccess();
+  const list = useMessages(access.load ? { box: 'inbox', unacknowledged: true } : null);
+  return { list, count: access.load ? (list.data?.length ?? null) : null };
 }

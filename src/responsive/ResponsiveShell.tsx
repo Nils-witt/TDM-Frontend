@@ -8,8 +8,11 @@ import Spinner from '@/components/Spinner';
 import AppFrame from './AppFrame';
 import { homePath } from './sections';
 import ArchivePage from './pages/ArchivePage';
+import MessagePage from './pages/MessagePage';
+import MessagesPage from './pages/MessagesPage';
 import MissionPage from './pages/MissionPage';
 import MissionsPage from './pages/MissionsPage';
+import NewMessagePage from './pages/NewMessagePage';
 import NewMissionPage from './pages/NewMissionPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
@@ -63,6 +66,13 @@ function ResponsiveShell() {
                     <Route path="missions/:id" element={<MissionPage />} />
                     {pages.has('archive') && <Route path="archive" element={<ArchivePage />} />}
                     {pages.has('reports') && <Route path="reports" element={<ReportsPage />} />}
+                    {pages.has('messages') && (
+                      <>
+                        <Route path="messages" element={<MessagesPage />} />
+                        <Route path="messages/new" element={<NewMessagePage />} />
+                        <Route path="messages/:id" element={<MessagePage />} />
+                      </>
+                    )}
                     {pages.has('map') && (
                       <Route
                         path="map"

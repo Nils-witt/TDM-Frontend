@@ -33,7 +33,7 @@ describe('allowedViews', () => {
   it('allows everything without views', () => {
     const v = allowedViews(principal([]));
     expect(v.desktop && v.responsive).toBe(true);
-    expect([...v.pages]).toEqual(['missions', 'archive', 'map', 'reports']);
+    expect([...v.pages]).toEqual(['missions', 'archive', 'map', 'reports', 'messages']);
   });
 
   it('follows the function, in the canonical order', () => {

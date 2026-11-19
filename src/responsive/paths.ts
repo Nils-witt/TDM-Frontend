@@ -10,6 +10,9 @@ export const responsivePaths = {
   map: `${mobileBasePath}/map`,
   reports: `${mobileBasePath}/reports`,
   settings: `${mobileBasePath}/settings`,
+  messages: `${mobileBasePath}/messages`,
+  newMessage: `${mobileBasePath}/messages/new`,
+  message: (id: string) => `${mobileBasePath}/messages/${encodeURIComponent(id)}`,
   // The UHS view of an UHS function's session.
   uhs: `${mobileBasePath}/uhs`,
   uhsNewPatient: `${mobileBasePath}/uhs/new`,

@@ -30,3 +30,12 @@ describe('an UHS function', () => {
     expect(homePath(pages('uhs'))).toBe(responsivePaths.uhs);
   });
 });
+
+describe('the Messages page', () => {
+  it('is a section with the unacknowledged badge when the function shows it', () => {
+    const shown = visibleSections(pages('messages'));
+    expect(shown.map((s) => s.label)).toEqual(['Messages', 'Settings']);
+    expect(shown[0]?.badge).toBe('messages');
+    expect(homePath(pages('messages'))).toBe(responsivePaths.messages);
+  });
+});

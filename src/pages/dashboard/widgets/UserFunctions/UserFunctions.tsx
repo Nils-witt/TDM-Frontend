@@ -38,6 +38,7 @@ const pageLabels: Record<ResponsivePage, string> = {
   archive: 'Archive',
   map: 'Map',
   reports: 'Reports',
+  messages: 'Messages',
 };
 
 type ViewsDraft = { views: Set<View>; pages: Set<ResponsivePage> };
