@@ -1,5 +1,5 @@
 import type { ApiSession, Principal } from './auth';
-import { request } from './client';
+import { ApiError, request } from './client';
 
 // A user function the caller may work as, with its functional permissions.
 // `all` is the admin group's All permissions function.
@@ -49,15 +49,35 @@ export type SessionChoice = { function: string; scope: string | null };
 
 export type SessionStarted = { session: ApiSession; whoami: Principal };
 
+// Another session in the scope of the caller's (or the caller's own, `own`),
+// without its ID and browser.
+export type ScopePeer = Pick<
+  ApiSession,
+  'username' | 'function' | 'uhs' | 'created_at' | 'last_seen'
+> & {
+  own: boolean;
+};
+
 export const choicesPath = '/api/v1/me/functions';
 export const ownSessionsPath = '/api/v1/me/sessions';
 export const sessionsPath = '/api/v1/sessions';
+// Who works in the current session's scope; needs no permission.
+export const scopeSessionsPath = `${sessionsPath}/current/scope`;
 export const userFunctionsPath = '/api/v1/user-functions';
 export const userFunctionPath = (id: string) => `${userFunctionsPath}/${encodeURIComponent(id)}`;
 
 export const fetchChoices = (path: string) => request<SessionChoices>(path);
 export const fetchSessions = (path: string) =>
   request<{ sessions: ApiSession[] }>(path).then((r) => r.sessions);
+// null from an API older than the endpoint.
+export const fetchScopePeers = (path: string) =>
+  request<{ sessions: ScopePeer[] }>(path).then(
+    (r) => r.sessions,
+    (err: unknown) => {
+      if (err instanceof ApiError && err.status === 404) return null;
+      throw err;
+    },
+  );
 export const fetchUserFunctions = (path: string) =>
   request<{ functions: UserFunction[] }>(path).then((r) => r.functions);
 

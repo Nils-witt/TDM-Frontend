@@ -17,6 +17,7 @@ import BackupIndicator from './actions/BackupIndicator';
 import ConnectionsIndicator from './actions/ConnectionsIndicator';
 import UnitRequestIndicator from './actions/UnitRequestIndicator';
 import Fullscreen from './actions/Fullscreen';
+import ScopeUsersIndicator from './actions/ScopeUsersIndicator';
 import SessionMenu from './actions/SessionMenu';
 import UserMenu from './actions/UserMenu';
 import styles from './Nav.module.scss';
@@ -138,6 +139,7 @@ function Nav() {
               <UnitRequestIndicator />
               <BackupIndicator />
               <ChannelIndicator />
+              <ScopeUsersIndicator />
               <SessionMenu />
               <UserMenu />
               <Clock />
