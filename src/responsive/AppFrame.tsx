@@ -1,7 +1,8 @@
+import { lazy, Suspense } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { useAllowedViews, useSession } from '@/app/session';
-import { useUnacknowledgedMessages } from '@/data/messages';
+import { useMessageAccess, useUnacknowledgedMessages } from '@/data/messages';
 import OfflineBanner from '@/components/OfflineBanner';
 import SymbolIcon from '@/components/symbols/SymbolIcon';
 import LiveIndicator from '@/nav/actions/LiveIndicator';
@@ -10,6 +11,8 @@ import ScopePicker from './ScopePicker';
 import { visibleSections } from './sections';
 import styles from './AppFrame.module.scss';
 
+const MessageSnackbarMUI = lazy(() => import('./MessageSnackbarMUI'));
+
 // One nav element that is a bottom tab bar on phones and a sidebar from
 // tablet width up; only the CSS differs.
 function AppFrame() {
@@ -17,6 +20,7 @@ function AppFrame() {
   const { pathname } = useLocation();
   const { pages } = useAllowedViews();
   const unacknowledged = useUnacknowledgedMessages().count;
+  const messages = useMessageAccess().view;
 
   const signOut = () => {
     logout().catch((err: unknown) =>
@@ -62,6 +66,11 @@ function AppFrame() {
           </NavLink>
         ))}
       </nav>
+      {messages && (
+        <Suspense>
+          <MessageSnackbarMUI canOpen={pages.has('messages')} />
+        </Suspense>
+      )}
       <main className={styles.main}>
         <OfflineBanner />
         {/* Keyed by the path, so another page clears a failed one's error. */}

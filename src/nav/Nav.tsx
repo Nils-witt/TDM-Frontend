@@ -17,6 +17,8 @@ import BackupIndicator from './actions/BackupIndicator';
 import ConnectionsIndicator from './actions/ConnectionsIndicator';
 import UnitRequestIndicator from './actions/UnitRequestIndicator';
 import Fullscreen from './actions/Fullscreen';
+import MessageIndicator from './actions/MessageIndicator';
+import MessageToasts from './actions/MessageToasts';
 import ScopeUsersIndicator from './actions/ScopeUsersIndicator';
 import SessionMenu from './actions/SessionMenu';
 import UserMenu from './actions/UserMenu';
@@ -145,6 +147,7 @@ function Nav() {
             <div className={styles.right}>
               <LiveIndicator />
               <ConnectionsIndicator />
+              <MessageIndicator />
               <UnitRequestIndicator />
               <BackupIndicator />
               <ChannelIndicator />
@@ -155,6 +158,7 @@ function Nav() {
               <Fullscreen />
             </div>
           </MenuBar>
+          <MessageToasts />
         </AboutProvider>
       </MissionPrintProvider>
     </MissionCloseProvider>

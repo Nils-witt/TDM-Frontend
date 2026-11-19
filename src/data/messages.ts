@@ -1,4 +1,5 @@
-import { useMessages } from '@/api/messages';
+import { useEffect, useEffectEvent, useRef } from 'react';
+import { arrivedMessages, type Message, useMessages } from '@/api/messages';
 import { useMessageSettings, priorityLabel } from '@/api/messageSettings';
 import { useOffline } from '@/api/connectivity';
 import { useHasPermission, useSession } from '@/app/session';
@@ -53,3 +54,24 @@ export function useUnacknowledgedMessages() {
   const list = useMessages(access.load ? { box: 'inbox', unacknowledged: true } : null);
   return { list, count: access.load ? (list.data?.length ?? null) : null };
 }
+
+// Calls onArrive with the messages that appear in the session function's
+// inbox (To or CC) after the first load: what a live messages event brought.
+// Nothing on the first load, so a reload does not repeat old ones.
+export function useMessageArrivals(onArrive: (arrived: Message[]) => void) {
+  const access = useMessageAccess();
+  const inbox = useMessages(access.load ? { box: 'inbox' } : null);
+  const previous = useRef<Message[] | undefined>(undefined);
+  const notify = useEffectEvent(onArrive);
+  useEffect(() => {
+    const data = inbox.data;
+    if (!data) return;
+    const arrived = arrivedMessages(previous.current, data);
+    previous.current = data;
+    if (arrived.length > 0) notify(arrived);
+  }, [inbox.data]);
+}
+
+// Priorities I and II stay until dismissed; III and IV close on their own
+// after this.
+export const toastTimeout = (m: Pick<Message, 'priority'>) => (m.priority <= 2 ? null : 8000);
