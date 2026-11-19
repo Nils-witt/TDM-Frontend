@@ -12,7 +12,7 @@ ARG VITE_API_BASE_URL=
 RUN VITE_API_BASE_URL=$VITE_API_BASE_URL npm run build
 
 # Serve dist/ with a fallback to index.html for client-side routes.
-FROM nginx:1.29-alpine
+FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY nginx-headers.conf /etc/nginx/snippets/headers.conf
 COPY --from=build /src/dist /usr/share/nginx/html
