@@ -42,6 +42,9 @@ export type Message = EntityMeta & {
   // name kept after the way is deleted; null for none, absent from an API
   // older than transmission ways.
   transmission_way?: { id: string; name: string } | null;
+  // Free text naming where the message came from (a unit, a caller, …);
+  // null for none, absent from an API older than the field.
+  origin?: string | null;
   // To before CC, each by name.
   receivers: MessageReceiver[];
   acknowledged: boolean;
@@ -65,6 +68,8 @@ export type MessageDraft = {
   tags: string[];
   // A transmission way's ID, or null for none.
   transmission_way: string | null;
+  // null for none.
+  origin: string | null;
 };
 
 // A function messages can be addressed to.
@@ -75,6 +80,7 @@ export const messageReceiversPath = '/api/v1/message-receivers';
 export const messagePath = (id: string) => `${messagesPath}/${encodeURIComponent(id)}`;
 
 export const maxMessageText = 4000;
+export const maxMessageOrigin = 200;
 
 // The problem type of a send refused because the chat is off in the scope.
 export const chatDisabledType = 'urn:universam:problem:chat-disabled';

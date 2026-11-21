@@ -7,6 +7,7 @@ import {
   type Message,
   type MessagePriority,
   type MessageReceiverOption,
+  maxMessageOrigin,
   maxMessageText,
 } from '@/api/messages';
 import { usePriorityLabels } from '@/data/messages';
@@ -101,6 +102,13 @@ function MessageComposeMUI({ onSent }: { onSent: (m: Message) => void }) {
             ))}
           </TextField>
         )}
+        <TextField
+          label="Origin"
+          value={c.origin}
+          disabled={disabled}
+          slotProps={{ htmlInput: { maxLength: maxMessageOrigin } }}
+          onChange={(e) => c.setOrigin(e.target.value)}
+        />
         <TextField
           label="Text"
           multiline

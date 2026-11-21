@@ -7,6 +7,7 @@ import {
   type Message,
   type MessageBox,
   type MessagePriority,
+  maxMessageOrigin,
   maxMessageText,
   messagePath,
   receiverOf,
@@ -269,6 +270,7 @@ function MessageDetail({
           <span className="muted">
             {formatTime(m.created_at)} · {m.created_by}
             {m.transmission_way && ` · via ${m.transmission_way.name}`}
+            {m.origin && ` · from ${m.origin}`}
           </span>
         </SectionText>
         <p className={styles.text}>{m.text}</p>
@@ -434,6 +436,16 @@ function ComposeForm({ c }: { c: ComposeState }) {
             </select>
           </FieldRow>
         )}
+        <FieldRow id={`${id}-origin`} label="Origin">
+          <input
+            id={`${id}-origin`}
+            className="grow"
+            maxLength={maxMessageOrigin}
+            value={c.origin}
+            disabled={disabled}
+            onChange={(e) => c.setOrigin(e.target.value)}
+          />
+        </FieldRow>
         <FieldRow id={`${id}-text`} label="Text" marked>
           <textarea
             id={`${id}-text`}

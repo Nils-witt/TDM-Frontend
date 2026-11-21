@@ -32,6 +32,7 @@ function MessageDetailMUI({
         <Typography variant="caption" color="text.secondary">
           {formatTime(m.created_at)} · {m.created_by}
           {m.transmission_way && ` · via ${m.transmission_way.name}`}
+          {m.origin && ` · from ${m.origin}`}
         </Typography>
       </Stack>
       <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{m.text}</Typography>

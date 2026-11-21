@@ -8,6 +8,7 @@ import {
   type MessageBox,
   type MessagePriority,
   messagesApi,
+  maxMessageOrigin,
   maxMessageText,
   useMessageReceivers,
   useMessages,
@@ -110,6 +111,7 @@ export function useMessageCompose(onSent: (m: Message) => void) {
   const [tagIds, setTagIds] = useState<string[]>([]);
   // '' for none.
   const [wayId, setWayId] = useState('');
+  const [origin, setOrigin] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -120,7 +122,8 @@ export function useMessageCompose(onSent: (m: Message) => void) {
     !busy &&
     to.length > 0 &&
     text.trim() !== '' &&
-    text.length <= maxMessageText;
+    text.length <= maxMessageText &&
+    origin.length <= maxMessageOrigin;
 
   const reset = () => {
     setTo([]);
@@ -129,6 +132,7 @@ export function useMessageCompose(onSent: (m: Message) => void) {
     setText('');
     setTagIds([]);
     setWayId('');
+    setOrigin('');
     setError(null);
   };
 
@@ -143,6 +147,7 @@ export function useMessageCompose(onSent: (m: Message) => void) {
         text: text.trim(),
         tags: tagIds,
         transmission_way: wayId || null,
+        origin: origin.trim() || null,
       });
       reset();
       onSent(m);
@@ -173,6 +178,8 @@ export function useMessageCompose(onSent: (m: Message) => void) {
     tags: activeTags(tags.data),
     wayId,
     setWayId,
+    origin,
+    setOrigin,
     ways: ways.items.toSorted((a, b) => a.name.localeCompare(b.name)),
     blocker,
     canSend,
