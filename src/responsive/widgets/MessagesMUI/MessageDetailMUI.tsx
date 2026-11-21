@@ -1,6 +1,4 @@
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -12,7 +10,7 @@ import { activeTags, type MessageTag } from '@/api/messageTags';
 import { useMessageActions } from '@/pages/dashboard/widgets/Messages/messagesState';
 import { formatTime } from '@/pages/dashboard/widgets/shared/logbookEntries';
 import { FormActionsMUI, FormErrorMUI, FormMUI, FormSectionMUI, MutedMUI } from '../shared/FormMUI';
-import { PriorityChipMUI, TagChipMUI } from './MessagePartsMUI';
+import { PriorityChipMUI, TagSelectMUI } from './MessagePartsMUI';
 
 // One message: its text, each receiver with who acknowledged when,
 // Acknowledge for a pending To receiver, and the tags (the only change).
@@ -100,21 +98,9 @@ function TagEditorMUI({
     >
       <FormSectionMUI legend="Tags" disabled={disabled}>
         {choices.length === 0 && <MutedMUI>No tags in this scope.</MutedMUI>}
-        {choices.map((t) => (
-          <FormControlLabel
-            key={t.id}
-            control={
-              <Checkbox
-                checked={chosen.includes(t.id)}
-                disabled={disabled}
-                onChange={(e) =>
-                  setDraft(e.target.checked ? [...chosen, t.id] : chosen.filter((x) => x !== t.id))
-                }
-              />
-            }
-            label={<TagChipMUI tag={t} />}
-          />
-        ))}
+        {choices.length > 0 && (
+          <TagSelectMUI choices={choices} value={chosen} disabled={disabled} onChange={setDraft} />
+        )}
       </FormSectionMUI>
       <FormActionsMUI
         submitLabel="Save tags"

@@ -48,6 +48,11 @@
   }
 }
 
+// A tag in its color, whose text color the remove button takes.
+.tagPick button {
+  color: inherit;
+}
+
 // An always-CC function: shown, but not removable.
 .fixed {
   padding-right: 0.625rem;

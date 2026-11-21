@@ -1,5 +1,5 @@
 import type { MessageReceiverOption } from '@/api/messages';
-import type { MessageTag } from '@/api/messageTags';
+import { type MessageTag, tagTextColor } from '@/api/messageTags';
 import Chip, { type ChipTone } from '@/components/Chip';
 import { usePriorityLabel } from '@/data/messages';
 import MessageTagChip from '../shared/MessageTagChip';
@@ -81,6 +81,61 @@ export function FunctionPicks({
           {addable.map((o) => (
             <option key={o.id} value={o.id}>
               {o.name}
+            </option>
+          ))}
+        </select>
+      )}
+    </span>
+  );
+}
+
+// The chosen tags in their colors, each removable, then a select adding one
+// of the others: a multi-select like FunctionPicks. choices gives the order.
+export function TagPicks({
+  choices,
+  picked,
+  disabled,
+  onChange,
+}: {
+  choices: readonly MessageTag[];
+  picked: readonly string[];
+  disabled: boolean;
+  onChange: (ids: string[]) => void;
+}) {
+  const inOrder = (ids: readonly string[]) =>
+    choices.filter((t) => ids.includes(t.id)).map((t) => t.id);
+  const chosen = choices.filter((t) => picked.includes(t.id));
+  const addable = choices.filter((t) => !picked.includes(t.id));
+  return (
+    <span className={styles.chips}>
+      {chosen.map((t) => (
+        <span
+          key={t.id}
+          className={`${styles.pick} ${styles.tagPick}`}
+          style={{ background: t.color, color: tagTextColor(t.color) }}
+        >
+          {t.deleted ? `${t.name} (deleted)` : t.name}
+          <button
+            type="button"
+            aria-label={`Remove the tag ${t.name}`}
+            disabled={disabled}
+            onClick={() => onChange(picked.filter((p) => p !== t.id))}
+          >
+            ×
+          </button>
+        </span>
+      ))}
+      {addable.length > 0 && (
+        <select
+          aria-label="Add a tag"
+          value=""
+          disabled={disabled}
+          onChange={(e) => e.target.value && onChange(inOrder([...picked, e.target.value]))}
+        >
+          <option value="">Add…</option>
+          {addable.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
             </option>
           ))}
         </select>

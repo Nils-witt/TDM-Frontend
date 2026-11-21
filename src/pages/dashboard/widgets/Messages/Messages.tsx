@@ -33,7 +33,7 @@ import { EmptyState } from '../shared/WidgetStates';
 import tableStyles from '../shared/CatalogManager.module.scss';
 import type { WidgetProps } from '../widgetOptions';
 import { useWidgetState } from '../widgetState';
-import { FunctionPicks, PriorityChip, TagChips } from './MessageParts';
+import { FunctionPicks, PriorityChip, TagChips, TagPicks } from './MessageParts';
 import {
   boxLabels,
   type ComposeState,
@@ -338,19 +338,9 @@ function TagEditor({
     >
       <Section legend="Tags">
         {choices.length === 0 && <span className="muted">No tags yet (Message Tags).</span>}
-        {choices.map((t) => (
-          <label key={t.id} className="row">
-            <input
-              type="checkbox"
-              checked={chosen.includes(t.id)}
-              disabled={disabled}
-              onChange={(e) =>
-                setDraft(e.target.checked ? [...chosen, t.id] : chosen.filter((x) => x !== t.id))
-              }
-            />
-            <TagChips tags={[t]} />
-          </label>
-        ))}
+        {choices.length > 0 && (
+          <TagPicks choices={choices} picked={chosen} disabled={disabled} onChange={setDraft} />
+        )}
       </Section>
       <FormActions
         submitLabel="Save Tags"
@@ -458,23 +448,12 @@ function ComposeForm({ c }: { c: ComposeState }) {
         </FieldRow>
         {c.tags.length > 0 && (
           <FieldRow id={`${id}-tags`} label="Tags">
-            <span className={styles.chips}>
-              {c.tags.map((t) => (
-                <label key={t.id} className="row">
-                  <input
-                    type="checkbox"
-                    checked={c.tagIds.includes(t.id)}
-                    disabled={disabled}
-                    onChange={(e) =>
-                      c.setTagIds(
-                        e.target.checked ? [...c.tagIds, t.id] : c.tagIds.filter((x) => x !== t.id),
-                      )
-                    }
-                  />
-                  <TagChips tags={[t]} />
-                </label>
-              ))}
-            </span>
+            <TagPicks
+              choices={c.tags}
+              picked={c.tagIds}
+              disabled={disabled}
+              onChange={c.setTagIds}
+            />
           </FieldRow>
         )}
       </Section>

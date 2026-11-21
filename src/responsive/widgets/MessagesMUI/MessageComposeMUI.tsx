@@ -1,7 +1,5 @@
 import Autocomplete from '@mui/material/Autocomplete';
-import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -14,7 +12,7 @@ import {
 import { usePriorityLabels } from '@/data/messages';
 import { useMessageCompose } from '@/pages/dashboard/widgets/Messages/messagesState';
 import { FormActionsMUI, FormErrorMUI, FormMUI, FormSectionMUI, MutedMUI } from '../shared/FormMUI';
-import { TagChipMUI } from './MessagePartsMUI';
+import { TagSelectMUI } from './MessagePartsMUI';
 
 // To and CC as multi-selects that never offer a function in both; the
 // always-CC functions are fixed chips in CC.
@@ -114,25 +112,12 @@ function MessageComposeMUI({ onSent }: { onSent: (m: Message) => void }) {
           onChange={(e) => c.setText(e.target.value)}
         />
         {c.tags.length > 0 && (
-          <Stack direction="row" useFlexGap sx={{ gap: 1, flexWrap: 'wrap' }}>
-            {c.tags.map((t) => (
-              <FormControlLabel
-                key={t.id}
-                control={
-                  <Checkbox
-                    checked={c.tagIds.includes(t.id)}
-                    disabled={disabled}
-                    onChange={(e) =>
-                      c.setTagIds(
-                        e.target.checked ? [...c.tagIds, t.id] : c.tagIds.filter((x) => x !== t.id),
-                      )
-                    }
-                  />
-                }
-                label={<TagChipMUI tag={t} />}
-              />
-            ))}
-          </Stack>
+          <TagSelectMUI
+            choices={c.tags}
+            value={c.tagIds}
+            disabled={disabled}
+            onChange={c.setTagIds}
+          />
         )}
       </FormSectionMUI>
       <FormActionsMUI
