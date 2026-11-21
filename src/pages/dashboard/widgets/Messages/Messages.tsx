@@ -268,6 +268,7 @@ function MessageDetail({
         <SectionText>
           <span className="muted">
             {formatTime(m.created_at)} · {m.created_by}
+            {m.transmission_way && ` · via ${m.transmission_way.name}`}
           </span>
         </SectionText>
         <p className={styles.text}>{m.text}</p>
@@ -426,6 +427,23 @@ function ComposeForm({ c }: { c: ComposeState }) {
             ))}
           </select>
         </FieldRow>
+        {c.ways.length > 0 && (
+          <FieldRow id={`${id}-way`} label="Transmission">
+            <select
+              id={`${id}-way`}
+              value={c.wayId}
+              disabled={disabled}
+              onChange={(e) => c.setWayId(e.target.value)}
+            >
+              <option value="">Chat only</option>
+              {c.ways.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          </FieldRow>
+        )}
         <FieldRow id={`${id}-text`} label="Text" marked>
           <textarea
             id={`${id}-text`}

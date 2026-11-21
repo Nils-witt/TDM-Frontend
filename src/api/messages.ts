@@ -38,6 +38,10 @@ export type Message = EntityMeta & {
   text: string;
   // Tag IDs (api/messageTags.ts), which may have been deleted since.
   tags: string[];
+  // How it was transmitted besides the chat (api/transmissionWays.ts), its
+  // name kept after the way is deleted; null for none, absent from an API
+  // older than transmission ways.
+  transmission_way?: { id: string; name: string } | null;
   // To before CC, each by name.
   receivers: MessageReceiver[];
   acknowledged: boolean;
@@ -59,6 +63,8 @@ export type MessageDraft = {
   priority: MessagePriority;
   text: string;
   tags: string[];
+  // A transmission way's ID, or null for none.
+  transmission_way: string | null;
 };
 
 // A function messages can be addressed to.

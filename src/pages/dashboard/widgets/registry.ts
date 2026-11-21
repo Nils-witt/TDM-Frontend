@@ -37,6 +37,7 @@ const MapStylesWidget = lazy(() => import('./MapStyles/MapStyles.tsx'));
 const MapAdminWidget = lazy(() => import('./MapAdmin/MapAdmin.tsx'));
 const MessageSettingsWidget = lazy(() => import('./MessageSettings/MessageSettings.tsx'));
 const MessageTagsWidget = lazy(() => import('./MessageTags/MessageTags.tsx'));
+const TransmissionWaysWidget = lazy(() => import('./TransmissionWays/TransmissionWays.tsx'));
 const OverlayAccessWidget = lazy(() => import('./OverlayAccess/OverlayAccess.tsx'));
 const LayoutsWidget = lazy(() => import('./Layouts/Layouts.tsx'));
 const ExportTemplatesWidget = lazy(() => import('./ExportTemplates/ExportTemplates.tsx'));
@@ -881,6 +882,15 @@ const MessageSettings: Widget = {
   Component: MessageSettingsWidget,
 };
 
+// How messages were transmitted besides the chat (Tetra, Email, Melder).
+const TransmissionWays: Widget = {
+  ...adminWidget,
+  id: 'TransmissionWays',
+  name: 'Transmission ways',
+  description: 'Manages the ways a message can be marked as transmitted, such as Tetra or Email.',
+  Component: TransmissionWaysWidget,
+};
+
 // Global tags (admins) and the scope's tags (messages.view).
 const MessageTags: Widget = {
   ...adminWidget,
@@ -1022,6 +1032,7 @@ export const widgets: Record<string, Widget> = Object.fromEntries(
     MapAdmin,
     MessageSettings,
     MessageTags,
+    TransmissionWays,
     OverlayAccess,
     ExportTemplates,
     Workflows,

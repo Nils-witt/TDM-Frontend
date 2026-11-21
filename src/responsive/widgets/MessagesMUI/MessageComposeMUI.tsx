@@ -84,6 +84,25 @@ function MessageComposeMUI({ onSent }: { onSent: (m: Message) => void }) {
             </MenuItem>
           ))}
         </TextField>
+        {c.ways.length > 0 && (
+          <TextField
+            select
+            label="Transmission"
+            value={c.wayId}
+            disabled={disabled}
+            // A Select hides the empty value's item and floats the label
+            // over it unless told to show it.
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            onChange={(e) => c.setWayId(e.target.value)}
+          >
+            <MenuItem value="">Chat only</MenuItem>
+            {c.ways.map((w) => (
+              <MenuItem key={w.id} value={w.id}>
+                {w.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
         <TextField
           label="Text"
           multiline

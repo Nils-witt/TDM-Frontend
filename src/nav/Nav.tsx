@@ -124,6 +124,7 @@ function Nav() {
                   <NavMenuItem label="Overlay Access" widget="OverlayAccess" />
                   <NavMenuItem label="Message Settings" widget="MessageSettings" />
                   <NavMenuItem label="Message Tags" widget="MessageTags" />
+                  <NavMenuItem label="Transmission Ways" widget="TransmissionWays" />
                   <NavMenuItem label="Export Templates" widget="ExportTemplates" />
                   <NavMenuItem label="Workflows" widget="Workflows" />
                   <NavMenuItem label="Backup Servers" widget="BackupInstances" />

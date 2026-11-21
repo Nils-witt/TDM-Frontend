@@ -13,6 +13,7 @@ import {
   useMessages,
 } from '@/api/messages';
 import { activeTags, type MessageTag, useMessageTags } from '@/api/messageTags';
+import { useTransmissionWays } from '@/api/transmissionWays';
 import { useChatEnabled, useMessageAccess } from '@/data/messages';
 
 // The state of a messages view, shared by the desktop widget and /m.
@@ -101,11 +102,14 @@ export function useMessageCompose(onSent: (m: Message) => void) {
   const chatEnabled = useChatEnabled();
   const receivers = useMessageReceivers(access.load);
   const tags = useMessageTags(access.load);
+  const ways = useTransmissionWays(access.load);
   const [to, setTo] = useState<string[]>([]);
   const [cc, setCc] = useState<string[]>([]);
   const [priority, setPriority] = useState<MessagePriority>(3);
   const [text, setText] = useState('');
   const [tagIds, setTagIds] = useState<string[]>([]);
+  // '' for none.
+  const [wayId, setWayId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -124,6 +128,7 @@ export function useMessageCompose(onSent: (m: Message) => void) {
     setPriority(3);
     setText('');
     setTagIds([]);
+    setWayId('');
     setError(null);
   };
 
@@ -131,7 +136,14 @@ export function useMessageCompose(onSent: (m: Message) => void) {
     if (!canSend) return;
     setBusy(true);
     try {
-      const m = await messagesApi.send({ to, cc, priority, text: text.trim(), tags: tagIds });
+      const m = await messagesApi.send({
+        to,
+        cc,
+        priority,
+        text: text.trim(),
+        tags: tagIds,
+        transmission_way: wayId || null,
+      });
       reset();
       onSent(m);
     } catch (err) {
@@ -159,6 +171,9 @@ export function useMessageCompose(onSent: (m: Message) => void) {
     options,
     receivers,
     tags: activeTags(tags.data),
+    wayId,
+    setWayId,
+    ways: ways.items.toSorted((a, b) => a.name.localeCompare(b.name)),
     blocker,
     canSend,
     busy,

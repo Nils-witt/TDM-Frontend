@@ -53,7 +53,7 @@ export type CatalogApi<T extends CatalogEntry> = {
   remove: (id: string) => Promise<void>;
 };
 
-const catalogApi = <T extends CatalogEntry>(path: string): CatalogApi<T> => ({
+export const catalogApi = <T extends CatalogEntry>(path: string): CatalogApi<T> => ({
   create: (input) => request<T>(path, { method: 'POST', body: JSON.stringify(input) }),
   patch: (id, input) =>
     request<T>(`${path}/${encodeURIComponent(id)}`, {

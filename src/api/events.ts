@@ -51,6 +51,8 @@ const typePaths: Record<string, string[]> = {
   // Deleting a tag keeps it on messages, which show its name.
   message_tags: ['/api/v1/message-tags'],
   message_settings: ['/api/v1/message-settings'],
+  // Deleting a way keeps its name on messages.
+  transmission_ways: ['/api/v1/transmission-ways'],
   map_styles: ['/api/v1/map-styles'],
   map_settings: ['/api/v1/map-settings'],
   // A restriction changes which overlays a caller is listed.

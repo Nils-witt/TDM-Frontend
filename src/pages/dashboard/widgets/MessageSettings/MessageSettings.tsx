@@ -114,6 +114,18 @@ function MessageSettingsWidget() {
             </span>
           </SectionText>
         </Section>
+        <Section legend="Transmission ways">
+          <SectionText>
+            <span className="muted">
+              How a message was transmitted besides the chat, picked when sending.
+            </span>
+          </SectionText>
+          <div className="row">
+            <button type="button" className="btn" onClick={() => openWidget('TransmissionWays')}>
+              Transmission ways…
+            </button>
+          </div>
+        </Section>
         <FormActions
           submitLabel="Save"
           busy={busy}

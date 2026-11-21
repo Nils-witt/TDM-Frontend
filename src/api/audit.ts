@@ -23,6 +23,7 @@ export const auditEntityTypes = [
   'message_receivers',
   'message_tags',
   'message_settings',
+  'transmission_ways',
 ] as const;
 
 export type AuditEntityType = (typeof auditEntityTypes)[number];
